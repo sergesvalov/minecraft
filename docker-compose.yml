@@ -3,7 +3,7 @@ services:
     image: itzg/minecraft-server:latest
     container_name: mc-paper-geyser
     ports:
-      - "25565:25565"          # Java Edition TCP
+      - "25566:25565"          # Java Edition TCP
       - "19132:19132/udp"      # Bedrock Edition UDP
     environment:
       EULA: "true"

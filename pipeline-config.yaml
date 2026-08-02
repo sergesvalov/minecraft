@@ -7,7 +7,7 @@ deploy:
   dir: "/opt/minecraft"
 
 ports:
-  host: 25565
+  host: 25566
   internal: 25565
 
 volumes:
