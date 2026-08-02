@@ -10,7 +10,14 @@ deploy:
 volumes:
   data: "/opt/minecraft/data"
 
+images:
+  - name: "minecraft"
+    context: "."
+  - name: "minecraft-filebrowser"
+    context: "filebrowser"
+
 containers:
   - "mc-paper-geyser"
+  - "mc-filebrowser"
 
 migrations: false

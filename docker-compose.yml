@@ -20,7 +20,7 @@ services:
 
   # Удобный веб-интерфейс для загрузки модов/плагинов и редактирования конфигов
   filebrowser:
-    image: filebrowser/filebrowser:latest
+    image: ${REGISTRY_IP}:5050/minecraft-filebrowser:${BUILD_TAG}
     container_name: mc-filebrowser
     user: "1000:1000"          # Совпадает с правами файлов майнкрафта
     ports:
