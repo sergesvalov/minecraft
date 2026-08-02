@@ -1,0 +1,19 @@
+service_name: "minecraft"
+stack_type: "docker-compose"
+target_cluster: "prod"
+
+# Указываем конкретную директорию для публикации
+deploy:
+  dir: "/opt/minecraft"
+
+ports:
+  host: 25565
+  internal: 25565
+
+volumes:
+  data: "/opt/minecraft/data"
+
+containers:
+  - "mc"
+
+migrations: false
