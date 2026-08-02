@@ -1,6 +1,6 @@
 services:
   mc:
-    image: ${DOCKER_IMAGE}:${BUILD_TAG}
+    image: ghcr.io/itzg/minecraft-server:latest
     container_name: mc-paper-geyser
     ports:
       - "25566:25565"          # Java Edition TCP
