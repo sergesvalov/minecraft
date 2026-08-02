@@ -18,6 +18,22 @@ services:
       - ./data:/data           # Данные будут лежать в /opt/minecraft/data на хосте
     restart: unless-stopped
 
+  # Удобный веб-интерфейс для загрузки модов/плагинов и редактирования конфигов
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: mc-filebrowser
+    user: "1000:1000"          # Совпадает с правами файлов майнкрафта
+    ports:
+      - "8080:80"              # Веб-интерфейс будет доступен на порту 8080
+    volumes:
+      - ./data:/srv            # Открываем доступ к папке майнкрафта
+      - filebrowser_db:/database
+    environment:
+      - FB_DATABASE=/database/filebrowser.db
+    restart: unless-stopped
+
+volumes:
+  filebrowser_db:
   # Шаблон для ванильного сервера (при необходимости можно запустить параллельно на другом порту или вместо основного)
   # mc-vanilla:
   #   image: itzg/minecraft-server:latest
