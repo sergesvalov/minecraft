@@ -8,6 +8,7 @@ services:
     environment:
       EULA: "true"
       TYPE: "PAPER"
+      ONLINE_MODE: "false"
       PLUGINS: |
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
