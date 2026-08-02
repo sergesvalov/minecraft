@@ -1,2 +1,1 @@
-FROM alpine:latest
-RUN echo "Minecraft pipeline dummy image"
+FROM itzg/minecraft-server:latest
