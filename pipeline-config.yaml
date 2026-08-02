@@ -6,14 +6,11 @@ target_cluster: "prod"
 deploy:
   dir: "/opt/minecraft"
 
-ports:
-  host: 25566
-  internal: 25565
 
 volumes:
   data: "/opt/minecraft/data"
 
 containers:
-  - "mc"
+  - "mc-paper-geyser"
 
 migrations: false
