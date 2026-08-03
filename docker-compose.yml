@@ -19,8 +19,6 @@ services:
       PLUGINS: |
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
-        https://github.com/dmulloy2/ProtocolLib/releases/latest/download/ProtocolLib.jar
-        https://github.com/games647/FastLogin/releases/latest/download/FastLoginBukkit.jar
     volumes:
       - ./data:/data           # Данные будут лежать в /opt/minecraft/data на хосте
       - ./scripts/auto-patch-authme.sh:/custom-init.d/auto-patch-authme.sh:ro
