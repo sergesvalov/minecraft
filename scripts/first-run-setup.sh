@@ -2,6 +2,7 @@
 # Скрипт для применения пост-настроек сервера после первого запуска
 
 # --- Настройки ---
+SERVER_DIR="/opt/minecraft"
 TIMEZONE="Europe/Athens"
 AUTHME_TIMEOUT="120"
 # -----------------
@@ -13,7 +14,7 @@ sudo timedatectl set-timezone "$TIMEZONE"
 sudo timedatectl set-ntp true
 
 echo "2. Проверка файла конфигурации AuthMe..."
-AUTHME_CONFIG="/opt/minecraft/data/plugins/AuthMe/config.yml"
+AUTHME_CONFIG="${SERVER_DIR}/data/plugins/AuthMe/config.yml"
 
 if [ -f "$AUTHME_CONFIG" ]; then
     echo "Внесение исправлений в конфиг AuthMe..."
