@@ -22,6 +22,9 @@ node('built-in') {
             
             # Принудительно копируем скрипты из репозитория на сервер
             scp -o StrictHostKeyChecking=no -r scripts/* ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/scripts/
+            
+            # Делаем скрипты исполняемыми
+            ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'chmod +x /opt/minecraft/scripts/*.sh'
             """
         }
     }
