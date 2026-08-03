@@ -27,8 +27,8 @@ if [ -f "$AUTHME_CONFIG" ]; then
     # Включаем автоматический вход (без пароля) для Bedrock-игроков через Floodgate
     sudo sed -i "s/floodgate: false/floodgate: true/g" "$AUTHME_CONFIG"
     
-    echo "Перезагрузка плагина AuthMe..."
-    sudo docker exec mc-paper-geyser rcon-cli authme reload
+    echo "Перезагрузка сервера для применения настроек..."
+    sudo docker restart mc-paper-geyser
     echo "Настройки AuthMe успешно применены!"
 else
     echo "Файл $AUTHME_CONFIG не найден!"
