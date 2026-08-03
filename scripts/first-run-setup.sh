@@ -25,7 +25,12 @@ if [ -f "$AUTHME_CONFIG" ]; then
     sudo sed -i "s/timeout: 30/timeout: $AUTHME_TIMEOUT/g" "$AUTHME_CONFIG"
     
     # Включаем автоматический вход (без пароля) для Bedrock-игроков через Floodgate
-    sudo sed -i "s/floodgate: false/floodgate: true/g" "$AUTHME_CONFIG"
+    if grep -q "floodgate:" "$AUTHME_CONFIG"; then
+        sudo sed -i -E "s/^[[:space:]]*floodgate:.*/    floodgate: true/g" "$AUTHME_CONFIG"
+    else
+        # Если опции нет, добавляем секцию Hooks в конец (или просто саму опцию)
+        echo -e "\nHooks:\n    floodgate: true" | sudo tee -a "$AUTHME_CONFIG" > /dev/null
+    fi
     
     echo "Перезагрузка сервера для применения настроек..."
     sudo docker restart mc-paper-geyser

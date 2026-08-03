@@ -17,7 +17,12 @@ echo "[AuthMe-AutoPatch] Запуск фонового скрипта ожида
         # Надежная замена строк (заменяем всю строку целиком независимо от пробелов)
         sed -i -E "s/^[[:space:]]*allowedNicknameCharacters:.*/    allowedNicknameCharacters: '[a-zA-Z0-9_.]*'/g" "$AUTHME_CONFIG"
         sed -i -E "s/^[[:space:]]*timeout:.*/        timeout: 120/g" "$AUTHME_CONFIG"
-        sed -i -E "s/^[[:space:]]*floodgate:.*/    floodgate: true/g" "$AUTHME_CONFIG"
+        
+        if grep -q "floodgate:" "$AUTHME_CONFIG"; then
+            sed -i -E "s/^[[:space:]]*floodgate:.*/    floodgate: true/g" "$AUTHME_CONFIG"
+        else
+            echo -e "\nHooks:\n    floodgate: true" >> "$AUTHME_CONFIG"
+        fi
         
         echo "[AuthMe-AutoPatch] Перезагрузка плагина через RCON..."
         # Немного ждем, чтобы сервер точно запустил плагины и RCON
