@@ -27,8 +27,11 @@ if [ -f "$AUTHME_CONFIG" ]; then
     # Включаем автоматический вход (без пароля) для Bedrock-игроков через Floodgate
     if grep -q "floodgate:" "$AUTHME_CONFIG"; then
         sudo sed -i -E "s/^[[:space:]]*floodgate:.*/    floodgate: true/g" "$AUTHME_CONFIG"
+    elif grep -q "^Hooks:" "$AUTHME_CONFIG"; then
+        # Если опции нет, но есть секция Hooks, добавляем туда
+        sudo sed -i -E "/^Hooks:/a \\    floodgate: true" "$AUTHME_CONFIG"
     else
-        # Если опции нет, добавляем секцию Hooks в конец (или просто саму опцию)
+        # Иначе добавляем секцию целиком
         echo -e "\nHooks:\n    floodgate: true" | sudo tee -a "$AUTHME_CONFIG" > /dev/null
     fi
     

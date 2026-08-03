@@ -20,6 +20,8 @@ echo "[AuthMe-AutoPatch] Запуск фонового скрипта ожида
         
         if grep -q "floodgate:" "$AUTHME_CONFIG"; then
             sed -i -E "s/^[[:space:]]*floodgate:.*/    floodgate: true/g" "$AUTHME_CONFIG"
+        elif grep -q "^Hooks:" "$AUTHME_CONFIG"; then
+            sed -i -E "/^Hooks:/a \\    floodgate: true" "$AUTHME_CONFIG"
         else
             echo -e "\nHooks:\n    floodgate: true" >> "$AUTHME_CONFIG"
         fi
