@@ -12,6 +12,7 @@ services:
       EULA: "true"
       TYPE: "PAPER"
       ONLINE_MODE: "false"
+      GAMEMODE: "creative"
       OPS: "papa"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "admin"
