@@ -13,7 +13,7 @@ services:
       TYPE: "PAPER"
       ONLINE_MODE: "false"
       OPS: "papa"
-      MODRINTH_PROJECTS: "authmereloaded,coreprotect,bluemap"
+      MODRINTH_PROJECTS: "authmereloaded,bluemap"
       PLUGINS: |
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
