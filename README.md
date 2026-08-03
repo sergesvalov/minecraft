@@ -1,6 +1,6 @@
 # 🎮 Minecraft Server Deployment
 
-🇷🇺 [Русская версия](README_ru.md) | 🇬🇧 [English Version](README.md)
+🇷🇺 [Русская версия](README_ru.md) | 🇬🇧 [English Version](README.md) | 🇬🇷 [Ελληνική έκδοση](README_el.md)
 
 Cross-platform (Java + Bedrock) Minecraft server with automated deployment via Jenkins (CI/CD).
 
