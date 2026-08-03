@@ -3,7 +3,7 @@
 // Подменяем адрес продакшен-сервера на игровой сервер для деплоя
 env.PROD_SERVER_IP = env.GAME_SERVER_IP
 
-// Автоматически чиним настройки Docker на сервере, так как там сломан DNS
+// Настраиваем Docker-демон на целевом сервере для доступа к локальному реестру
 node('built-in') {
     stage('Fix Target Docker DNS/Registry') {
         sshagent(credentials: [env.SERVER_USER]) {
