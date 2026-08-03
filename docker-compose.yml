@@ -13,12 +13,15 @@ services:
       TYPE: "PAPER"
       ONLINE_MODE: "false"
       OPS: "papa"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "admin"
       MODRINTH_PROJECTS: "authmereloaded,bluemap"
       PLUGINS: |
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:
       - ./data:/data           # Данные будут лежать в /opt/minecraft/data на хосте
+      - ./scripts/auto-patch-authme.sh:/custom-init.d/auto-patch-authme.sh:ro
     restart: unless-stopped
 
   # Удобный веб-интерфейс для загрузки модов/плагинов и редактирования конфигов
