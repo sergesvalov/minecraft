@@ -1,3 +1,4 @@
+version: "3.8"
 services:
   mc:
     image: ${DOCKER_IMAGE}:${BUILD_TAG}
@@ -7,6 +8,7 @@ services:
       - "19132:19132/udp"      # Bedrock Edition UDP
       - "25581:8100"           # BlueMap Web Interface
     environment:
+      TZ: "Europe/Athens"
       EULA: "true"
       TYPE: "PAPER"
       ONLINE_MODE: "false"
@@ -30,6 +32,7 @@ services:
       - ./data:/srv            # Открываем доступ к папке майнкрафта
       - filebrowser_db:/database
     environment:
+      - TZ=Europe/Athens
       - FB_DATABASE=/database/filebrowser.db
     restart: unless-stopped
 
