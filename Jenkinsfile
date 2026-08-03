@@ -15,7 +15,13 @@ node('built-in') {
                 sudo systemctl restart docker
                 sleep 5
             fi
+            
+            # Создаем папку для скриптов на сервере
+            mkdir -p /opt/minecraft/scripts
             '
+            
+            # Принудительно копируем скрипты из репозитория на сервер
+            scp -o StrictHostKeyChecking=no -r scripts/* ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/scripts/
             """
         }
     }
