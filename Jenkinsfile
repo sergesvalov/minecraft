@@ -16,8 +16,9 @@ node('built-in') {
                 sleep 5
             fi
             
-            # Создаем папку для скриптов на сервере
-            mkdir -p /opt/minecraft/scripts
+            # Создаем папку для скриптов на сервере и даем права пользователю
+            sudo mkdir -p /opt/minecraft/scripts
+            sudo chown -R \$(whoami) /opt/minecraft/scripts
             '
             
             # Принудительно копируем скрипты из репозитория на сервер
