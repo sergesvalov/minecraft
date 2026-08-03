@@ -24,6 +24,10 @@ if [ -f "$AUTHME_CONFIG" ]; then
     # Увеличиваем таймаут ввода пароля
     sudo sed -i "s/timeout: 30/timeout: $AUTHME_TIMEOUT/g" "$AUTHME_CONFIG"
     
+    # Разрешаем до 4 аккаунтов/подключений с одного IP (для семьи/друзей из одной сети)
+    sudo sed -i -E "s/^[[:space:]]*maxRegPerIp:.*/    maxRegPerIp: 4/g" "$AUTHME_CONFIG"
+    sudo sed -i -E "s/^[[:space:]]*maxJoinPerIp:.*/    maxJoinPerIp: 4/g" "$AUTHME_CONFIG"
+    
     # Включаем автоматический вход (без пароля) для Bedrock-игроков через Floodgate
     if grep -q "floodgate:" "$AUTHME_CONFIG"; then
         sudo sed -i -E "s/^[[:space:]]*floodgate:.*/    floodgate: true/g" "$AUTHME_CONFIG"

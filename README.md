@@ -1,111 +1,115 @@
 # 🎮 Minecraft Server Deployment
 
-Кроссплатформенный (Java + Bedrock) сервер Minecraft с автоматическим деплоем через Jenkins (CI/CD).
+🇷🇺 [Русская версия](README_ru.md) | 🇬🇧 [English Version](README.md)
 
-## 🌟 Ключевые возможности
+Cross-platform (Java + Bedrock) Minecraft server with automated deployment via Jenkins (CI/CD).
 
-### 1. Кроссплатформенность
-Сервер использует ядро **Paper** и плагины **Geyser** + **Floodgate**. 
-Оба мира объединены — можно играть с любых устройств:
-- **Java Edition (ПК):** `<SERVER_IP>:25566`
-- **Bedrock Edition (Телефоны/Консоли):** `<SERVER_IP>:19132`
+## 🌟 Key Features
 
-### 2. Система внутренней авторизации (AuthMe)
-Сервер работает в автономном режиме (`ONLINE_MODE=false`), что позволяет удобно играть по локальной сети.
-Для защиты инвентаря и построек игроков используется плагин **AuthMeReloaded**:
-- Java-игроки при первом входе создают свой пароль: `/register пароль пароль`, а затем авторизуются через `/login пароль`.
-- Bedrock-игроки также **должны зарегистрироваться**, используя команды в чате (как и Java-игроки). Временно авто-вход для них отключен из-за несовместимости версий.
-### 3. Автоматические права Администратора
-Игрок с ником **`papa`** получает права оператора автоматически при входе. 
-Чтобы добавить других админов, отредактируйте переменную `OPS` в `docker-compose.yml`.
+### 1. Cross-platform Support
+The server uses the **Paper** core and **Geyser** + **Floodgate** plugins. 
+Both worlds are merged — you can play from any device:
+- **Java Edition (PC):** `<SERVER_IP>:25566`
+- **Bedrock Edition (Phones/Consoles):** `<SERVER_IP>:19132`
 
-### 4. Интерактивная 3D веб-карта (BlueMap)
-На сервере работает плагин BlueMap, который генерирует красивую 3D-карту вашего мира (как Google Earth) в реальном времени.
+### 2. Internal Authentication System (AuthMe)
+The server runs in offline mode (`ONLINE_MODE=false`), making it convenient for local network play.
+To protect players' inventory and builds, the **AuthMeReloaded** plugin is used:
+- Java players create their password upon first login: `/register password password`, and then authenticate using `/login password`.
+- Bedrock players also **must register**, using chat commands (just like Java players). Temporarily, auto-login for them is disabled due to version incompatibility.
+
+### 3. Automatic Administrator Rights
+A player with the username **`papa`** automatically receives operator rights upon login. 
+To add other admins, edit the `OPS` variable in `docker-compose.yml`.
+
+### 4. Interactive 3D Web Map (BlueMap)
+The server runs the BlueMap plugin, which generates a beautiful 3D map of your world (like Google Earth) in real-time.
 🌍 **`http://<SERVER_IP>:25581`**
 
-### 5. Защита от гриферов (CoreProtect)
+### 5. Anti-grief Protection (CoreProtect)
 > [!WARNING]
-> Плагин временно отключен, так как разработчики еще не выпустили версию, совместимую с Minecraft 26.2. Мы вернем его в сборку, как только выйдет обновление.
+> The plugin is temporarily disabled as the developers have not yet released a version compatible with Minecraft 26.2. We will bring it back to the build as soon as the update is released.
 
-Все действия игроков (поставленные/сломанные блоки, взаимодействие с сундуками) логируются. Администратор (`papa`) может посмотреть, кто сломал блок, и откатить любые изменения.
+All player actions (placed/broken blocks, chest interactions) are logged. The administrator (`papa`) can see who broke a block and rollback any changes.
 
-### 6. Веб-интерфейс для управления файлами (FileBrowser)
-Вместе с сервером разворачивается удобная веб-панель для управления файлами, модами и конфигурациями без SSH:
+### 6. Web Interface for File Management (FileBrowser)
+Along with the server, a convenient web panel is deployed for managing files, mods, and configurations without SSH:
 🌐 **`http://<SERVER_IP>:25580`**
-- Логин по умолчанию: `admin`
-- Пароль по умолчанию: `admin`
+- Default login: `admin`
+- Default password: `admin`
 
-## 🛠️ Архитектура и CI/CD (Jenkins)
+## 🛠️ Architecture and CI/CD (Jenkins)
 
-Из-за сломанного DNS/IPv6 на целевом сервере настроена архитектура **Proxy Registry Deploy**:
+Due to broken DNS/IPv6 on the target server, a **Proxy Registry Deploy** architecture is configured:
 
-1. **Jenkins** скачивает исходные образы (Minecraft и FileBrowser) из Docker Hub.
-2. Образы перепаковываются и загружаются в приватный локальный реестр `192.168.0.222:5050`.
-3. В процессе пайплайна (`Jenkinsfile`), на целевом сервере `<SERVER_IP>` автоматически настраивается `/etc/docker/daemon.json` для доверия к `insecure-registries`.
-4. Целевой сервер стягивает все образы **по локальной сети** без использования интернета.
+1. **Jenkins** downloads the source images (Minecraft and FileBrowser) from Docker Hub.
+2. The images are repacked and uploaded to a private local registry `192.168.0.222:5050`.
+3. During the pipeline (`Jenkinsfile`), the target server `<SERVER_IP>` is automatically configured with `/etc/docker/daemon.json` to trust the `insecure-registries`.
+4. The target server pulls all images **over the local network** without using the internet.
 
-## 💾 Сохранность данных
+## 💾 Data Persistence
 
-Все игровые данные хранятся на хост-сервере в директории деплоя:
+All game data is stored on the host server in the deployment directory:
 `/opt/minecraft/data`
 
-Это гарантирует, что данные (миры, плагины, настройки) полностью сохраняются:
-- При жесткой перезагрузке сервера.
-- При повторных деплоях новой конфигурации через Jenkins.
+This ensures that data (worlds, plugins, settings) is fully preserved:
+- During a hard server reboot.
+- During repeated deployments of a new configuration via Jenkins.
 
-## 🚀 Как запустить
+## 🚀 How to Run
 
-Всё работает автоматически через пайплайн `minecraft` на вашем Jenkins. Любые изменения в `docker-compose.yml` (например, добавление новых плагинов в `MODRINTH_PROJECTS`) после коммита автоматически применятся на сервере.
+Everything works automatically through the `minecraft` pipeline on your Jenkins. Any changes in `docker-compose.yml` (for example, adding new plugins to `MODRINTH_PROJECTS`) will automatically apply to the server after a commit.
 
-### Автоматическая донастройка
-В репозитории есть встроенный скрипт `scripts/auto-patch-authme.sh`. Он автоматически запускается внутри контейнера сервера и "на лету" правит конфиг AuthMe, как только тот генерируется:
-1. Настраивает плагин так, чтобы пускать игроков с телефонов без пароля (интеграция Floodgate).
-2. Разрешает символ точки `.` в никнеймах (нужно для Bedrock-игроков).
-3. Увеличивает таймаут авторизации до 120 секунд.
+### Automatic Pre-configuration
+The repository has a built-in script `scripts/auto-patch-authme.sh`. It runs automatically inside the server container and patches the AuthMe config "on the fly" as soon as it is generated:
+1. Configures the plugin to allow phone players to enter without a password (Floodgate integration).
+2. Allows the dot character `.` in nicknames (required for Bedrock players).
+3. Increases the authentication timeout to 120 seconds.
+4. Allows up to 4 accounts and connections from a single IP address (useful when the whole family plays from home on the same Wi-Fi).
 
-**Как использовать:**
-Никак! Всё работает на 100% автоматически. Скрипт запускается в фоне при старте контейнера, сам ждет появления файла настроек, сам его изменяет и сам мгновенно перезагружает плагин. Вам больше не нужно заходить по SSH!
+**How to use:**
+You don't need to do anything! Everything works 100% automatically. The script runs in the background at container startup, waits for the config file to appear, modifies it, and instantly reloads the plugin. You no longer need to log in via SSH!
 
 ---
 
-## 🎮 Руководство для новичков (Простыми словами)
+## 🎮 Beginner's Guide (In Simple Terms)
 
-Если вы никогда раньше не играли на серверах и не знаете, куда вводить все эти непонятные команды со слэшем (`/`) — не пугайтесь, всё очень просто! Вам не нужны никакие хакерские экраны. Все команды вводятся **прямо в самой игре Minecraft, в игровом чате**.
+If you have never played on servers before and don't know where to enter all those confusing slash (`/`) commands — don't be afraid, it's very simple! You don't need any hacker screens. All commands are entered **directly in the Minecraft game itself, in the game chat**.
 
-### 1. Как зайти и зарегистрироваться?
-Сервер использует независимую систему защиты, поэтому ваша учетная запись будет привязана к личному паролю.
+### 1. How to join and register?
+The server uses an independent security system, so your account will be tied to a personal password.
 
-**Для игроков с компьютеров (Java Edition):**
-1. Зайдите в сетевую игру и добавьте сервер по адресу: `<SERVER_IP>:25566`.
-2. Подключитесь к серверу. Сначала вы не сможете двигаться.
-3. Откройте чат, нажав на клавиатуре английскую букву **`T`** (или русскую **`Е`**). Внизу появится темная строка ввода.
-4. Напишите команду регистрации, придумав пароль (его нужно ввести два раза через пробел), и нажмите Enter: 
-   `/register ваш_пароль ваш_пароль`
-5. **Готово!** При следующих заходах на сервер нажимайте `T` и пишите:
-   `/login ваш_пароль`
+**For PC players (Java Edition):**
+1. Go to Multiplayer and add the server at: `<SERVER_IP>:25566`.
+2. Connect to the server. At first, you will not be able to move.
+3. Open the chat by pressing the English letter **`T`** (or Russian **`Е`**) on your keyboard. A dark input line will appear at the bottom.
+4. Write the registration command, creating a password (you need to enter it twice separated by a space), and press Enter: 
+   `/register your_password your_password`
+5. **Done!** Next time you join the server, press `T` and write:
+   `/login your_password`
 
-**Для игроков с телефонов и консолей (Bedrock Edition):**
-1. Добавьте сервер по адресу: `<SERVER_IP>`, порт `19132`.
-2. Подключитесь к серверу.
-3. Откройте чат (кнопка сообщения сверху экрана на телефоне или специальная кнопка на геймпаде).
-4. Пройдите регистрацию, как и Java-игроки. Напишите:
-   `/register ваш_пароль ваш_пароль`
-5. При следующих заходах пишите:
-   `/login ваш_пароль`
+**For Phone and Console players (Bedrock Edition):**
+1. Add the server at: `<SERVER_IP>`, port `19132`.
+2. Connect to the server.
+3. Open the chat (the message button at the top of the screen on your phone or a special button on your gamepad).
+4. Complete the registration, just like Java players. Write:
+   `/register your_password your_password`
+5. Next time you join, write:
+   `/login your_password`
 
-### 2. Как узнать, кто сломал ваш дом или обокрал сундук?
+### 2. How to find out who broke your house or robbed a chest?
 > [!WARNING]
-> Функция временно недоступна на версии 26.2 из-за отсутствия обновления плагина от авторов.
+> This feature is temporarily unavailable on version 26.2 due to the lack of a plugin update from the authors.
 
-На сервере работает скрытый "видеорегистратор" (CoreProtect), который запоминает каждый шаг всех игроков.
-Если произошла беда:
-1. Нажмите `T` и напишите команду `/co i` (буквы английские). Вы перейдете в режим сыщика.
-2. Теперь **кликните левой кнопкой мыши** (попытайтесь ударить/сломать) по любому блоку или по пустому месту, где раньше стоял украденный блок. В чате появится текст с именем воришки и временем кражи.
-3. **Кликните правой кнопкой мыши** (попытайтесь использовать) по сундуку, чтобы увидеть, кто и когда брал из него вещи.
-4. Чтобы выключить режим сыщика и снова нормально строить, еще раз нажмите `T` и напишите `/co i`.
+The server has a hidden "dashcam" (CoreProtect) that remembers every step of all players.
+If a disaster happens:
+1. Press `T` and write the command `/co i` (English letters). You will enter inspector mode.
+2. Now **left-click** (try to hit/break) any block or an empty space where the stolen block used to be. A text will appear in the chat with the name of the thief and the time of the theft.
+3. **Right-click** (try to use) on a chest to see who took items from it and when.
+4. To turn off inspector mode and build normally again, press `T` again and write `/co i`.
 
-### 3. Где посмотреть интерактивную 3D-карту?
-Для этого даже не нужно заходить в Майнкрафт! 
-Просто откройте ваш обычный браузер (Chrome, Safari, Яндекс) на компьютере или телефоне и перейдите по этой ссылке:
+### 3. Where to see the interactive 3D map?
+You don't even need to open Minecraft for this! 
+Just open your regular browser (Chrome, Safari, Yandex) on your computer or phone and go to this link:
 🌍 **`http://<SERVER_IP>:25581`**
-Там вы увидите весь свой мир с высоты птичьего полета, сможете вращать камеру в 3D и видеть перемещения других игроков в реальном времени.
+There you will see your entire world from a bird's-eye view, you can rotate the camera in 3D, and see the movements of other players in real-time.
