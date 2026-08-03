@@ -1,20 +1,20 @@
 #!/bin/bash
-# Этот скрипт автоматически монтируется в контейнер и запускается при старте.
-# Он ждет появления файла конфигурации AuthMe и патчит его "на лету".
+# This script is automatically mounted into the container and executed at startup.
+# It waits for the AuthMe config file to appear and patches it "on the fly".
 
-echo "[AuthMe-AutoPatch] Запуск фонового скрипта ожидания конфигурации..."
+echo "[AuthMe-AutoPatch] Starting background script to wait for configuration..."
 
 (
   AUTHME_CONFIG="/data/plugins/AuthMe/config.yml"
   
-  # Ждем до 5 минут (150 * 2 сек), пока сервер не сгенерирует файл
+  # Wait up to 5 minutes (150 * 2 sec) until the server generates the file
   for i in {1..150}; do
     if [ -f "$AUTHME_CONFIG" ]; then
-      # Проверяем, пропатчен ли файл уже (ищем floodgate: true)
+      # Check if the file is already patched (look for floodgate: true)
       if ! grep -q "floodgate: true" "$AUTHME_CONFIG"; then
-        echo "[AuthMe-AutoPatch] Файл найден! Применяем патчи..."
+        echo "[AuthMe-AutoPatch] File found! Applying patches..."
         
-        # Надежная замена строк (заменяем всю строку целиком независимо от пробелов)
+        # Reliable string replacement (replace the whole line regardless of whitespace)
         sed -i -E "s/^[[:space:]]*allowedNicknameCharacters:.*/    allowedNicknameCharacters: '[a-zA-Z0-9_.]*'/g" "$AUTHME_CONFIG"
         sed -i -E "s/^[[:space:]]*timeout:.*/        timeout: 120/g" "$AUTHME_CONFIG"
         sed -i -E "s/^[[:space:]]*maxRegPerIp:.*/    maxRegPerIp: 4/g" "$AUTHME_CONFIG"
@@ -28,13 +28,13 @@ echo "[AuthMe-AutoPatch] Запуск фонового скрипта ожида
             echo -e "\nHooks:\n    floodgate: true" >> "$AUTHME_CONFIG"
         fi
         
-        echo "[AuthMe-AutoPatch] Перезагрузка плагина через RCON..."
-        # Немного ждем, чтобы сервер точно запустил плагины и RCON
+        echo "[AuthMe-AutoPatch] Reloading plugin via RCON..."
+        # Wait a bit to ensure the server has fully started plugins and RCON
         sleep 5
         rcon-cli authme reload
-        echo "[AuthMe-AutoPatch] Успешно пропатчено и применено!"
+        echo "[AuthMe-AutoPatch] Successfully patched and applied!"
       else
-        echo "[AuthMe-AutoPatch] Файл уже содержит правильные настройки (floodgate: true)."
+        echo "[AuthMe-AutoPatch] File already contains correct settings (floodgate: true)."
       fi
       break
     fi

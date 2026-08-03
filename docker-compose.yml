@@ -21,19 +21,19 @@ services:
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:
-      - ./data:/data           # Данные будут лежать в /opt/minecraft/data на хосте
+      - ./data:/data           # Data will be stored in /opt/minecraft/data on host
       - ./scripts/auto-patch-authme.sh:/custom-init.d/auto-patch-authme.sh:ro
     restart: unless-stopped
 
-  # Удобный веб-интерфейс для загрузки модов/плагинов и редактирования конфигов
+  # Convenient web interface for downloading mods/plugins and editing configs
   filebrowser:
     image: ${REGISTRY_IP}:5050/minecraft-filebrowser:${BUILD_TAG}
     container_name: mc-filebrowser
-    user: "1000:1000"          # Совпадает с правами файлов майнкрафта
+    user: "1000:1000"          # Matches minecraft file permissions
     ports:
-      - "25580:80"             # Веб-интерфейс будет доступен на порту 25580
+      - "25580:80"             # Web interface will be available on port 25580
     volumes:
-      - ./data:/srv            # Открываем доступ к папке майнкрафта
+      - ./data:/srv            # Expose minecraft directory access
       - filebrowser_db:/database
     environment:
       - TZ=Europe/Athens
@@ -42,7 +42,7 @@ services:
 
 volumes:
   filebrowser_db:
-  # Шаблон для ванильного сервера (при необходимости можно запустить параллельно на другом порту или вместо основного)
+  # Template for vanilla server (can be run in parallel on another port or instead of main if needed)
   # mc-vanilla:
   #   image: itzg/minecraft-server:latest
   #   container_name: mc-vanilla
