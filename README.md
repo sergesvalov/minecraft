@@ -38,6 +38,14 @@ Along with the server, a convenient web panel is deployed for managing files, mo
 - Default login: `admin`
 - Default password: `admin`
 
+### 7. Essential Game Plugins
+- **Geyser & Floodgate:** Enable cross-play between Java and Bedrock (mobile/console) editions.
+- **SkinsRestorer:** Restores player skins, which are normally missing on offline-mode servers.
+- **LuckPerms:** Advanced permissions management system for configuring roles and commands.
+- **EssentialsX:** Provides hundreds of vital server commands (e.g., `/home`, `/spawn`, `/tpa`).
+- **GSit:** A fun addition that allows players to sit on stairs/slabs, lay down, or crawl anywhere.
+- **AxGraves:** Protects items on death by placing a grave, preventing item despawn or theft.
+
 ## 🛠️ Architecture and CI/CD (Jenkins)
 
 Due to broken DNS/IPv6 on the target server, a **Proxy Registry Deploy** architecture is configured:
