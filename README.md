@@ -51,7 +51,7 @@ Along with the server, a convenient web panel is deployed for managing files, mo
 Due to broken DNS/IPv6 on the target server, a **Proxy Registry Deploy** architecture is configured:
 
 1. **Jenkins** downloads the source images (Minecraft and FileBrowser) from Docker Hub.
-2. The images are repacked and uploaded to a private local registry `192.168.0.222:5050`.
+2. The images are repacked and uploaded to a private local registry `<REGISTRY_IP>:5050`.
 3. During the pipeline (`Jenkinsfile`), the target server `<SERVER_IP>` is automatically configured with `/etc/docker/daemon.json` to trust the `insecure-registries`.
 4. The target server pulls all images **over the local network** without using the internet.
 
