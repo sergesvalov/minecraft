@@ -22,8 +22,8 @@ To protect players' inventory and builds, the **AuthMeReloaded** plugin is used:
 A player with the username **`papa`** automatically receives operator rights upon login. 
 To add other admins, edit the `OPS` variable in `docker-compose.yml`.
 
-### 4. Interactive 3D Web Map (BlueMap)
-The server runs the BlueMap plugin, which generates a beautiful 3D map of your world (like Google Earth) in real-time.
+### 4. Interactive Web Map (Squaremap)
+The server runs the Squaremap plugin, which generates a fast and smooth 2D map of your world in real-time.
 🌍 **`http://<SERVER_IP>:25581`**
 
 ### 5. Anti-grief Protection (CoreProtect)
@@ -125,8 +125,8 @@ If a disaster happens:
 3. **Right-click** (try to use) on a chest to see who took items from it and when.
 4. To turn off inspector mode and build normally again, press `T` again and write `/co i`.
 
-### 3. Where to see the interactive 3D map?
+### 3. Where to see the web map?
 You don't even need to open Minecraft for this! 
 Just open your regular browser (Chrome, Safari, Yandex) on your computer or phone and go to this link:
 🌍 **`http://<SERVER_IP>:25581`**
-There you will see your entire world from a bird's-eye view, you can rotate the camera in 3D, and see the movements of other players in real-time.
+There you will see your entire world from a bird's-eye view, and you can see the movements of other players in real-time.
