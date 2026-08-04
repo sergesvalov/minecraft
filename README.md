@@ -40,7 +40,7 @@ Along with the server, a convenient web panel is deployed for managing files, mo
 
 ### 7. Essential Game Plugins
 - **Geyser & Floodgate:** Enable cross-play between Java and Bedrock (mobile/console) editions.
-- **SkinsRestorer:** Restores player skins, which are normally missing on offline-mode servers.
+
 - **LuckPerms:** Advanced permissions management system for configuring roles and commands.
 - **EssentialsX:** Provides hundreds of vital server commands (e.g., `/home`, `/spawn`, `/tpa`).
 - **GSit:** A fun addition that allows players to sit on stairs/slabs, lay down, or crawl anywhere.
@@ -63,6 +63,15 @@ All game data is stored on the host server in the deployment directory:
 This ensures that data (worlds, plugins, settings) is fully preserved:
 - During a hard server reboot.
 - During repeated deployments of a new configuration via Jenkins.
+
+### Automatic Backups
+The server is configured to automatically create backups every day (at 2:00 AM). Backups are stored in the `backups` directory as `.tar` archives, and only the 3 most recent backups are kept to save space.
+
+**How to restore the server from a backup:**
+1. Stop the server: `docker-compose stop mc`
+2. Rename the current `data` folder to `data_old` and create a new empty `data` folder.
+3. Open the `backups` directory and extract the desired archive directly into the new `data` folder (using 7-Zip or built-in OS tools).
+4. Start the server again: `docker-compose start mc`
 
 ## 🚀 How to Run
 

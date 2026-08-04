@@ -41,6 +41,24 @@ services:
       - FB_DATABASE=/database/filebrowser.db
     restart: unless-stopped
 
+  mc-backup:
+    image: itzg/mc-backup
+    container_name: mc-backup
+    environment:
+      TZ: "Europe/Athens"
+      BACKUP_CRON: "0 2 * * *"
+      PRUNE_BACKUPS_DAYS: 7
+      PRUNE_BACKUPS_COUNT: 3
+      RCON_HOST: "mc"
+      RCON_PASSWORD: "admin"
+      BACKUP_METHOD: "tar"
+    volumes:
+      - ./data:/data:ro
+      - ./backups:/backups
+    depends_on:
+      - mc
+    restart: unless-stopped
+
 volumes:
   filebrowser_db:
   # Template for vanilla server (can be run in parallel on another port or instead of main if needed)
