@@ -9,6 +9,7 @@ services:
       - "25581:8080"           # Squaremap Web Interface
     environment:
       TZ: "Europe/Athens"
+      MEMORY: "2G"
       EULA: "true"
       TYPE: "PAPER"
       ONLINE_MODE: "false"
