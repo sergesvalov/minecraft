@@ -48,12 +48,7 @@ Along with the server, a convenient web panel is deployed for managing files, mo
 
 ## 🛠️ Architecture and CI/CD (Jenkins)
 
-Due to broken DNS/IPv6 on the target server, a **Proxy Registry Deploy** architecture is configured:
-
-1. **Jenkins** downloads the source images (Minecraft and FileBrowser) from Docker Hub.
-2. The images are repacked and uploaded to a private local registry `<REGISTRY_IP>:5050`.
-3. During the pipeline (`Jenkinsfile`), the target server `<SERVER_IP>` is automatically configured with `/etc/docker/daemon.json` to trust the `insecure-registries`.
-4. The target server pulls all images **over the local network** without using the internet.
+Deployment is automated via **Jenkins** over SSH. Jenkins copies the necessary scripts and configurations to the target server and starts/updates the containers via `docker-compose`.
 
 ## 💾 Data Persistence
 
@@ -130,3 +125,8 @@ You don't even need to open Minecraft for this!
 Just open your regular browser (Chrome, Safari, Yandex) on your computer or phone and go to this link:
 🌍 **`http://<SERVER_IP>:25581`**
 There you will see your entire world from a bird's-eye view, and you can see the movements of other players in real-time.
+
+### 4. How to protect yourself from unwanted teleportation?
+Any player can protect themselves from unwanted teleports by typing `/tptoggle` in the chat.
+- After typing this, no one (including administrators) will be able to teleport to you.
+- To disable the protection and allow teleports again, type `/tptoggle` once more.
