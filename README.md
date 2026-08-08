@@ -45,6 +45,7 @@ Along with the server, a convenient web panel is deployed for managing files, mo
 - **EssentialsX:** Provides hundreds of vital server commands (e.g., `/home`, `/spawn`, `/tpa`).
 - **GSit:** A fun addition that allows players to sit on stairs/slabs, lay down, or crawl anywhere.
 - **AxGraves:** Protects items on death by placing a grave, preventing item despawn or theft.
+- **FastAsyncWorldEdit (FAWE):** High-performance map editing tool, perfect for creative building.
 
 ## 🛠️ Architecture and CI/CD (Jenkins)
 
