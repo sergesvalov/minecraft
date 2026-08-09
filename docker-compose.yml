@@ -14,6 +14,7 @@ services:
       TYPE: "PAPER"
       ONLINE_MODE: "false"
       GAMEMODE: "creative"
+      MOTD: "Ο διακομιστής του Στεπάν και του Άλεξ"
       OPS: "papa"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "admin"
