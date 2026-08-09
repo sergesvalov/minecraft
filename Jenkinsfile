@@ -13,7 +13,8 @@ node('built-in') {
             sudo mkdir -p /opt/minecraft/scripts
             sudo chown -R \$(whoami) /opt/minecraft/scripts
             # Remove old scripts to prevent "Text file busy" error during scp if they are running
-            rm -f /opt/minecraft/scripts/*.sh
+            # Use rm -rf because Docker might have accidentally created it as a directory if it was missing during startup
+            rm -rf /opt/minecraft/scripts/*.sh
             '
             
             # Force copy scripts from repository to server
