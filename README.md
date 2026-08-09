@@ -18,9 +18,9 @@ To protect players' inventory and builds, the **AuthMeReloaded** plugin is used:
 - Java players create their password upon first login: `/register password password`, and then authenticate using `/login password`.
 - Bedrock players also **must register**, using chat commands (just like Java players). Temporarily, auto-login for them is disabled due to version incompatibility.
 
-### 3. Automatic Administrator Rights
-A player with the username **`papa`** automatically receives operator rights upon login. 
-To add other admins, edit the `OPS` variable in `docker-compose.yml`.
+### 3. Automatic Administrator Rights (LuckPerms Daemon)
+A player with the username **`papa`** is the superadmin and automatically receives and retains vanilla operator rights upon login. 
+For all other admins, you can simply issue the `/op <nickname>` command in-game. A background daemon (`scripts/auto-perms.sh`) automatically scans for newly opped players every night at 03:00 AM. It grants them the full `admin` group in **LuckPerms** and immediately revokes their vanilla OP for security.
 
 ### 4. Interactive Web Map (Squaremap)
 The server runs the Squaremap plugin, which generates a fast and smooth 2D map of your world in real-time.
@@ -131,3 +131,19 @@ There you will see your entire world from a bird's-eye view, and you can see the
 Any player can protect themselves from unwanted teleports by typing `/tptoggle` in the chat.
 - After typing this, no one (including administrators) will be able to teleport to you.
 - To disable the protection and allow teleports again, type `/tptoggle` once more.
+
+### 5. Fast Building (WorldEdit / FAWE)
+The server has the **FastAsyncWorldEdit (FAWE)** plugin to help you build massive structures instantly. Note: These commands are only available to admins (`/op`).
+
+**How to select an area:**
+1. Type `//wand` in chat to get a wooden axe.
+2. **Left-click** a block with the axe to set **Point 1**.
+3. **Right-click** a different block to set **Point 2**. This creates an invisible box between the two points.
+
+**Basic Commands:**
+- `//set stone` — Fills the selected box with stone (you can use any block name like `glass`, `air`, `dirt`).
+- `//replace dirt grass_block` — Replaces only dirt with grass blocks in the selection.
+- `//undo` — Undoes your last action.
+- `//redo` — Redoes an undone action.
+- `//copy` — Copies the selected structure (relative to where you are standing).
+- `//paste` — Pastes the copied structure.
