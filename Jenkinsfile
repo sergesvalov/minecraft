@@ -1,7 +1,7 @@
 @Library('mylib@main') _
 
 // Override production server IP with game server IP for deployment
-env.PROD_SERVER_IP = env.GAME_SERVER_IP
+env.PROD_SERVER_IP = env.GAME_SERVER_IP ?: '192.168.0.220'
 
 // Configure target node for deployment
 node('built-in') {
