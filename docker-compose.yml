@@ -27,6 +27,7 @@ services:
       - ./data:/data           # Data will be stored in /opt/minecraft/data on host
       - ./scripts/auto-patch-authme.sh:/custom-init.d/auto-patch-authme.sh:ro
       - ./scripts/auto-perms.sh:/custom-init.d/auto-perms.sh:ro
+      - ./scripts/auto-patch-geyser.sh:/custom-init.d/auto-patch-geyser.sh:ro
     restart: unless-stopped
 
   # Convenient web interface for downloading mods/plugins and editing configs
