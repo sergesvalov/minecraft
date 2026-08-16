@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   mc:
-    image: ${DOCKER_IMAGE}:${BUILD_TAG}
+    image: itzg/minecraft-server:latest
     container_name: mc-paper-geyser
     ports:
       - "25566:25565"          # Java Edition TCP
@@ -32,7 +32,7 @@ services:
 
   # Convenient web interface for downloading mods/plugins and editing configs
   filebrowser:
-    image: ${REGISTRY_IP}:5050/minecraft-filebrowser:${BUILD_TAG}
+    image: filebrowser/filebrowser:latest
     container_name: mc-filebrowser
     user: "1000:1000"          # Matches minecraft file permissions
     ports:
