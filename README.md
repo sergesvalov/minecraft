@@ -79,6 +79,7 @@ The repository has a built-in script `scripts/auto-patch-authme.sh`. It runs aut
 2. Allows the dot character `.` in nicknames (required for Bedrock players).
 3. Increases the authentication timeout to 120 seconds.
 4. Allows up to 4 accounts and connections from a single IP address (useful when the whole family plays from home on the same Wi-Fi).
+5. Automatically sets the game time to day (`/time set day`) every time a player registers or logs into the server.
 
 **How to use:**
 You don't need to do anything! Everything works 100% automatically. The script runs in the background at container startup, waits for the config file to appear, modifies it, and instantly reloads the plugin. You no longer need to log in via SSH!
