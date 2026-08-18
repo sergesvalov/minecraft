@@ -28,6 +28,15 @@ echo "[AuthMe-AutoPatch] Starting background script to wait for configuration...
             echo -e "\nHooks:\n    floodgate: true" >> "$AUTHME_CONFIG"
         fi
         
+        AUTHME_COMMANDS="/data/plugins/AuthMe/commands.yml"
+        if [ -f "$AUTHME_COMMANDS" ]; then
+            if ! grep -q "time set day" "$AUTHME_COMMANDS"; then
+                echo "[AuthMe-AutoPatch] Patching commands.yml for onRegister and onLogin day start..."
+                sed -i -E 's/^onRegister:.*$/onRegister:\n    makeday:\n        command: "time set day"\n        executor: CONSOLE/g' "$AUTHME_COMMANDS"
+                sed -i -E 's/^onLogin:.*$/onLogin:\n    makeday:\n        command: "time set day"\n        executor: CONSOLE/g' "$AUTHME_COMMANDS"
+            fi
+        fi
+        
         echo "[AuthMe-AutoPatch] Reloading plugin via RCON..."
         # Wait a bit to ensure the server has fully started plugins and RCON
         sleep 5
