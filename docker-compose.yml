@@ -18,7 +18,7 @@ services:
       OPS: "papa"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "admin"
-      MODRINTH_PROJECTS: "authmereloaded,squaremap,luckperms,gsit,axgraves,fastasyncworldedit"
+      MODRINTH_PROJECTS: "authmereloaded,squaremap,luckperms,gsit,axgraves,fastasyncworldedit,coreprotect"
       PLUGINS: |
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
@@ -51,11 +51,12 @@ services:
     environment:
       TZ: "Europe/Athens"
       BACKUP_CRON: "0 2 * * *"
-      PRUNE_BACKUPS_DAYS: 7
-      PRUNE_BACKUPS_COUNT: 3
       RCON_HOST: "mc"
       RCON_PASSWORD: "admin"
-      BACKUP_METHOD: "tar"
+      BACKUP_METHOD: "restic"
+      RESTIC_PASSWORD: "123"
+      RESTIC_REPOSITORY: "/backups"
+      PRUNE_RESTIC_RETENTION: "--keep-last 7 --keep-daily 7"
     volumes:
       - ./data:/data:ro
       - ./backups:/backups
