@@ -24,8 +24,8 @@ MC_ONLINE = Gauge('minecraft_server_online', 'Is the Minecraft server online (1)
 MC_PLAYERS = Gauge('minecraft_player_count', 'Number of players currently online')
 MC_PING = Gauge('minecraft_server_ping_ms', 'Server ping latency in milliseconds')
 
-TNT_PLACED = Counter('warden_tnt_placed_total', 'Total TNT blocks placed')
-TNT_EXPLODED = Counter('warden_tnt_exploded_total', 'Total TNT explosions')
+TNT_PLACED = Counter('warden_tnt_placed_total', 'Total TNT blocks placed', ['player', 'world', 'x', 'y', 'z', 'time'])
+TNT_EXPLODED = Counter('warden_tnt_exploded_total', 'Total TNT explosions', ['source', 'world', 'x', 'y', 'z', 'time'])
 
 server = JavaServer.lookup(f"{MC_HOST}:{MC_PORT}")
 
@@ -77,15 +77,19 @@ def process_event(event_line):
         event_type = data.get('event')
         
         if event_type == 'place_tnt':
-            TNT_PLACED.inc()
             player = data.get('player', 'Unknown')
+            world = data.get('world', 'Unknown')
             x, y, z = data.get('x'), data.get('y'), data.get('z')
+            timestamp = data.get('timestamp', 'Unknown')
+            TNT_PLACED.labels(player=player, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
             logging.warning(f"🧨 TNT PLACED by {player} at {x},{y},{z}")
             
         elif event_type == 'explode_tnt':
-            TNT_EXPLODED.inc()
             source = data.get('source', 'Unknown')
+            world = data.get('world', 'Unknown')
             x, y, z = data.get('x'), data.get('y'), data.get('z')
+            timestamp = data.get('timestamp', 'Unknown')
+            TNT_EXPLODED.labels(source=source, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
             logging.error(f"💥 TNT EXPLODED (Source: {source}) at {x},{y},{z}")
             
     except json.JSONDecodeError:
