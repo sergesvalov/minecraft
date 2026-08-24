@@ -73,6 +73,7 @@ services:
       - "8002:8001"
     volumes:
       - ./data/plugins/WardenLog:/app/logs:ro
+      - ./warden-monitor/monitor.py:/app/monitor.py:ro
     depends_on:
       - mc
     restart: unless-stopped
