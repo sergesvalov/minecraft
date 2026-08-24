@@ -61,8 +61,11 @@ def liveness_monitor():
         time.sleep(15) # Check every 15 seconds
 
 def tail(file_path):
+    logged_wait = False
     while not os.path.exists(file_path):
-        logging.info(f"Waiting for log file {file_path}...")
+        if not logged_wait:
+            logging.info(f"Waiting for log file {file_path}...")
+            logged_wait = True
         time.sleep(5)
     
     with open(file_path, 'r', encoding='utf-8') as f:

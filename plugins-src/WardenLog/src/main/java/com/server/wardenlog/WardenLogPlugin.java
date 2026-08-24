@@ -30,6 +30,14 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
             getDataFolder().mkdirs();
         }
         logFile = new File(getDataFolder(), "events.jsonl");
+        
+        try {
+            if (!logFile.exists()) {
+                logFile.createNewFile();
+            }
+        } catch (IOException e) {
+            getLogger().warning("Failed to create events.jsonl: " + e.getMessage());
+        }
 
         getServer().getPluginManager().registerEvents(this, this);
         getLogger().info("WardenLog enabled! Logging events to " + logFile.getName());
