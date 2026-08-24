@@ -79,6 +79,7 @@ def tail(file_path):
             line = f.readline()
             if not line:
                 time.sleep(0.5)
+                f.seek(0, os.SEEK_CUR) # Сбрасываем флаг конца файла (EOF), чтобы Python увидел новые строки
                 continue
             
             yield line.strip()
