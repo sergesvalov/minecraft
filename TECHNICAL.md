@@ -6,6 +6,14 @@ This documentation describes the architecture, CI/CD process, backups, and serve
 
 Deployment is automated via **Jenkins** over SSH. Jenkins copies the necessary scripts and configurations to the target server and starts/updates the containers via `docker-compose`.
 
+### Jenkins Deployment Options
+By default, triggering a Jenkins build will deploy the full stack. This includes:
+- Updating the main Minecraft server (`mc`).
+- Automatically forcing a rebuild of the `warden-monitor` Docker image to fetch the latest Python dependencies (from `requirements.txt`) before restarting it.
+
+**Zero-Downtime Monitor Deployment:**
+If you need to deploy an update exclusively to the `warden-monitor` container without restarting the Minecraft server (so players are not disconnected), you can check the `DEPLOY_MONITOR_ONLY` parameter when starting the Jenkins job ("Build with Parameters"). This mode will copy only the monitor scripts and safely restart just the monitor container.
+
 ### Custom Plugin Deployment (WardenLog)
 The repository contains the source code for a custom plugin `WardenLog` (in the `plugins-src` folder). 
 The Jenkins pipeline (`Jenkinsfile`) automatically:
