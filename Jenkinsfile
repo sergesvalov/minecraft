@@ -25,11 +25,13 @@ node('built-in') {
             # Use rm -rf because Docker might have accidentally created it as a directory if it was missing during startup
             rm -rf /opt/minecraft/scripts/*.sh
             mkdir -p /opt/minecraft/warden-monitor
+            mkdir -p /opt/minecraft/data/plugins
             '
             
             # Force copy scripts and warden-monitor from repository to server
             scp -o StrictHostKeyChecking=no -r scripts/* ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/scripts/
             scp -o StrictHostKeyChecking=no -r warden-monitor/* ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/warden-monitor/
+            scp -o StrictHostKeyChecking=no data/plugins/*.jar ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/data/plugins/
             
             # Make scripts executable
             ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'chmod +x /opt/minecraft/scripts/*.sh'
