@@ -1,5 +1,5 @@
 name: WardenLog
-version: '1.0'
+version: '1.2'
 main: com.server.wardenlog.WardenLogPlugin
 api-version: '1.20'
 author: AI

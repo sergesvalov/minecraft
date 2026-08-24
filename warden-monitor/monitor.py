@@ -33,6 +33,9 @@ MC_PING = Gauge('minecraft_server_ping_ms', 'Server ping latency in milliseconds
 TNT_PLACED = Counter('warden_tnt_placed_total', 'Total TNT blocks placed', ['player', 'world', 'x', 'y', 'z', 'time'])
 TNT_EXPLODED = Counter('warden_tnt_exploded_total', 'Total TNT explosions', ['source', 'world', 'x', 'y', 'z', 'time'])
 
+PLAYER_JOINED = Counter('warden_player_joins_total', 'Total player joins', ['player', 'time'])
+PLAYER_QUIT = Counter('warden_player_quits_total', 'Total player quits', ['player', 'time'])
+
 server = JavaServer.lookup(f"{MC_HOST}:{MC_PORT}")
 
 def liveness_monitor():
@@ -100,6 +103,18 @@ def process_event(event_line):
             timestamp = data.get('timestamp', 'Unknown')
             TNT_EXPLODED.labels(source=source, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
             logging.error(f"💥 TNT EXPLODED (Source: {source}) at {x},{y},{z}")
+            
+        elif event_type == 'player_join':
+            player = data.get('player', 'Unknown')
+            timestamp = data.get('timestamp', 'Unknown')
+            PLAYER_JOINED.labels(player=player, time=timestamp).inc()
+            logging.info(f"✅ Player {player} joined")
+            
+        elif event_type == 'player_quit':
+            player = data.get('player', 'Unknown')
+            timestamp = data.get('timestamp', 'Unknown')
+            PLAYER_QUIT.labels(player=player, time=timestamp).inc()
+            logging.info(f"👋 Player {player} quit")
             
     except json.JSONDecodeError:
         pass

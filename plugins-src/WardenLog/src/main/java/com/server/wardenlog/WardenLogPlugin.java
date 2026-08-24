@@ -11,6 +11,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.BufferedWriter;
@@ -93,6 +95,28 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
             
             appendLog(json);
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        String json = String.format(
+            "{\"timestamp\":\"%s\", \"event\":\"player_join\", \"player\":\"%s\"}",
+            Instant.now().toString(),
+            escape(player.getName())
+        );
+        appendLog(json);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        String json = String.format(
+            "{\"timestamp\":\"%s\", \"event\":\"player_quit\", \"player\":\"%s\"}",
+            Instant.now().toString(),
+            escape(player.getName())
+        );
+        appendLog(json);
     }
 
     private void appendLog(String jsonLine) {
