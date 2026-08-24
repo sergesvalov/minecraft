@@ -38,3 +38,19 @@
 
 **Πώς να το χρησιμοποιήσετε:**
 Δεν χρειάζεται να κάνετε τίποτα! Όλα λειτουργούν 100% αυτόματα. Το σενάριο τρέχει στο παρασκήνιο κατά την εκκίνηση του container, περιμένει να εμφανιστεί το αρχείο ρυθμίσεων, το τροποποιεί και επαναφορτώνει άμεσα το πρόσθετο. Δεν χρειάζεται πλέον να συνδέεστε μέσω SSH!
+
+## 📊 Μετρήσεις Prometheus (Παρακολούθηση)
+
+Το container `warden-monitor` συλλέγει και εκθέτει μετρήσεις σε μορφή Prometheus στη θύρα `8000` (`http://<SERVER_IP>:8000/metrics`).
+
+### Διαθέσιμες Μετρήσεις:
+
+| Μέτρηση (Metric) | Τύπος | Περιγραφή | Ετικέτες (Labels) |
+| --- | --- | --- | --- |
+| `minecraft_server_online` | Gauge | Κατάσταση διακομιστή (1 = online, 0 = offline) | - |
+| `minecraft_player_count` | Gauge | Αριθμός συνδεδεμένων παικτών | - |
+| `minecraft_server_ping_ms` | Gauge | Καθυστέρηση (ping) διακομιστή σε χιλιοστά του δευτερολέπτου | - |
+| `warden_tnt_placed_total` | Counter | Συνολικός αριθμός μπλοκ TNT που τοποθετήθηκαν | `player`, `world`, `x`, `y`, `z`, `time` |
+| `warden_tnt_exploded_total` | Counter | Συνολικός αριθμός εκρήξεων TNT | `source`, `world`, `x`, `y`, `z`, `time` |
+| `warden_player_joins_total` | Counter | Συνολικός αριθμός συνδέσεων παικτών | `player`, `time` |
+| `warden_player_quits_total` | Counter | Συνολικός αριθμός αποσυνδέσεων παικτών | `player`, `time` |

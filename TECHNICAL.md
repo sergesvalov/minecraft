@@ -38,3 +38,19 @@ The repository has a built-in script `scripts/auto-patch-authme.sh`. It runs aut
 
 **How to use:**
 You don't need to do anything! Everything works 100% automatically. The script runs in the background at container startup, waits for the config file to appear, modifies it, and instantly reloads the plugin. You no longer need to log in via SSH!
+
+## 📊 Prometheus Metrics (Monitoring)
+
+The `warden-monitor` container collects and exposes metrics in Prometheus format on port `8000` (`http://<SERVER_IP>:8000/metrics`).
+
+### Available Metrics:
+
+| Metric | Type | Description | Labels |
+| --- | --- | --- | --- |
+| `minecraft_server_online` | Gauge | Server status (1 = online, 0 = offline) | - |
+| `minecraft_player_count` | Gauge | Number of players currently online | - |
+| `minecraft_server_ping_ms` | Gauge | Server ping latency in milliseconds | - |
+| `warden_tnt_placed_total` | Counter | Total number of TNT blocks placed | `player`, `world`, `x`, `y`, `z`, `time` |
+| `warden_tnt_exploded_total` | Counter | Total number of TNT explosions | `source`, `world`, `x`, `y`, `z`, `time` |
+| `warden_player_joins_total` | Counter | Total number of times players joined | `player`, `time` |
+| `warden_player_quits_total` | Counter | Total number of times players quit | `player`, `time` |
