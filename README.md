@@ -120,3 +120,21 @@ The server has the **FastAsyncWorldEdit (FAWE)** plugin to help you build massiv
 - `//redo` — Redoes an undone action.
 - `//copy` — Copies the selected structure (relative to where you are standing).
 - `//paste` — Pastes the copied structure.
+
+### 6. Fun Animations (GSit)
+You can sit, lay down, or crawl anywhere in the world! 
+- Type `/sit` to sit right where you are, or simply **right-click** on stairs/slabs with an empty hand.
+- Type `/lay` to lay down.
+- Type `/crawl` to start crawling.
+- Type `/spin` to spin.
+
+### 7. Death and Graves (AxGraves)
+Don't worry about losing your items if you die! 
+When you die, a grave is automatically created with all your items and experience inside. It protects your items from disappearing or being stolen by others.
+- To collect your items, just return to your death location and **right-click** your grave or break it.
+
+### 8. Voice Chat & Music (OpenAudioMc)
+You can talk to other players nearby using your microphone! No mods are required.
+- Type `/oa accept` in the game chat.
+- You will receive a link to open a web page in your browser.
+- Open it on your phone or PC, allow microphone access, and you're good to go!
