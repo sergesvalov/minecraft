@@ -50,6 +50,7 @@ node('built-in') {
             sshagent(credentials: [env.SERVER_USER]) {
                 sh """
                 scp -o StrictHostKeyChecking=no docker-compose.yml ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/docker-compose.yml
+                scp -o StrictHostKeyChecking=no -r warden-monitor/* ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/warden-monitor/
                 ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'cd /opt/minecraft && docker compose up -d --build warden-monitor'
                 """
             }
