@@ -6,6 +6,14 @@ This documentation describes the architecture, CI/CD process, backups, and serve
 
 Deployment is automated via **Jenkins** over SSH. Jenkins copies the necessary scripts and configurations to the target server and starts/updates the containers via `docker-compose`.
 
+### Custom Plugin Deployment (WardenLog)
+The repository contains the source code for a custom plugin `WardenLog` (in the `plugins-src` folder). 
+The Jenkins pipeline (`Jenkinsfile`) automatically:
+1. Builds the plugin using Maven inside a Docker container.
+2. Skips building if the version hasn't changed.
+3. Copies the compiled `.jar` file to `/opt/minecraft/data/plugins/` on the production server.
+4. Pre-creates the `WardenLog` directory and sets correct permissions before starting the containers to avoid Docker root ownership conflicts.
+
 ## 💾 Data Persistence
 
 All game data is stored on the host server in the deployment directory:
@@ -39,9 +47,15 @@ The repository has a built-in script `scripts/auto-patch-authme.sh`. It runs aut
 **How to use:**
 You don't need to do anything! Everything works 100% automatically. The script runs in the background at container startup, waits for the config file to appear, modifies it, and instantly reloads the plugin. You no longer need to log in via SSH!
 
-## 📊 Prometheus Metrics (Monitoring)
+## 📊 Prometheus Metrics & Webhook (Warden)
 
 The `warden-monitor` container collects and exposes metrics in Prometheus format on port `8000` (`http://<SERVER_IP>:8000/metrics`).
+
+### Webhook API (Alerts)
+A hidden webhook API runs on port `8002` (mapped from `8001` inside the container) for sending global announcements to all players on the server.
+- **Endpoint:** `http://<SERVER_IP>:8002/alert?msg=Your_Message`
+- **Result:** All players will see a large red "WARNING" title on their screen with your message as the subtitle.
+This is useful for automated scripts or warnings before a server restart.
 
 ### Available Metrics:
 
