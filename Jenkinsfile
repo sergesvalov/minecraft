@@ -1,5 +1,11 @@
 @Library('mylib@main') _
 
+properties([
+    parameters([
+        booleanParam(name: 'DEPLOY_MONITOR_ONLY', defaultValue: false, description: 'Deploy ONLY warden-monitor without touching the Minecraft server')
+    ])
+])
+
 // Override production server IP with game server IP for deployment
 env.PROD_SERVER_IP = env.GAME_SERVER_IP ?: '192.168.0.220'
 
@@ -40,5 +46,18 @@ node('built-in') {
         }
     }
 }
+    if (params.DEPLOY_MONITOR_ONLY) {
+        stage('Deploy Monitor Only') {
+            sshagent(credentials: [env.SERVER_USER]) {
+                sh """
+                scp -o StrictHostKeyChecking=no docker-compose.yml ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/docker-compose.yml
+                ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'cd /opt/minecraft && docker compose up -d warden-monitor'
+                """
+            }
+        }
+    }
+}
 
-declarativePipeline(agent: 'built-in')
+if (!params.DEPLOY_MONITOR_ONLY) {
+    declarativePipeline(agent: 'built-in')
+}
