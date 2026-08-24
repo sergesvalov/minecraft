@@ -42,6 +42,9 @@ node('built-in') {
             
             # Make scripts executable
             ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'chmod +x /opt/minecraft/scripts/*.sh'
+            
+            # Force rebuild monitor image to pick up new dependencies before deployment
+            ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'cd /opt/minecraft && docker compose build warden-monitor'
             """
         }
     }
