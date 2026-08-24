@@ -6,6 +6,9 @@ import threading
 from datetime import datetime
 from prometheus_client import start_http_server, Gauge, Counter
 from mcstatus import JavaServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import urllib.parse
+from mcrcon import MCRcon
 
 # Setup logging
 logging.basicConfig(
@@ -18,6 +21,9 @@ LOG_FILE = '/app/logs/events.jsonl'
 MC_HOST = 'mc'
 MC_PORT = 25565
 PROMETHEUS_PORT = 8000
+WEBHOOK_PORT = 8001
+RCON_PASSWORD = 'admin'
+RCON_PORT = 25575
 
 # Prometheus Metrics
 MC_ONLINE = Gauge('minecraft_server_online', 'Is the Minecraft server online (1) or down (0)')
@@ -97,6 +103,43 @@ def process_event(event_line):
     except Exception as e:
         logging.error(f"Error processing event: {e}")
 
+class WebhookHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == '/alert':
+            qs = urllib.parse.parse_qs(parsed.query)
+            msg = qs.get('msg', ['ВНИМАНИЕ! Сервер будет перезагружен через 5 минут!'])[0]
+            
+            try:
+                with MCRcon(MC_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
+                    # Minecraft title json format
+                    mcr.command(f'title @a title {{"text":"ВНИМАНИЕ","color":"red","bold":true}}')
+                    mcr.command(f'title @a subtitle {{"text":"{msg}","color":"yellow"}}')
+                    mcr.command(f'say [ALERT] {msg}')
+                
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'Alert broadcasted successfully!\n')
+                logging.info(f"Broadcasted alert to server: {msg}")
+            except Exception as e:
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(f'Failed to connect to RCON: {e}\n'.encode())
+                logging.error(f"Failed to send alert via RCON: {e}")
+        else:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b'Not Found\n')
+            
+    # Suppress default HTTP logging to avoid spam
+    def log_message(self, format, *args):
+        pass
+
+def start_webhook_server():
+    server = HTTPServer(('0.0.0.0', WEBHOOK_PORT), WebhookHandler)
+    logging.info(f"Started Webhook API on port {WEBHOOK_PORT}")
+    server.serve_forever()
+
 if __name__ == '__main__':
     logging.info(f"Starting Prometheus exporter on port {PROMETHEUS_PORT}...")
     start_http_server(PROMETHEUS_PORT)
@@ -104,6 +147,9 @@ if __name__ == '__main__':
     # Start the background liveness checker
     t = threading.Thread(target=liveness_monitor, daemon=True)
     t.start()
+    
+    # Start the webhook server
+    threading.Thread(target=start_webhook_server, daemon=True).start()
     
     for line in tail(LOG_FILE):
         process_event(line)
