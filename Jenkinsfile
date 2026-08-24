@@ -45,7 +45,6 @@ node('built-in') {
             """
         }
     }
-}
     if (params.DEPLOY_MONITOR_ONLY) {
         stage('Deploy Monitor Only') {
             sshagent(credentials: [env.SERVER_USER]) {
