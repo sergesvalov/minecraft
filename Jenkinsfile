@@ -25,7 +25,8 @@ node('built-in') {
             # Use rm -rf because Docker might have accidentally created it as a directory if it was missing during startup
             rm -rf /opt/minecraft/scripts/*.sh
             mkdir -p /opt/minecraft/warden-monitor
-            mkdir -p /opt/minecraft/data/plugins
+            mkdir -p /opt/minecraft/data/plugins/WardenLog
+            sudo chown -R \$(whoami) /opt/minecraft/data/plugins/WardenLog
             '
             
             # Force copy scripts and warden-monitor from repository to server
