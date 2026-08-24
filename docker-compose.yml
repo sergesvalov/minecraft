@@ -69,7 +69,7 @@ services:
     container_name: warden-monitor
     ports:
       - "8000:8000"
-      - "8001:8001"
+      - "8002:8001"
     volumes:
       - ./data/plugins/WardenLog:/app/logs:ro
     depends_on:
