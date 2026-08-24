@@ -5,6 +5,11 @@ env.PROD_SERVER_IP = env.GAME_SERVER_IP ?: '192.168.0.220'
 
 // Configure target node for deployment
 node('built-in') {
+    stage('Build Plugins') {
+        // Запуск локального скрипта сборки плагина. Он сам проверит версию и пропустит сборку, если JAR уже есть.
+        sh 'bash scripts/build-warden.sh'
+    }
+
     stage('Prepare Server Scripts') {
         sshagent(credentials: [env.SERVER_USER]) {
             sh """

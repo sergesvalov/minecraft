@@ -64,6 +64,17 @@ services:
       - mc
     restart: unless-stopped
 
+  warden-monitor:
+    build: ./warden-monitor
+    container_name: warden-monitor
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/plugins/WardenLog:/app/logs:ro
+    depends_on:
+      - mc
+    restart: unless-stopped
+
 volumes:
   filebrowser_db:
   # Template for vanilla server (can be run in parallel on another port or instead of main if needed)

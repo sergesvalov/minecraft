@@ -47,6 +47,11 @@ Along with the server, a convenient web panel is deployed for managing files, mo
 - **AxGraves:** Protects items on death by placing a grave, preventing item despawn or theft.
 - **FastAsyncWorldEdit (FAWE):** High-performance map editing tool, perfect for creative building.
 
+### 8. Analytics & Prometheus Monitoring (Warden)
+A custom-built `WardenLog` plugin and a standalone Python service monitor server health and log specific gameplay events in real-time.
+- **Prometheus Exporter:** Available at `http://<SERVER_IP>:8000/metrics`. Tracks server liveness, player count, and ping.
+- **TNT Tracking:** Automatically logs who placed or exploded TNT blocks and where.
+
 ## 🛠️ Architecture and CI/CD (Jenkins)
 
 Deployment is automated via **Jenkins** over SSH. Jenkins copies the necessary scripts and configurations to the target server and starts/updates the containers via `docker-compose`.

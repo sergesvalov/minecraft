@@ -1,0 +1,2 @@
+prometheus_client==0.20.0
+mcstatus==11.1.1
