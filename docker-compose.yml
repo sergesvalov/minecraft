@@ -18,11 +18,12 @@ services:
       OPS: "papa"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "admin"
-      MODRINTH_PROJECTS: "authmereloaded,squaremap,luckperms,gsit,axgraves,fastasyncworldedit,openaudiomc"
+      MODRINTH_PROJECTS: "authmereloaded,squaremap,luckperms,gsit,axgraves,fastasyncworldedit"
       PLUGINS: |
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
         https://github.com/EssentialsX/Essentials/releases/download/2.22.0/EssentialsX-2.22.0.jar
+        https://github.com/Mindgamesnl/OpenAudioMc/releases/download/6.10.16/openaudiomc-6.10.16.jar
     volumes:
       - ./data:/data           # Data will be stored in /opt/minecraft/data on host
       - ./scripts/auto-patch-authme.sh:/custom-init.d/auto-patch-authme.sh:ro
