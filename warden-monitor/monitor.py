@@ -167,8 +167,11 @@ if __name__ == '__main__':
     t = threading.Thread(target=liveness_monitor, daemon=True)
     t.start()
     
-    # Start the webhook server
-    threading.Thread(target=start_webhook_server, daemon=True).start()
+    # Start the log tailer in a background thread
+    def run_tailer():
+        for line in tail(LOG_FILE):
+            process_event(line)
+    threading.Thread(target=run_tailer, daemon=True).start()
     
-    for line in tail(LOG_FILE):
-        process_event(line)
+    # Start the webhook server in the main thread (needed for RCON signals)
+    start_webhook_server()
