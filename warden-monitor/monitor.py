@@ -8,6 +8,7 @@ from prometheus_client import start_http_server, Gauge, Counter
 from mcstatus import JavaServer
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
+import urllib.request
 from mcrcon import MCRcon
 
 # Setup logging
@@ -18,6 +19,7 @@ logging.basicConfig(
 )
 
 LOG_FILE = '/app/logs/events.jsonl'
+TG_CONFIG_FILE = '/app/logs/tg_config.json'
 MC_HOST = 'mc'
 MC_PORT = 25565
 PROMETHEUS_PORT = 8000
@@ -38,6 +40,38 @@ PLAYER_QUIT = Counter('warden_player_quits_total', 'Total player quits', ['playe
 
 server = JavaServer.lookup(f"{MC_HOST}:{MC_PORT}")
 
+def get_tg_config():
+    if os.path.exists(TG_CONFIG_FILE):
+        try:
+            with open(TG_CONFIG_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return {"bot_token": "", "chat_id": ""}
+
+def save_tg_config(token, chat_id):
+    with open(TG_CONFIG_FILE, 'w') as f:
+        json.dump({"bot_token": token, "chat_id": chat_id}, f)
+
+def send_telegram_message_sync(msg):
+    config = get_tg_config()
+    token = config.get("bot_token")
+    chat_id = config.get("chat_id")
+    if not token or not chat_id:
+        return
+    
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    data = json.dumps({"chat_id": chat_id, "text": msg}).encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+    
+    try:
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        logging.error(f"Failed to send Telegram message: {e}")
+
+def send_telegram_message(msg):
+    threading.Thread(target=send_telegram_message_sync, args=(msg,), daemon=True).start()
+
 def liveness_monitor():
     """Background thread to continuously check if the Minecraft server is alive."""
     logging.info(f"Started liveness monitor for {MC_HOST}:{MC_PORT}")
@@ -51,6 +85,7 @@ def liveness_monitor():
             
             if not was_online:
                 logging.info("✅ Server is back ONLINE!")
+                send_telegram_message("✅ Сервер Minecraft запущен и доступен!")
                 was_online = True
                 
         except Exception as e:
@@ -59,6 +94,7 @@ def liveness_monitor():
             MC_PING.set(0)
             if was_online:
                 logging.error(f"❌ SERVER IS DOWN! Failed to ping {MC_HOST}:{MC_PORT}. Error: {e}")
+                send_telegram_message(f"❌ СЕРВЕР НЕДОСТУПЕН! Произошла ошибка: {e}")
                 was_online = False
                 
         time.sleep(15) # Check every 15 seconds
@@ -96,6 +132,7 @@ def process_event(event_line):
             timestamp = data.get('timestamp', 'Unknown')
             TNT_PLACED.labels(player=player, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
             logging.warning(f"🧨 TNT PLACED by {player} at {x},{y},{z}")
+            send_telegram_message(f"🧨 ВНИМАНИЕ: Игрок {player} установил динамит (TNT) на координатах {x}, {y}, {z} в мире {world}!")
             
         elif event_type == 'explode_tnt':
             source = data.get('source', 'Unknown')
@@ -104,23 +141,62 @@ def process_event(event_line):
             timestamp = data.get('timestamp', 'Unknown')
             TNT_EXPLODED.labels(source=source, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
             logging.error(f"💥 TNT EXPLODED (Source: {source}) at {x},{y},{z}")
+            send_telegram_message(f"💥 ВЗРЫВ! Динамит взорвался на координатах {x}, {y}, {z} в мире {world} (Источник: {source})!")
             
         elif event_type == 'player_join':
             player = data.get('player', 'Unknown')
             timestamp = data.get('timestamp', 'Unknown')
             PLAYER_JOINED.labels(player=player, time=timestamp).inc()
             logging.info(f"✅ Player {player} joined")
+            send_telegram_message(f"👋 Игрок {player} зашел на сервер")
             
         elif event_type == 'player_quit':
             player = data.get('player', 'Unknown')
             timestamp = data.get('timestamp', 'Unknown')
             PLAYER_QUIT.labels(player=player, time=timestamp).inc()
             logging.info(f"👋 Player {player} quit")
+            send_telegram_message(f"🚪 Игрок {player} покинул сервер")
             
     except json.JSONDecodeError:
         pass
     except Exception as e:
         logging.error(f"Error processing event: {e}")
+
+HTML_PAGE = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Warden Monitor - Telegram Settings</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 400px; }
+        h2 { margin-top: 0; color: #0088cc; }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 5px; background: #2a2a2a; color: #fff; box-sizing: border-box; }
+        button { margin-top: 20px; width: 100%; padding: 12px; border: none; border-radius: 5px; background: #0088cc; color: white; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #006699; }
+        .success { color: #4caf50; margin-top: 15px; font-weight: bold; display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Настройки Telegram Bot</h2>
+        <p>Введите данные бота для получения уведомлений (TNT, входы игроков, статус сервера).</p>
+        <form method="POST" action="/tg">
+            <label>Bot Token</label>
+            <input type="text" name="bot_token" placeholder="Например: 123456789:ABCdefGHI..." value="{bot_token}" required>
+            
+            <label>Chat ID</label>
+            <input type="text" name="chat_id" placeholder="Например: -10012345678" value="{chat_id}" required>
+            
+            <button type="submit">Сохранить и протестировать</button>
+            {message}
+        </form>
+    </div>
+</body>
+</html>
+'''
 
 class WebhookHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -145,11 +221,45 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(f'Failed to connect to RCON: {e}\n'.encode())
                 logging.error(f"Failed to send alert via RCON: {e}")
+                
+        elif parsed.path == '/tg':
+            config = get_tg_config()
+            html = HTML_PAGE.format(bot_token=config.get("bot_token", ""), chat_id=config.get("chat_id", ""), message="")
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(html.encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()
             self.wfile.write(b'Not Found\n')
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == '/tg':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            fields = urllib.parse.parse_qs(post_data)
             
+            bot_token = fields.get('bot_token', [''])[0]
+            chat_id = fields.get('chat_id', [''])[0]
+            
+            save_tg_config(bot_token, chat_id)
+            
+            # Send test message
+            threading.Thread(target=send_telegram_message_sync, args=("✅ Telegram уведомления успешно настроены!",), daemon=True).start()
+            
+            msg = '<div class="success" style="display:block;">Сохранено! Отправлено тестовое сообщение.</div>'
+            html = HTML_PAGE.format(bot_token=bot_token, chat_id=chat_id, message=msg)
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(html.encode('utf-8'))
+        else:
+            self.send_response(404)
+            self.end_headers()
+
     # Suppress default HTTP logging to avoid spam
     def log_message(self, format, *args):
         pass
