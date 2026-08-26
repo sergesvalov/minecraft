@@ -69,6 +69,8 @@ services:
   warden-monitor:
     build: ./warden-monitor
     container_name: warden-monitor
+    environment:
+      TZ: "Europe/Athens"
     ports:
       - "8000:8000"
       - "8002:8001"
