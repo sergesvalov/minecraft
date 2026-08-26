@@ -75,7 +75,7 @@ services:
       - "8000:8000"
       - "8002:8001"
     volumes:
-      - ./data/plugins/WardenLog:/app/logs:ro
+      - ./data/plugins/WardenLog:/app/logs
       - ./warden-monitor/monitor.py:/app/monitor.py:ro
     depends_on:
       - mc
