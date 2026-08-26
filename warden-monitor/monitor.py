@@ -169,14 +169,14 @@ HTML_PAGE = '''
     <title>Warden Monitor - Telegram Settings</title>
     <meta charset="utf-8">
     <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 400px; }
-        h2 { margin-top: 0; color: #0088cc; }
-        label { display: block; margin: 15px 0 5px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 5px; background: #2a2a2a; color: #fff; box-sizing: border-box; }
-        button { margin-top: 20px; width: 100%; padding: 12px; border: none; border-radius: 5px; background: #0088cc; color: white; font-size: 16px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #006699; }
-        .success { color: #4caf50; margin-top: 15px; font-weight: bold; display: none; }
+        body {{ font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+        .card {{ background: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 400px; }}
+        h2 {{ margin-top: 0; color: #0088cc; }}
+        label {{ display: block; margin: 15px 0 5px; font-weight: bold; }}
+        input[type="text"] {{ width: 100%; padding: 10px; border: 1px solid #333; border-radius: 5px; background: #2a2a2a; color: #fff; box-sizing: border-box; }}
+        button {{ margin-top: 20px; width: 100%; padding: 12px; border: none; border-radius: 5px; background: #0088cc; color: white; font-size: 16px; cursor: pointer; transition: 0.3s; }}
+        button:hover {{ background: #006699; }}
+        .success {{ color: #4caf50; margin-top: 15px; font-weight: bold; display: none; }}
     </style>
 </head>
 <body>
