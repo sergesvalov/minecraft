@@ -51,6 +51,7 @@ Along with the server, a convenient web panel is deployed for managing files, mo
 A custom-built `WardenLog` plugin and a standalone Python service monitor server health and log specific gameplay events in real-time.
 - **Prometheus Exporter:** Available at `http://<SERVER_IP>:8000/metrics`. Tracks server liveness, player count, and ping.
 - **TNT Tracking:** Automatically logs who placed or exploded TNT blocks and where.
+- **Telegram Notifications:** You can receive real-time alerts about server status, player logins, and TNT events. Configure this by visiting **`http://<SERVER_IP>:8002/tg`** and entering your bot token and chat ID.
 
 > [!NOTE]  
 > 🛠️ **Looking for technical details?**  
