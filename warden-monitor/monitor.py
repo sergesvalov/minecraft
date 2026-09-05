@@ -39,6 +39,12 @@ PLAYER_JOINED = Counter('warden_player_joins_total', 'Total player joins', ['pla
 PLAYER_QUIT = Counter('warden_player_quits_total', 'Total player quits', ['player', 'time'])
 DANGEROUS_MOB_SPAWN = Counter('warden_dangerous_mob_spawn_total', 'Total dangerous mobs spawned', ['mob', 'player', 'world', 'x', 'y', 'z', 'time'])
 
+LAVA_PLACED = Counter('warden_lava_placed_total', 'Total lava blocks placed', ['player', 'world', 'x', 'y', 'z', 'time'])
+CRYSTAL_PLACED = Counter('warden_crystal_placed_total', 'Total end crystals placed', ['player', 'world', 'x', 'y', 'z', 'time'])
+SUSPICIOUS_COMMAND = Counter('warden_suspicious_command_total', 'Total suspicious commands executed', ['player', 'command', 'time'])
+PLAYER_KILLS = Counter('warden_player_kills_total', 'Total PVP kills', ['killer', 'victim', 'time'])
+FAILED_LOGINS = Counter('warden_failed_logins_total', 'Total failed login attempts', ['player', 'time'])
+
 server = JavaServer.lookup(f"{MC_HOST}:{MC_PORT}")
 
 def get_tg_config():
@@ -167,6 +173,66 @@ def process_event(event_line):
             DANGEROUS_MOB_SPAWN.labels(mob=mob, player=player, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
             logging.warning(f"🧟 DANGEROUS MOB SPAWNED: {mob} near {player} at {x},{y},{z}")
             send_telegram_message(f"⚠️ ВНИМАНИЕ: Опасный моб {mob} заспавнен (или появился рядом с {player}) на координатах {x}, {y}, {z} в мире {world}!")
+            
+        elif event_type == 'place_lava':
+            player = data.get('player', 'Unknown')
+            world = data.get('world', 'Unknown')
+            x, y, z = data.get('x'), data.get('y'), data.get('z')
+            timestamp = data.get('timestamp', 'Unknown')
+            LAVA_PLACED.labels(player=player, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
+            logging.warning(f"🌋 LAVA PLACED by {player} at {x},{y},{z}")
+            send_telegram_message(f"🌋 Игрок {player} разлил лаву на координатах {x}, {y}, {z} в мире {world}!")
+            
+        elif event_type == 'place_crystal':
+            player = data.get('player', 'Unknown')
+            world = data.get('world', 'Unknown')
+            x, y, z = data.get('x'), data.get('y'), data.get('z')
+            timestamp = data.get('timestamp', 'Unknown')
+            CRYSTAL_PLACED.labels(player=player, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
+            logging.warning(f"🔮 CRYSTAL PLACED by {player} at {x},{y},{z}")
+            send_telegram_message(f"🔮 Игрок {player} установил Кристалл Энда на координатах {x}, {y}, {z} в мире {world}!")
+            
+        elif event_type == 'explode_crystal':
+            world = data.get('world', 'Unknown')
+            x, y, z = data.get('x'), data.get('y'), data.get('z')
+            logging.warning(f"💥 CRYSTAL EXPLODED at {x},{y},{z}")
+            send_telegram_message(f"💥 Взорвался Кристалл Энда на координатах {x}, {y}, {z} в мире {world}!")
+
+        elif event_type == 'suspicious_command':
+            player = data.get('player', 'Unknown')
+            command = data.get('command', 'Unknown')
+            timestamp = data.get('timestamp', 'Unknown')
+            SUSPICIOUS_COMMAND.labels(player=player, command=command, time=timestamp).inc()
+            logging.warning(f"⚠️ SUSPICIOUS COMMAND by {player}: {command}")
+            send_telegram_message(f"⚠️ Подозрительная команда от {player}: `{command}`")
+            
+        elif event_type == 'player_kill':
+            killer = data.get('killer', 'Unknown')
+            victim = data.get('victim', 'Unknown')
+            timestamp = data.get('timestamp', 'Unknown')
+            PLAYER_KILLS.labels(killer=killer, victim=victim, time=timestamp).inc()
+            logging.info(f"⚔️ {killer} killed {victim}")
+            send_telegram_message(f"⚔️ Игрок {killer} убил {victim}!")
+            
+        elif event_type == 'failed_login':
+            player = data.get('player', 'Unknown')
+            timestamp = data.get('timestamp', 'Unknown')
+            FAILED_LOGINS.labels(player=player, time=timestamp).inc()
+            logging.warning(f"❌ Failed login attempt for {player}")
+            send_telegram_message(f"❌ Неудачная попытка входа под ником {player} (Неверный пароль)!")
+            
+        elif event_type == 'high_entity_count':
+            count = data.get('count', 0)
+            world = data.get('world', 'Unknown')
+            x, z = data.get('x'), data.get('z')
+            logging.warning(f"🐄 HIGH ENTITY COUNT ({count}) in {world} at {x},{z}")
+            send_telegram_message(f"🐄 Аномальное скопление мобов ({count} шт.) в чанке на координатах {x}, {z} в мире {world}!")
+            
+        elif event_type == 'lag_machine':
+            world = data.get('world', 'Unknown')
+            x, z = data.get('x'), data.get('z')
+            logging.warning(f"🤖 LAG MACHINE DETECTED in {world} at {x},{z}")
+            send_telegram_message(f"🤖 ОБНАРУЖЕНА ЛАГ-МАШИНА (Слишком много поршней) в чанке {x}, {z} в мире {world}!")
             
     except json.JSONDecodeError:
         pass
