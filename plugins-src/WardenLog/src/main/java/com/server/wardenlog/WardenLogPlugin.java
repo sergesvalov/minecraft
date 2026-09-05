@@ -11,8 +11,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.BufferedWriter;
@@ -117,6 +119,39 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
             escape(player.getName())
         );
         appendLog(json);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onMobSpawn(EntitySpawnEvent event) {
+        EntityType type = event.getEntity().getType();
+        if (type == EntityType.WITHER || type == EntityType.ENDER_DRAGON || 
+            type == EntityType.WARDEN || type == EntityType.RAVAGER || type == EntityType.EVOKER) {
+            
+            Location loc = event.getLocation();
+            String player = "Unknown";
+            
+            double closestDist = Double.MAX_VALUE;
+            for (Player p : loc.getWorld().getPlayers()) {
+                double dist = p.getLocation().distanceSquared(loc);
+                if (dist < 2500 && dist < closestDist) { // within 50 blocks
+                    closestDist = dist;
+                    player = p.getName();
+                }
+            }
+            
+            String json = String.format(
+                "{\"timestamp\":\"%s\", \"event\":\"dangerous_mob_spawn\", \"mob\":\"%s\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
+                Instant.now().toString(),
+                type.name(),
+                escape(player),
+                loc.getBlockX(),
+                loc.getBlockY(),
+                loc.getBlockZ(),
+                escape(loc.getWorld().getName())
+            );
+            
+            appendLog(json);
+        }
     }
 
     private void appendLog(String jsonLine) {

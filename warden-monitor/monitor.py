@@ -37,6 +37,7 @@ TNT_EXPLODED = Counter('warden_tnt_exploded_total', 'Total TNT explosions', ['so
 
 PLAYER_JOINED = Counter('warden_player_joins_total', 'Total player joins', ['player', 'time'])
 PLAYER_QUIT = Counter('warden_player_quits_total', 'Total player quits', ['player', 'time'])
+DANGEROUS_MOB_SPAWN = Counter('warden_dangerous_mob_spawn_total', 'Total dangerous mobs spawned', ['mob', 'player', 'world', 'x', 'y', 'z', 'time'])
 
 server = JavaServer.lookup(f"{MC_HOST}:{MC_PORT}")
 
@@ -156,6 +157,16 @@ def process_event(event_line):
             PLAYER_QUIT.labels(player=player, time=timestamp).inc()
             logging.info(f"👋 Player {player} quit")
             send_telegram_message(f"🚪 Игрок {player} покинул сервер")
+            
+        elif event_type == 'dangerous_mob_spawn':
+            mob = data.get('mob', 'Unknown')
+            player = data.get('player', 'Unknown')
+            world = data.get('world', 'Unknown')
+            x, y, z = data.get('x'), data.get('y'), data.get('z')
+            timestamp = data.get('timestamp', 'Unknown')
+            DANGEROUS_MOB_SPAWN.labels(mob=mob, player=player, world=world, x=str(x), y=str(y), z=str(z), time=timestamp).inc()
+            logging.warning(f"🧟 DANGEROUS MOB SPAWNED: {mob} near {player} at {x},{y},{z}")
+            send_telegram_message(f"⚠️ ВНИМАНИЕ: Опасный моб {mob} заспавнен (или появился рядом с {player}) на координатах {x}, {y}, {z} в мире {world}!")
             
     except json.JSONDecodeError:
         pass
