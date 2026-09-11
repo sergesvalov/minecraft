@@ -17,6 +17,12 @@ JAR_PATH="$PROJECT_ROOT/data/plugins/$JAR_NAME"
 echo "🔍 Проверка версии $PLUGIN_VERSION..."
 if [ -f "$JAR_PATH" ]; then
     echo "✅ Плагин WardenLog версии $PLUGIN_VERSION уже собран ($JAR_NAME). Пропускаем сборку."
+    # Export build info for CI — mark as skipped (no new version)
+    BUILD_INFO="$PROJECT_ROOT/plugins-src/WardenLog/build-info.properties"
+    echo "PLUGIN_VERSION=${PLUGIN_VERSION}" > "$BUILD_INFO"
+    echo "JAR_PATH=${JAR_PATH}" >> "$BUILD_INFO"
+    echo "JAR_NAME=${JAR_NAME}" >> "$BUILD_INFO"
+    echo "BUILD_NEW=false" >> "$BUILD_INFO"
     exit 0
 fi
 
@@ -32,5 +38,12 @@ docker run --rm \
 echo "📦 Копирование готового JAR в data/plugins..."
 mkdir -p "$PROJECT_ROOT/data/plugins"
 cp "$PROJECT_ROOT/plugins-src/WardenLog/target/WardenLog-${PLUGIN_VERSION}.jar" "$JAR_PATH"
+
+# Export build info for CI — mark as fresh build (new version)
+BUILD_INFO="$PROJECT_ROOT/plugins-src/WardenLog/build-info.properties"
+echo "PLUGIN_VERSION=${PLUGIN_VERSION}" > "$BUILD_INFO"
+echo "JAR_PATH=${JAR_PATH}" >> "$BUILD_INFO"
+echo "JAR_NAME=${JAR_NAME}" >> "$BUILD_INFO"
+echo "BUILD_NEW=true" >> "$BUILD_INFO"
 
 echo "✅ Сборка успешно завершена!"

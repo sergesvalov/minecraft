@@ -26,7 +26,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import fr.xephi.authme.events.FailedLoginEvent;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -104,6 +103,15 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         }
 
         getServer().getPluginManager().registerEvents(this, this);
+
+        // Register AuthMe listener only if AuthMe is installed
+        if (getServer().getPluginManager().getPlugin("AuthMe") != null) {
+            getServer().getPluginManager().registerEvents(new AuthMeListener(this), this);
+            getLogger().info("AuthMe detected — failed login tracking enabled.");
+        } else {
+            getLogger().info("AuthMe not found — failed login tracking disabled.");
+        }
+
         getLogger().info("WardenLog enabled! Logging events to " + logFile.getName());
 
         // Background task for entity counts (once per minute)
@@ -117,9 +125,9 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
                             chunk.getEntities().length,
                             chunk.getX() * 16,
                             chunk.getZ() * 16,
-                            escape(world.getName())
+                            escapeString(world.getName())
                         );
-                        appendLog(json);
+                        logEvent(json);
                     }
                 }
             }
@@ -150,9 +158,9 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
             Location loc = block.getLocation();
             String json = String.format(
                 "{\"timestamp\":\"%s\", \"event\":\"place_tnt\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                Instant.now().toString(), escape(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())
+                Instant.now().toString(), escapeString(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
             );
-            appendLog(json);
+            logEvent(json);
         }
     }
 
@@ -168,10 +176,10 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
             Location loc = block.getLocation();
             String json = String.format(
                 "{\"timestamp\":\"%s\", \"event\":\"break_valuable\", \"player\":\"%s\", \"block\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                Instant.now().toString(), escape(playerName), block.getType().name(),
-                loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())
+                Instant.now().toString(), escapeString(playerName), block.getType().name(),
+                loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
             );
-            appendLog(json);
+            logEvent(json);
         }
 
         // Grief detection: >30 blocks in 10 seconds
@@ -185,10 +193,10 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
                 Location loc = block.getLocation();
                 String json = String.format(
                     "{\"timestamp\":\"%s\", \"event\":\"grief_alert\", \"player\":\"%s\", \"blocks_broken\":%d, \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                    Instant.now().toString(), escape(playerName), breaks.size(),
-                    loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())
+                    Instant.now().toString(), escapeString(playerName), breaks.size(),
+                    loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
                 );
-                appendLog(json);
+                logEvent(json);
                 griefCooldowns.put(playerName, now + 60000L); // 1 minute cooldown
             }
         }
@@ -203,27 +211,27 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
             String source = tnt.getSource() != null ? tnt.getSource().getName() : "Unknown";
             String json = String.format(
                 "{\"timestamp\":\"%s\", \"event\":\"explode_tnt\", \"source\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                Instant.now().toString(), escape(source), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())
+                Instant.now().toString(), escapeString(source), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
             );
-            appendLog(json);
+            logEvent(json);
         } else if (entity != null && entity.getType() == EntityType.ENDER_CRYSTAL) {
             Location loc = entity.getLocation();
             String json = String.format(
                 "{\"timestamp\":\"%s\", \"event\":\"explode_crystal\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                Instant.now().toString(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())
+                Instant.now().toString(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
             );
-            appendLog(json);
+            logEvent(json);
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"player_join\", \"player\":\"%s\"}", Instant.now().toString(), escape(event.getPlayer().getName())));
+        logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"player_join\", \"player\":\"%s\"}", Instant.now().toString(), escapeString(event.getPlayer().getName())));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"player_quit\", \"player\":\"%s\"}", Instant.now().toString(), escape(event.getPlayer().getName())));
+        logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"player_quit\", \"player\":\"%s\"}", Instant.now().toString(), escapeString(event.getPlayer().getName())));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -241,7 +249,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
                     player = p.getName();
                 }
             }
-            appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"dangerous_mob_spawn\", \"mob\":\"%s\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), type.name(), escape(player), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())));
+            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"dangerous_mob_spawn\", \"mob\":\"%s\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), type.name(), escapeString(player), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
         }
     }
 
@@ -252,7 +260,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         if (event.getBucket() == Material.LAVA_BUCKET) {
             Player player = event.getPlayer();
             Location loc = event.getBlockClicked().getRelative(event.getBlockFace()).getLocation();
-            appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"place_lava\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), escape(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())));
+            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"place_lava\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), escapeString(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
         }
     }
 
@@ -261,7 +269,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         if (event.getAction().name().contains("RIGHT_CLICK_BLOCK") && event.getItem() != null && event.getItem().getType() == Material.END_CRYSTAL) {
             Player player = event.getPlayer();
             Location loc = event.getClickedBlock().getLocation();
-            appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"place_crystal\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), escape(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())));
+            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"place_crystal\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), escapeString(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
         }
     }
 
@@ -271,7 +279,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         if (cmd.startsWith("/op ") || cmd.startsWith("/deop ") || cmd.startsWith("/ban ") || 
             cmd.startsWith("/kick ") || cmd.equals("/stop") || cmd.startsWith("//set ") || 
             cmd.startsWith("//replace ")) {
-            appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"suspicious_command\", \"player\":\"%s\", \"command\":\"%s\"}", Instant.now().toString(), escape(event.getPlayer().getName()), escape(cmd)));
+            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"suspicious_command\", \"player\":\"%s\", \"command\":\"%s\"}", Instant.now().toString(), escapeString(event.getPlayer().getName()), escapeString(cmd)));
         }
     }
 
@@ -280,14 +288,11 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         Player victim = event.getEntity();
         Player killer = victim.getKiller();
         if (killer != null && killer != victim) {
-            appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"player_kill\", \"killer\":\"%s\", \"victim\":\"%s\"}", Instant.now().toString(), escape(killer.getName()), escape(victim.getName())));
+            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"player_kill\", \"killer\":\"%s\", \"victim\":\"%s\"}", Instant.now().toString(), escapeString(killer.getName()), escapeString(victim.getName())));
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onFailedLogin(FailedLoginEvent event) {
-        appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"failed_login\", \"player\":\"%s\"}", Instant.now().toString(), escape(event.getPlayer().getName())));
-    }
+
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
@@ -303,12 +308,13 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
         if (count > 500) { // 500 extensions in 5 seconds
             Location loc = event.getBlock().getLocation();
-            appendLog(String.format("{\"timestamp\":\"%s\", \"event\":\"lag_machine\", \"x\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), loc.getBlockX(), loc.getBlockZ(), escape(loc.getWorld().getName())));
+            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"lag_machine\", \"x\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), loc.getBlockX(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
             chunkPistonCooldowns.put(chunkKey, now + 300000L); // 5 minutes cooldown
         }
     }
 
-    private void appendLog(String jsonLine) {
+    /** Public so that optional listener classes (e.g. AuthMeListener) can write events. */
+    public void logEvent(String jsonLine) {
         getServer().getScheduler().runTaskAsynchronously(this, () -> {
             try (FileWriter fw = new FileWriter(logFile, true);
                  BufferedWriter bw = new BufferedWriter(fw);
@@ -320,7 +326,8 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         });
     }
 
-    private String escape(String str) {
+    /** Public so that optional listener classes can safely escape strings. */
+    public String escapeString(String str) {
         if (str == null) return "null";
         return str.replace("\\", "\\\\").replace("\"", "\\\"");
     }

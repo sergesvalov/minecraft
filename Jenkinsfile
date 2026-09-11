@@ -20,6 +20,44 @@ node('built-in') {
         sh 'bash scripts/build-warden.sh'
     }
 
+    stage('Publish GitHub Release') {
+        // Only publish when the build script actually compiled a new version
+        def buildNew = sh(script: 'grep -q "BUILD_NEW=true" plugins-src/WardenLog/build-info.properties', returnStatus: true) == 0
+        if (buildNew) {
+            // Reuse the credential already configured for this GitHub repo (checkout scm)
+            def repoCredId = scm.userRemoteConfigs[0].credentialsId
+            withCredentials([usernamePassword(credentialsId: repoCredId, usernameVariable: 'GITHUB_USER', passwordVariable: 'GH_TOKEN')]) {
+                sh '''
+                    . plugins-src/WardenLog/build-info.properties
+
+                    TAG="wardenlog-v${PLUGIN_VERSION}"
+
+                    NOTES="## WardenLog v${PLUGIN_VERSION}
+
+Lightweight Paper plugin for logging TNT, grief, and suspicious events.
+
+### Installation
+1. Download **${JAR_NAME}** below
+2. Place it in your server's \`plugins/\` folder
+3. Restart the server
+
+> AuthMe is an optional dependency. The plugin works without it."
+
+                    echo "📦 Creating GitHub Release ${TAG}..."
+                    gh release create "${TAG}" \
+                        "${JAR_PATH}" \
+                        --repo sergesvalov/minecraft \
+                        --title "WardenLog v${PLUGIN_VERSION}" \
+                        --notes "${NOTES}" \
+                        --latest
+                    echo "✅ Release ${TAG} published!"
+                '''
+            }
+        } else {
+            echo 'ℹ️ Plugin version unchanged — skipping GitHub Release.'
+        }
+    }
+
     stage('Prepare Server Scripts') {
         sshagent(credentials: [env.SERVER_USER]) {
             sh """
