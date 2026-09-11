@@ -13,6 +13,7 @@ import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -33,14 +34,59 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class WardenLogPlugin extends JavaPlugin implements Listener {
 
     private File logFile;
     private final Map<Long, Integer> chunkPistonCounts = new HashMap<>();
     private final Map<Long, Long> chunkPistonCooldowns = new HashMap<>();
+    private final Map<String, List<Long>> breakTracker = new HashMap<>();
+    private final Map<String, Long> griefCooldowns = new HashMap<>();
+
+    private static final Set<Material> VALUABLE_BLOCKS = new HashSet<>();
+    static {
+        // Containers
+        VALUABLE_BLOCKS.add(Material.CHEST);
+        VALUABLE_BLOCKS.add(Material.TRAPPED_CHEST);
+        VALUABLE_BLOCKS.add(Material.ENDER_CHEST);
+        VALUABLE_BLOCKS.add(Material.BARREL);
+        VALUABLE_BLOCKS.add(Material.HOPPER);
+        VALUABLE_BLOCKS.add(Material.DROPPER);
+        VALUABLE_BLOCKS.add(Material.DISPENSER);
+        // Valuable blocks
+        VALUABLE_BLOCKS.add(Material.DIAMOND_BLOCK);
+        VALUABLE_BLOCKS.add(Material.EMERALD_BLOCK);
+        VALUABLE_BLOCKS.add(Material.NETHERITE_BLOCK);
+        VALUABLE_BLOCKS.add(Material.GOLD_BLOCK);
+        VALUABLE_BLOCKS.add(Material.IRON_BLOCK);
+        // Special blocks
+        VALUABLE_BLOCKS.add(Material.SPAWNER);
+        VALUABLE_BLOCKS.add(Material.BEACON);
+        VALUABLE_BLOCKS.add(Material.ENCHANTING_TABLE);
+        VALUABLE_BLOCKS.add(Material.ANVIL);
+        VALUABLE_BLOCKS.add(Material.BREWING_STAND);
+        VALUABLE_BLOCKS.add(Material.CONDUIT);
+        VALUABLE_BLOCKS.add(Material.LODESTONE);
+        VALUABLE_BLOCKS.add(Material.RESPAWN_ANCHOR);
+        VALUABLE_BLOCKS.add(Material.JUKEBOX);
+        // Functional blocks
+        VALUABLE_BLOCKS.add(Material.FURNACE);
+        VALUABLE_BLOCKS.add(Material.BLAST_FURNACE);
+        VALUABLE_BLOCKS.add(Material.SMOKER);
+        // All shulker boxes
+        for (Material m : Material.values()) {
+            if (m.name().endsWith("SHULKER_BOX")) {
+                VALUABLE_BLOCKS.add(m);
+            }
+        }
+    }
 
     @Override
     public void onEnable() {
@@ -81,6 +127,13 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
         // Background task to clear piston counters (every 5 seconds)
         Bukkit.getScheduler().runTaskTimer(this, chunkPistonCounts::clear, 100L, 100L);
+
+        // Background task to clean up old break tracking entries (every 15 seconds)
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            long now = System.currentTimeMillis();
+            breakTracker.values().forEach(list -> list.removeIf(t -> now - t > 10000));
+            breakTracker.values().removeIf(List::isEmpty);
+        }, 300L, 300L);
     }
 
     @Override
@@ -100,6 +153,44 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
                 Instant.now().toString(), escape(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())
             );
             appendLog(json);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        Block block = event.getBlock();
+        String playerName = player.getName();
+        long now = System.currentTimeMillis();
+
+        // Track valuable block destruction
+        if (VALUABLE_BLOCKS.contains(block.getType())) {
+            Location loc = block.getLocation();
+            String json = String.format(
+                "{\"timestamp\":\"%s\", \"event\":\"break_valuable\", \"player\":\"%s\", \"block\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
+                Instant.now().toString(), escape(playerName), block.getType().name(),
+                loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())
+            );
+            appendLog(json);
+        }
+
+        // Grief detection: >30 blocks in 10 seconds
+        List<Long> breaks = breakTracker.computeIfAbsent(playerName, k -> new ArrayList<>());
+        breaks.add(now);
+        breaks.removeIf(t -> now - t > 10000);
+
+        if (breaks.size() > 30) {
+            Long cooldown = griefCooldowns.get(playerName);
+            if (cooldown == null || now > cooldown) {
+                Location loc = block.getLocation();
+                String json = String.format(
+                    "{\"timestamp\":\"%s\", \"event\":\"grief_alert\", \"player\":\"%s\", \"blocks_broken\":%d, \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
+                    Instant.now().toString(), escape(playerName), breaks.size(),
+                    loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escape(loc.getWorld().getName())
+                );
+                appendLog(json);
+                griefCooldowns.put(playerName, now + 60000L); // 1 minute cooldown
+            }
         }
     }
 
