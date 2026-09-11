@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,10 +45,15 @@ import java.util.Set;
 public class WardenLogPlugin extends JavaPlugin implements Listener {
 
     private File logFile;
+    private final ConcurrentLinkedQueue<String> logQueue = new ConcurrentLinkedQueue<>();
     private final Map<Long, Integer> chunkPistonCounts = new HashMap<>();
     private final Map<Long, Long> chunkPistonCooldowns = new HashMap<>();
     private final Map<String, List<Long>> breakTracker = new HashMap<>();
     private final Map<String, Long> griefCooldowns = new HashMap<>();
+
+    private int entityLimit;
+    private int griefBlocks;
+    private int lagMachinePistons;
 
     private static final Set<Material> VALUABLE_BLOCKS = new HashSet<>();
     static {
@@ -89,6 +95,11 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
+        entityLimit = getConfig().getInt("limits.entities_per_chunk", 150);
+        griefBlocks = getConfig().getInt("limits.grief_blocks", 30);
+        lagMachinePistons = getConfig().getInt("limits.lag_machine_pistons", 500);
+
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
@@ -114,11 +125,26 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
         getLogger().info("WardenLog enabled! Logging events to " + logFile.getName());
 
+        // Background task for batched logging (every 5 seconds)
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+            if (logQueue.isEmpty()) return;
+            try (FileWriter fw = new FileWriter(logFile, true);
+                 BufferedWriter bw = new BufferedWriter(fw);
+                 PrintWriter out = new PrintWriter(bw)) {
+                String line;
+                while ((line = logQueue.poll()) != null) {
+                    out.println(line);
+                }
+            } catch (IOException e) {
+                getLogger().severe("Failed to write to WardenLog events.jsonl: " + e.getMessage());
+            }
+        }, 100L, 100L);
+
         // Background task for entity counts (once per minute)
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (World world : Bukkit.getWorlds()) {
                 for (Chunk chunk : world.getLoadedChunks()) {
-                    if (chunk.getEntities().length > 150) {
+                    if (chunk.getEntities().length > entityLimit) {
                         String json = String.format(
                             "{\"timestamp\":\"%s\", \"event\":\"high_entity_count\", \"count\":%d, \"x\":%d, \"z\":%d, \"world\":\"%s\"}",
                             Instant.now().toString(),
@@ -136,11 +162,14 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         // Background task to clear piston counters (every 5 seconds)
         Bukkit.getScheduler().runTaskTimer(this, chunkPistonCounts::clear, 100L, 100L);
 
-        // Background task to clean up old break tracking entries (every 15 seconds)
+        // Background task to clean up old break tracking entries and cooldowns (every 15 seconds)
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();
             breakTracker.values().forEach(list -> list.removeIf(t -> now - t > 10000));
             breakTracker.values().removeIf(List::isEmpty);
+            
+            chunkPistonCooldowns.entrySet().removeIf(entry -> now > entry.getValue());
+            griefCooldowns.entrySet().removeIf(entry -> now > entry.getValue());
         }, 300L, 300L);
     }
 
@@ -187,7 +216,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         breaks.add(now);
         breaks.removeIf(t -> now - t > 10000);
 
-        if (breaks.size() > 30) {
+        if (breaks.size() > griefBlocks) {
             Long cooldown = griefCooldowns.get(playerName);
             if (cooldown == null || now > cooldown) {
                 Location loc = block.getLocation();
@@ -306,7 +335,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         int count = chunkPistonCounts.getOrDefault(chunkKey, 0) + 1;
         chunkPistonCounts.put(chunkKey, count);
 
-        if (count > 500) { // 500 extensions in 5 seconds
+        if (count > lagMachinePistons) { // Limit based on config
             Location loc = event.getBlock().getLocation();
             logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"lag_machine\", \"x\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), loc.getBlockX(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
             chunkPistonCooldowns.put(chunkKey, now + 300000L); // 5 minutes cooldown
@@ -315,15 +344,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
     /** Public so that optional listener classes (e.g. AuthMeListener) can write events. */
     public void logEvent(String jsonLine) {
-        getServer().getScheduler().runTaskAsynchronously(this, () -> {
-            try (FileWriter fw = new FileWriter(logFile, true);
-                 BufferedWriter bw = new BufferedWriter(fw);
-                 PrintWriter out = new PrintWriter(bw)) {
-                out.println(jsonLine);
-            } catch (IOException e) {
-                getLogger().severe("Failed to write to WardenLog events.jsonl: " + e.getMessage());
-            }
-        });
+        logQueue.offer(jsonLine);
     }
 
     /** Public so that optional listener classes can safely escape strings. */

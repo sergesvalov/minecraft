@@ -1,0 +1,4 @@
+limits:
+  entities_per_chunk: 150
+  grief_blocks: 30
+  lag_machine_pistons: 500
