@@ -38,7 +38,7 @@ Lightweight Paper plugin for logging TNT, grief, and suspicious events.
 
 ### Installation
 1. Download **${JAR_NAME}** below
-2. Place it in your server's \`plugins/\` folder
+2. Place it in your server's \\`plugins/\\` folder
 3. Restart the server
 
 > AuthMe is an optional dependency. The plugin works without it."
