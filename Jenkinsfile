@@ -24,9 +24,7 @@ node('built-in') {
         // Only publish when the build script actually compiled a new version
         def buildNew = sh(script: 'grep -q "BUILD_NEW=true" plugins-src/WardenLog/build-info.properties', returnStatus: true) == 0
         if (buildNew) {
-            // Reuse the credential already configured for this GitHub repo (checkout scm)
-            def repoCredId = scm.userRemoteConfigs[0].credentialsId
-            withCredentials([usernamePassword(credentialsId: repoCredId, usernameVariable: 'GITHUB_USER', passwordVariable: 'GH_TOKEN')]) {
+            withCredentials([string(credentialsId: 'git-access', variable: 'GH_TOKEN')]) {
                 sh '''
                     . plugins-src/WardenLog/build-info.properties
 
