@@ -143,14 +143,26 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         // Background task for entity counts (once per minute)
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (World world : Bukkit.getWorlds()) {
-                for (Chunk chunk : world.getLoadedChunks()) {
-                    if (chunk.getEntities().length > entityLimit) {
+                Map<String, Integer> chunkEntityCounts = new HashMap<>();
+                for (Entity entity : world.getEntities()) {
+                    Location loc = entity.getLocation();
+                    int cx = loc.getBlockX() >> 4;
+                    int cz = loc.getBlockZ() >> 4;
+                    String key = cx + "," + cz;
+                    chunkEntityCounts.put(key, chunkEntityCounts.getOrDefault(key, 0) + 1);
+                }
+                
+                for (Map.Entry<String, Integer> entry : chunkEntityCounts.entrySet()) {
+                    if (entry.getValue() > entityLimit) {
+                        String[] parts = entry.getKey().split(",");
+                        int cx = Integer.parseInt(parts[0]);
+                        int cz = Integer.parseInt(parts[1]);
                         String json = String.format(
                             "{\"timestamp\":\"%s\", \"event\":\"high_entity_count\", \"count\":%d, \"x\":%d, \"z\":%d, \"world\":\"%s\"}",
                             Instant.now().toString(),
-                            chunk.getEntities().length,
-                            chunk.getX() * 16,
-                            chunk.getZ() * 16,
+                            entry.getValue(),
+                            cx * 16,
+                            cz * 16,
                             escapeString(world.getName())
                         );
                         logEvent(json);
@@ -175,6 +187,18 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (!logQueue.isEmpty()) {
+            try (FileWriter fw = new FileWriter(logFile, true);
+                 BufferedWriter bw = new BufferedWriter(fw);
+                 PrintWriter out = new PrintWriter(bw)) {
+                String line;
+                while ((line = logQueue.poll()) != null) {
+                    out.println(line);
+                }
+            } catch (IOException e) {
+                getLogger().severe("Failed to write remaining logs during shutdown: " + e.getMessage());
+            }
+        }
         getLogger().info("WardenLog disabled.");
     }
 
@@ -304,11 +328,32 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onCommand(PlayerCommandPreprocessEvent event) {
-        String cmd = event.getMessage().toLowerCase();
-        if (cmd.startsWith("/op ") || cmd.startsWith("/deop ") || cmd.startsWith("/ban ") || 
-            cmd.startsWith("/kick ") || cmd.equals("/stop") || cmd.startsWith("//set ") || 
-            cmd.startsWith("//replace ")) {
-            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"suspicious_command\", \"player\":\"%s\", \"command\":\"%s\"}", Instant.now().toString(), escapeString(event.getPlayer().getName()), escapeString(cmd)));
+        String rawCmd = event.getMessage().toLowerCase();
+        
+        // Strip namespaces like /minecraft: or /bukkit:
+        String cmdStr = rawCmd;
+        if (cmdStr.startsWith("/")) {
+            int spaceIdx = cmdStr.indexOf(' ');
+            String baseCmd = spaceIdx != -1 ? cmdStr.substring(1, spaceIdx) : cmdStr.substring(1);
+            String args = spaceIdx != -1 ? cmdStr.substring(spaceIdx) : "";
+            
+            int colonIdx = baseCmd.indexOf(':');
+            if (colonIdx != -1) {
+                baseCmd = baseCmd.substring(colonIdx + 1);
+            }
+            cmdStr = "/" + baseCmd + args;
+        }
+
+        if (cmdStr.startsWith("/op ") || cmdStr.equals("/op") || 
+            cmdStr.startsWith("/deop ") || cmdStr.equals("/deop") || 
+            cmdStr.startsWith("/ban ") || cmdStr.equals("/ban") || 
+            cmdStr.startsWith("/kick ") || cmdStr.equals("/kick") || 
+            cmdStr.equals("/stop") || 
+            cmdStr.startsWith("//set ") || cmdStr.equals("//set") || 
+            cmdStr.startsWith("//replace ") || cmdStr.equals("//replace")) {
+            
+            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"suspicious_command\", \"player\":\"%s\", \"command\":\"%s\"}", 
+                     Instant.now().toString(), escapeString(event.getPlayer().getName()), escapeString(rawCmd)));
         }
     }
 
