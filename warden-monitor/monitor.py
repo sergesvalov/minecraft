@@ -254,8 +254,9 @@ def process_event(event_line):
         elif event_type == 'lag_machine':
             world = data.get('world', 'Unknown')
             x, z = data.get('x'), data.get('z')
-            logging.warning(f"🤖 LAG MACHINE DETECTED in {world} at {x},{z}")
-            send_telegram_message(f"🤖 ОБНАРУЖЕНА ЛАГ-МАШИНА (Слишком много поршней) в чанке {x}, {z} в мире {world}!")
+            reason = data.get('reason', 'Слишком много поршней')
+            logging.warning(f"🤖 LAG MACHINE DETECTED in {world} at {x},{z} ({reason})")
+            send_telegram_message(f"🤖 ОБНАРУЖЕНА ЛАГ-МАШИНА ({reason}) в чанке {x}, {z} в мире {world}!")
 
         elif event_type == 'break_valuable':
             player = data.get('player', 'Unknown')

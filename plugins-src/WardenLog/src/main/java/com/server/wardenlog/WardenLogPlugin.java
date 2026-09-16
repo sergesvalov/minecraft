@@ -257,10 +257,30 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent event) {
+        if (event.blockList().isEmpty()) {
+            return; // Ignore explosions that don't break any blocks
+        }
+
         Entity entity = event.getEntity();
         if (entity instanceof TNTPrimed) {
             TNTPrimed tnt = (TNTPrimed) entity;
             Location loc = tnt.getLocation();
+            
+            int tntDestroyed = 0;
+            for (Block b : event.blockList()) {
+                if (b.getType() == Material.TNT) {
+                    tntDestroyed++;
+                }
+            }
+
+            if (tntDestroyed > 2) {
+                String json = String.format(
+                    "{\"timestamp\":\"%s\", \"event\":\"lag_machine\", \"reason\":\"Цепная реакция TNT (%d шт)\", \"x\":%d, \"z\":%d, \"world\":\"%s\"}",
+                    Instant.now().toString(), tntDestroyed, loc.getBlockX(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
+                );
+                logEvent(json);
+            }
+
             String source = tnt.getSource() != null ? tnt.getSource().getName() : "Unknown";
             String json = String.format(
                 "{\"timestamp\":\"%s\", \"event\":\"explode_tnt\", \"source\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
