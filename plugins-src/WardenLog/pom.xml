@@ -6,7 +6,7 @@
 
     <groupId>com.server</groupId>
     <artifactId>WardenLog</artifactId>
-    <version>1.6</version>
+    <version>1.7</version>
     <packaging>jar</packaging>
 
     <name>WardenLog</name>
@@ -32,7 +32,7 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.20.4-R0.1-SNAPSHOT</version>
+            <version>1.26.3-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <!-- AuthMe -->

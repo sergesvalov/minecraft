@@ -12,6 +12,7 @@ services:
       MEMORY: "2G"
       EULA: "true"
       TYPE: "PAPER"
+      VERSION: "26.3"
       ONLINE_MODE: "false"
       GAMEMODE: "creative"
       DIFFICULTY: "easy"
