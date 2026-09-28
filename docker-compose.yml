@@ -20,14 +20,13 @@ services:
       OPS: "papa"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "admin"
-      # fastasyncworldedit is removed from MODRINTH_PROJECTS because it does not have 26.3 files on Modrinth yet
+      # fastasyncworldedit is temporarily disabled due to download issues and missing 26.3 Modrinth files
       MODRINTH_PROJECTS: "authmereloaded,squaremap,luckperms,gsit,axgraves"
       PLUGINS: |
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
         https://github.com/EssentialsX/Essentials/releases/download/2.22.0/EssentialsX-2.22.0.jar
-        # Download FAWE directly from GitHub Releases instead
-        https://github.com/IntellectualSites/FastAsyncWorldEdit/releases/latest/download/FastAsyncWorldEdit-Bukkit.jar
+        # https://github.com/IntellectualSites/FastAsyncWorldEdit/releases/latest/download/FastAsyncWorldEdit-Bukkit.jar
     volumes:
       - ./data:/data           # Data will be stored in /opt/minecraft/data on host
       - ./scripts/auto-patch-authme.sh:/custom-init.d/auto-patch-authme.sh:ro
