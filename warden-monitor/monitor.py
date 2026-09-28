@@ -98,8 +98,8 @@ def liveness_monitor():
             MC_PING.set(status.latency)
             
             if not was_online:
-                logging.info("✅ Server is back ONLINE!")
-                send_telegram_message("✅ Сервер Minecraft запущен и доступен!")
+                logging.info(f"✅ Server is back ONLINE! Version: {status.version.name}")
+                send_telegram_message(f"✅ Сервер Minecraft ({status.version.name}) запущен и доступен!")
                 was_online = True
                 
         except Exception as e:
