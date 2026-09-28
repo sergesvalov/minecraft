@@ -143,26 +143,15 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         // Background task for entity counts (once per minute)
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (World world : Bukkit.getWorlds()) {
-                Map<String, Integer> chunkEntityCounts = new HashMap<>();
-                for (Entity entity : world.getEntities()) {
-                    Location loc = entity.getLocation();
-                    int cx = loc.getBlockX() >> 4;
-                    int cz = loc.getBlockZ() >> 4;
-                    String key = cx + "," + cz;
-                    chunkEntityCounts.put(key, chunkEntityCounts.getOrDefault(key, 0) + 1);
-                }
-                
-                for (Map.Entry<String, Integer> entry : chunkEntityCounts.entrySet()) {
-                    if (entry.getValue() > entityLimit) {
-                        String[] parts = entry.getKey().split(",");
-                        int cx = Integer.parseInt(parts[0]);
-                        int cz = Integer.parseInt(parts[1]);
+                for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
+                    int entityCount = chunk.getEntities().length;
+                    if (entityCount > entityLimit) {
                         String json = String.format(
                             "{\"timestamp\":\"%s\", \"event\":\"high_entity_count\", \"count\":%d, \"x\":%d, \"z\":%d, \"world\":\"%s\"}",
                             Instant.now().toString(),
-                            entry.getValue(),
-                            cx * 16,
-                            cz * 16,
+                            entityCount,
+                            chunk.getX() * 16,
+                            chunk.getZ() * 16,
                             escapeString(world.getName())
                         );
                         logEvent(json);
