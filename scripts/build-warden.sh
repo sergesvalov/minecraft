@@ -33,7 +33,7 @@ docker run --rm \
     -v "$PROJECT_ROOT/.m2:/var/maven/.m2" \
     -e MAVEN_CONFIG=/var/maven/.m2 \
     -w /usr/src/app \
-    maven:3.9-eclipse-temurin-21 mvn -Duser.home=/var/maven clean package
+    maven:3.9-eclipse-temurin-25 mvn -Duser.home=/var/maven clean package
 
 echo "📦 Копирование готового JAR в data/plugins..."
 mkdir -p "$PROJECT_ROOT/data/plugins"
