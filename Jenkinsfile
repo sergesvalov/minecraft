@@ -20,6 +20,7 @@ node('built-in') {
         sh 'bash scripts/build-warden.sh'
     }
 
+    /*
     stage('Publish GitHub Release') {
         // Only publish when the build script actually compiled a new version
         def buildNew = sh(script: 'grep -q "BUILD_NEW=true" plugins-src/WardenLog/build-info.properties', returnStatus: true) == 0
@@ -55,6 +56,7 @@ Lightweight Paper plugin for logging TNT, grief, and suspicious events.
             echo 'ℹ️ Plugin version unchanged — skipping GitHub Release.'
         }
     }
+    */
 
     stage('Prepare Server Scripts') {
         sshagent(credentials: [env.SERVER_USER]) {
