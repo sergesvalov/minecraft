@@ -287,7 +287,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
                 Instant.now().toString(), escapeString(source), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
             );
             logEvent(json);
-        } else if (entity != null && entity.getType() == EntityType.ENDER_CRYSTAL) {
+        } else if (entity != null && entity.getType() == EntityType.END_CRYSTAL) {
             Location loc = entity.getLocation();
             String json = String.format(
                 "{\"timestamp\":\"%s\", \"event\":\"explode_crystal\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
