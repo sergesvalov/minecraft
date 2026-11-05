@@ -137,18 +137,32 @@ def tail(file_path):
             logged_wait = True
         time.sleep(5)
     
-    with open(file_path, 'r', encoding='utf-8') as f:
-        f.seek(0, os.SEEK_END)
-        logging.info(f"Connected to log file. Listening for TNT events...")
-        
-        while True:
-            line = f.readline()
-            if not line:
-                time.sleep(0.5)
-                f.seek(0, os.SEEK_CUR) # Сбрасываем флаг конца файла (EOF), чтобы Python увидел новые строки
-                continue
-            
+    f = open(file_path, 'r', encoding='utf-8')
+    f.seek(0, os.SEEK_END)
+    logging.info(f"Connected to log file. Listening for TNT events...")
+
+    while True:
+        line = f.readline()
+        if line:
             yield line.strip()
+            continue
+
+        time.sleep(0.5)
+        f.seek(0, os.SEEK_CUR) # Сбрасываем флаг конца файла (EOF), чтобы Python увидел новые строки
+
+        # WardenLog раз в сутки переименовывает events.jsonl в events-YYYY-MM-DD.jsonl и начинает новый файл.
+        # Старый дескриптор продолжает смотреть на архив, поэтому при смене inode переоткрываем файл с начала.
+        try:
+            st = os.stat(file_path)
+        except FileNotFoundError:
+            continue  # архив уже переименован, новый файл ещё не создан
+        if st.st_ino != os.fstat(f.fileno()).st_ino or st.st_size < f.tell():
+            for rest in f:  # дочитываем хвост архива
+                if rest.strip():
+                    yield rest.strip()
+            f.close()
+            f = open(file_path, 'r', encoding='utf-8')
+            logging.info("Log file rotated, reopened events.jsonl")
 
 def process_event(event_line):
     try:
@@ -391,10 +405,21 @@ EVENT_DISPLAY = {
 
 def render_dashboard():
     events = []
-    if os.path.exists(LOG_FILE):
+    # Текущий файл, а если в нём мало событий (сразу после ротации) — ещё последний архив
+    log_dir = os.path.dirname(LOG_FILE)
+    try:
+        archives = sorted(
+            (n for n in os.listdir(log_dir) if n.startswith('events-') and n.endswith('.jsonl')),
+            reverse=True)
+    except OSError:
+        archives = []
+    sources = [LOG_FILE] + [os.path.join(log_dir, n) for n in archives[:1]]
+    for path in sources:
+        if len(events) >= 100 or not os.path.exists(path):
+            continue
         try:
-            with open(LOG_FILE, 'r', encoding='utf-8') as f:
-                lines = collections.deque(f, maxlen=100)
+            with open(path, 'r', encoding='utf-8') as f:
+                lines = collections.deque(f, maxlen=100 - len(events))
             for line in reversed(list(lines)):
                 line = line.strip()
                 if line:

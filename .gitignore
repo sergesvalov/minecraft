@@ -1,0 +1,12 @@
+# Build output
+target/
+plugins-src/*/build-info.properties
+.m2/
+
+# Server data lives on the host (/opt/minecraft/data), built jars land in data/plugins
+data/
+backups/
+
+# Python
+__pycache__/
+*.pyc

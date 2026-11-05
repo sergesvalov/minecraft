@@ -33,6 +33,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.HashMap;
@@ -54,6 +57,10 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
     private int entityLimit;
     private int griefBlocks;
     private int lagMachinePistons;
+    private int logRetentionDays;
+
+    private static final String ARCHIVE_PREFIX = "events-";
+    private static final String ARCHIVE_SUFFIX = ".jsonl";
 
     private static final Set<Material> VALUABLE_BLOCKS = new HashSet<>();
     static {
@@ -99,6 +106,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         entityLimit = getConfig().getInt("limits.entities_per_chunk", 150);
         griefBlocks = getConfig().getInt("limits.grief_blocks", 30);
         lagMachinePistons = getConfig().getInt("limits.lag_machine_pistons", 500);
+        logRetentionDays = Math.max(1, getConfig().getInt("log_retention_days", 14));
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
@@ -126,19 +134,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         getLogger().info("WardenLog enabled! Logging events to " + logFile.getName());
 
         // Background task for batched logging (every 5 seconds)
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-            if (logQueue.isEmpty()) return;
-            try (FileWriter fw = new FileWriter(logFile, true);
-                 BufferedWriter bw = new BufferedWriter(fw);
-                 PrintWriter out = new PrintWriter(bw)) {
-                String line;
-                while ((line = logQueue.poll()) != null) {
-                    out.println(line);
-                }
-            } catch (IOException e) {
-                getLogger().severe("Failed to write to WardenLog events.jsonl: " + e.getMessage());
-            }
-        }, 100L, 100L);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, this::flushLogQueue, 100L, 100L);
 
         // Background task for entity counts (once per minute)
         Bukkit.getScheduler().runTaskTimer(this, () -> {
@@ -176,19 +172,62 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        if (!logQueue.isEmpty()) {
-            try (FileWriter fw = new FileWriter(logFile, true);
-                 BufferedWriter bw = new BufferedWriter(fw);
-                 PrintWriter out = new PrintWriter(bw)) {
-                String line;
-                while ((line = logQueue.poll()) != null) {
-                    out.println(line);
+        flushLogQueue();
+        getLogger().info("WardenLog disabled.");
+    }
+
+    /** Writes queued events to events.jsonl, rotating the file first if it is from a previous day. */
+    private synchronized void flushLogQueue() {
+        if (logQueue.isEmpty()) return;
+        rotateLogIfNeeded();
+        try (FileWriter fw = new FileWriter(logFile, true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+            String line;
+            while ((line = logQueue.poll()) != null) {
+                out.println(line);
+            }
+        } catch (IOException e) {
+            getLogger().severe("Failed to write to WardenLog events.jsonl: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Renames events.jsonl to events-YYYY-MM-DD.jsonl (the day it was last written) once a new day starts,
+     * and deletes archives older than log_retention_days. Without this the file grew forever on the SD card.
+     */
+    private void rotateLogIfNeeded() {
+        if (!logFile.exists() || logFile.length() == 0) return;
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate today = LocalDate.now(zone);
+        LocalDate fileDate = Instant.ofEpochMilli(logFile.lastModified()).atZone(zone).toLocalDate();
+        if (!fileDate.isBefore(today)) return;
+
+        File dir = logFile.getParentFile();
+        File archive = new File(dir, ARCHIVE_PREFIX + fileDate + ARCHIVE_SUFFIX);
+        if (archive.exists()) {
+            archive = new File(dir, ARCHIVE_PREFIX + fileDate + "-" + System.currentTimeMillis() + ARCHIVE_SUFFIX);
+        }
+        if (!logFile.renameTo(archive)) {
+            getLogger().warning("Failed to rotate events.jsonl to " + archive.getName());
+            return;
+        }
+
+        File[] archives = dir.listFiles((d, name) -> name.startsWith(ARCHIVE_PREFIX) && name.endsWith(ARCHIVE_SUFFIX));
+        if (archives == null) return;
+        LocalDate cutoff = today.minusDays(logRetentionDays);
+        for (File old : archives) {
+            String name = old.getName();
+            if (name.length() < ARCHIVE_PREFIX.length() + 10) continue;
+            try {
+                LocalDate date = LocalDate.parse(name.substring(ARCHIVE_PREFIX.length(), ARCHIVE_PREFIX.length() + 10));
+                if (date.isBefore(cutoff) && !old.delete()) {
+                    getLogger().warning("Failed to delete old log " + name);
                 }
-            } catch (IOException e) {
-                getLogger().severe("Failed to write remaining logs during shutdown: " + e.getMessage());
+            } catch (DateTimeParseException ignored) {
+                // not one of our archives
             }
         }
-        getLogger().info("WardenLog disabled.");
     }
 
     // Existing TNT listeners...

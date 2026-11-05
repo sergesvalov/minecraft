@@ -10,11 +10,11 @@ deploy:
 volumes:
   data: "/opt/minecraft/data"
 
+# mylib (dockerComposePipeline) always builds and pushes at least one image; compose itself
+# uses itzg/minecraft-server directly, so this one stays as the required minimum.
 images:
   - name: "minecraft"
     context: "."
-  - name: "minecraft-filebrowser"
-    context: "filebrowser"
 
 containers:
   - "mc-paper-geyser"

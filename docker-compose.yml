@@ -17,6 +17,12 @@ services:
       # Heap only; the JVM's real RSS is ~0.7 GB more. At 2G the server used
       # ~2.7 GB of the 4 GB Pi, leaving too little for builds and the OS.
       MEMORY: "1536M"
+      # Tuned G1 GC flags from the itzg image: shorter GC pauses on the Pi
+      USE_AIKAR_FLAGS: "true"
+      # Defaults are 10/10, too heavy for a Pi 4. Mobs, farms and redstone keep
+      # working within 6 chunks of a player; terrain is visible 8 chunks away.
+      VIEW_DISTANCE: "8"
+      SIMULATION_DISTANCE: "6"
       EULA: "true"
       TYPE: "PAPER"
       VERSION: "26.3"
@@ -28,7 +34,8 @@ services:
       ENABLE_RCON: "true"
       RCON_PASSWORD: "admin"
       # fastasyncworldedit is temporarily disabled due to download issues and missing 26.3 Modrinth files
-      MODRINTH_PROJECTS: "authmereloaded,squaremap,luckperms,gsit,axgraves"
+      # chunky: world pre-generation (chunk generation is the heaviest load on the Pi)
+      MODRINTH_PROJECTS: "authmereloaded,squaremap,luckperms,gsit,axgraves,chunky"
       PLUGINS: |
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
