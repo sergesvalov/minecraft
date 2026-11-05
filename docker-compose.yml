@@ -3,13 +3,20 @@ services:
   mc:
     image: itzg/minecraft-server:latest
     container_name: mc-paper-geyser
+    # rpi4 has 4 GB RAM and the Jenkins agent runs builds (Gradle/Maven JVMs) on
+    # the same host. When memory runs out, the kernel must kill the build, not
+    # the game: an OOM kill of the server is a crash without saving the world.
+    # 2026-11-05 the server got OOM-killed 3 times in a row and the host hung.
+    oom_score_adj: -500
     ports:
       - "25566:25565"          # Java Edition TCP
       - "19132:19132/udp"      # Bedrock Edition UDP
       - "25581:8080"           # Squaremap Web Interface
     environment:
       TZ: "Europe/Athens"
-      MEMORY: "2G"
+      # Heap only; the JVM's real RSS is ~0.7 GB more. At 2G the server used
+      # ~2.7 GB of the 4 GB Pi, leaving too little for builds and the OS.
+      MEMORY: "1536M"
       EULA: "true"
       TYPE: "PAPER"
       VERSION: "26.3"
