@@ -1,6 +1,7 @@
 package com.server.halloumi;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.CustomModelData;
 import io.papermc.paper.datacomponent.item.FoodProperties;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -22,7 +23,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/** A dish from the tavern menu (tavern.menu in config.yml): a vanilla item renamed, with its own food values. */
+/**
+ * A dish from the tavern menu (tavern.menu in config.yml): a vanilla item renamed, with its own food values.
+ * Each dish also carries the custom_model_data string {@code halloumitrader:<id>}: the optional resource pack
+ * (resourcepack/) draws its own icon for it, and without the pack the vanilla item model is used.
+ */
 record Dish(String id, String name, Material base, List<String> lore, int nutrition, float saturation,
             int price, int amount, PotionEffectType effect, int effectSeconds, Color color) {
 
@@ -50,7 +55,13 @@ record Dish(String id, String name, Material base, List<String> lore, int nutrit
                     .saturation(saturation)
                     .build());
         }
+        item.setData(DataComponentTypes.CUSTOM_MODEL_DATA, modelData(id));
         return item;
+    }
+
+    /** custom_model_data shared by the plugin, the Java resource pack and the Geyser mapping. */
+    static CustomModelData modelData(String id) {
+        return CustomModelData.customModelData().addString("halloumitrader:" + id).build();
     }
 
     static List<Dish> load(FileConfiguration cfg, Logger log) {

@@ -4,7 +4,7 @@
 
 A Paper 26.3 plugin with wandering halloumi traders and Cypriot taverns that generate in the world on their own.
 
-No client mods needed. Works for both Java and Bedrock players (via Geyser).
+No client mods needed. Works for both Java and Bedrock players (via Geyser). Dishes get their own icons from an optional [resource pack](../../resourcepack/README.md); without it they look like the vanilla items they are based on.
 
 The default in-game texts are in Russian; change them in `config.yml`.
 
@@ -138,4 +138,5 @@ On deploy, Jenkins removes old `HalloumiTrader-*.jar` files on the server and co
 - Traders are vanilla `WanderingTrader`s tagged in their `PersistentDataContainer`: `halloumitrader:halloumi_trader` (all halloumi traders), `halloumitrader:tavern_guest` (tavern guests), `halloumitrader:innkeeper`. The plugin cancels `VillagerAcquireTradeEvent` for them so vanilla trades are not added.
 - Leaving is handled by the vanilla `despawnDelay`. For the innkeeper it is 0 (never leaves), and its AI is off.
 - Food items are vanilla items with a `FOOD` component (Paper Data Component API), a name and a description. The coffee is a potion with a colour and an effect.
+- Every dish also carries the `custom_model_data` string `halloumitrader:<id>` (halloumi: `halloumitrader:halloumi`). The [resource pack](../../resourcepack/README.md) and the Geyser mapping draw the dish icons from it. A new dish added in `tavern.menu` needs a texture `resourcepack/src/textures/<id>.png` to get an icon; otherwise it stays vanilla-looking.
 - Generation is a `BlockPopulator` (`TavernPopulator`). It runs on world generation threads and only touches the `LimitedRegion`. The grid square and its candidate chunk are derived from the seed, like vanilla `random_spread` structures. The main thread adds the sign, the book and the innkeeper every 10 seconds once the tavern chunk and its entities are loaded.

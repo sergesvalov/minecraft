@@ -27,6 +27,8 @@
 
 Сборка любого плагина из `plugins-src`: `bash scripts/build-plugin.sh <ИмяПапки>`.
 
+Иконки блюд `HalloumiTrader` берутся из необязательного ресурспака в [resourcepack/](resourcepack/README_ru.md). Jenkins выкладывает Java-пак в GitHub-релиз `resourcepack-v<N>` (сервер предлагает его через `RESOURCE_PACK` в `docker-compose.yml`) и копирует Bedrock-пак и сопоставление Geyser в `data/plugins/Geyser-Spigot/`.
+
 ## 💾 Сохранность данных
 
 Все игровые данные хранятся на хост-сервере в директории деплоя:

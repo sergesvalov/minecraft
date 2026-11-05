@@ -1,0 +1,185 @@
+{
+  "format_version": 2,
+  "items": {
+    "minecraft:bread": [
+      {
+        "type": "definition",
+        "model": "minecraft:bread",
+        "bedrock_identifier": "halloumitrader:halloumi",
+        "display_name": "Халуми",
+        "bedrock_options": {
+          "icon": "halloumitrader_halloumi",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:halloumi",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:cooked_porkchop": [
+      {
+        "type": "definition",
+        "model": "minecraft:cooked_porkchop",
+        "bedrock_identifier": "halloumitrader:souvlaki",
+        "display_name": "Сувлаки",
+        "bedrock_options": {
+          "icon": "halloumitrader_souvlaki",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:souvlaki",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:cooked_rabbit": [
+      {
+        "type": "definition",
+        "model": "minecraft:cooked_rabbit",
+        "bedrock_identifier": "halloumitrader:sheftalia",
+        "display_name": "Шефталья",
+        "bedrock_options": {
+          "icon": "halloumitrader_sheftalia",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:sheftalia",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:cooked_mutton": [
+      {
+        "type": "definition",
+        "model": "minecraft:cooked_mutton",
+        "bedrock_identifier": "halloumitrader:kleftiko",
+        "display_name": "Клефтико",
+        "bedrock_options": {
+          "icon": "halloumitrader_kleftiko",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:kleftiko",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:baked_potato": [
+      {
+        "type": "definition",
+        "model": "minecraft:baked_potato",
+        "bedrock_identifier": "halloumitrader:moussaka",
+        "display_name": "Мусака",
+        "bedrock_options": {
+          "icon": "halloumitrader_moussaka",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:moussaka",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:cooked_beef": [
+      {
+        "type": "definition",
+        "model": "minecraft:cooked_beef",
+        "bedrock_identifier": "halloumitrader:keftedes",
+        "display_name": "Кефтедес",
+        "bedrock_options": {
+          "icon": "halloumitrader_keftedes",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:keftedes",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:dried_kelp": [
+      {
+        "type": "definition",
+        "model": "minecraft:dried_kelp",
+        "bedrock_identifier": "halloumitrader:koupepia",
+        "display_name": "Куппепья",
+        "bedrock_options": {
+          "icon": "halloumitrader_koupepia",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:koupepia",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:beetroot": [
+      {
+        "type": "definition",
+        "model": "minecraft:beetroot",
+        "bedrock_identifier": "halloumitrader:horiatiki",
+        "display_name": "Хориатики",
+        "bedrock_options": {
+          "icon": "halloumitrader_horiatiki",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:horiatiki",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:cookie": [
+      {
+        "type": "definition",
+        "model": "minecraft:cookie",
+        "bedrock_identifier": "halloumitrader:loukoumades",
+        "display_name": "Лукумадес",
+        "bedrock_options": {
+          "icon": "halloumitrader_loukoumades",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:loukoumades",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:potion": [
+      {
+        "type": "definition",
+        "model": "minecraft:potion",
+        "bedrock_identifier": "halloumitrader:coffee",
+        "display_name": "Кипрский кофе",
+        "bedrock_options": {
+          "icon": "halloumitrader_coffee",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:coffee",
+          "index": 0
+        }
+      }
+    ]
+  }
+}

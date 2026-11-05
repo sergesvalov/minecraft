@@ -1,0 +1,5 @@
+# Resource pack sources and build output: keep bytes exactly as built (the SHA1 is in docker-compose.yml)
+resourcepack/dist/** binary
+*.png binary
+*.zip binary
+*.mcpack binary

@@ -383,6 +383,7 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
                 .nutrition(cfg.getInt("halloumi.nutrition", 8))
                 .saturation((float) cfg.getDouble("halloumi.saturation", 12.8))
                 .build());
+        item.setData(DataComponentTypes.CUSTOM_MODEL_DATA, Dish.modelData("halloumi"));
         return item;
     }
 

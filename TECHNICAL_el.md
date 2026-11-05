@@ -27,6 +27,8 @@
 
 Για να χτίσετε οποιοδήποτε πρόσθετο από το `plugins-src`: `bash scripts/build-plugin.sh <ΌνομαΦακέλου>`.
 
+Τα εικονίδια των πιάτων του `HalloumiTrader` προέρχονται από ένα προαιρετικό πακέτο πόρων στο [resourcepack/](resourcepack/README.md). Το Jenkins ανεβάζει το πακέτο Java στο GitHub release `resourcepack-v<N>` (ο διακομιστής το προσφέρει μέσω του `RESOURCE_PACK` στο `docker-compose.yml`) και αντιγράφει το πακέτο Bedrock και την αντιστοίχιση του Geyser στο `data/plugins/Geyser-Spigot/`.
+
 ## 💾 Διατήρηση Δεδομένων
 
 Όλα τα δεδομένα του παιχνιδιού αποθηκεύονται στον κεντρικό διακομιστή (host) στον κατάλογο ανάπτυξης:

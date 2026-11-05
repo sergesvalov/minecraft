@@ -31,6 +31,14 @@ services:
       DIFFICULTY: "easy"
       MOTD: "Ο διακομιστής του Στεπάν και του Άλεξ"
       OPS: "papa"
+      # Optional Java resource pack with tavern dish icons (resourcepack/). Players may decline it:
+      # dishes then look like vanilla food. URL, SHA1 and ID are written by
+      # resourcepack/tools/build-packs.mjs; Jenkins uploads the zip to the GitHub release.
+      RESOURCE_PACK: "https://github.com/sergesvalov/minecraft/releases/download/resourcepack-v1/HalloumiPack.zip"
+      RESOURCE_PACK_SHA1: "b4b5b2dd78c368041a0fb53e99644113b091efc1"
+      RESOURCE_PACK_ID: "b44afdae-f7b3-4fdf-8ffe-ba9128351354"
+      RESOURCE_PACK_ENFORCE: "FALSE"
+      RESOURCE_PACK_PROMPT: '{"text":"Иконки блюд таверны «Халуми». Можно отказаться: еда будет обычной."}'
       ENABLE_RCON: "true"
       RCON_PASSWORD: "admin"
       # fastasyncworldedit is temporarily disabled due to download issues and missing 26.3 Modrinth files

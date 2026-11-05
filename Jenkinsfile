@@ -22,6 +22,17 @@ node('built-in') {
         sh 'bash scripts/build-plugin.sh HalloumiTrader'
     }
 
+    stage('Publish Resource Pack') {
+        // Java players download the optional pack from the GitHub release named in docker-compose.yml
+        // (RESOURCE_PACK). The script skips the upload when the release already has this exact zip.
+        // A failure only marks the build unstable: the pack is optional and the server works without it.
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+            withCredentials([string(credentialsId: 'git-access', variable: 'GH_TOKEN')]) {
+                sh 'bash resourcepack/tools/publish-release.sh'
+            }
+        }
+    }
+
     /*
     stage('Publish GitHub Release') {
         // Only publish when the build script actually compiled a new version
@@ -75,6 +86,7 @@ Lightweight Paper plugin for logging TNT, grief, and suspicious events.
             sudo chown -R \$(whoami) /opt/minecraft/data/plugins/WardenLog
             # Remove old custom plugin jars so only the versions copied below stay (avoids "Ambiguous plugin name")
             rm -f /opt/minecraft/data/plugins/WardenLog-*.jar /opt/minecraft/data/plugins/HalloumiTrader-*.jar
+            mkdir -p /opt/minecraft/data/plugins/Geyser-Spigot/packs /opt/minecraft/data/plugins/Geyser-Spigot/custom_mappings
             # Drop dangling images left by previous deploys (old :latest pulls, warden-monitor rebuilds).
             # They filled the SD card before 2026-11-05. Images used by containers are not touched.
             docker image prune -f || true
@@ -84,6 +96,9 @@ Lightweight Paper plugin for logging TNT, grief, and suspicious events.
             scp -o StrictHostKeyChecking=no -r scripts/* ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/scripts/
             scp -o StrictHostKeyChecking=no -r warden-monitor/* ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/warden-monitor/
             scp -o StrictHostKeyChecking=no data/plugins/*.jar ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/data/plugins/
+            # Bedrock side of the dish icons: resource pack and custom item mappings, loaded by Geyser on start
+            scp -o StrictHostKeyChecking=no resourcepack/dist/HalloumiPack.mcpack ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/data/plugins/Geyser-Spigot/packs/
+            scp -o StrictHostKeyChecking=no resourcepack/dist/halloumitrader.json ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/data/plugins/Geyser-Spigot/custom_mappings/
             
             # Make scripts executable
             ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'chmod +x /opt/minecraft/scripts/*.sh'
