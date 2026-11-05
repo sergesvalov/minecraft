@@ -17,7 +17,8 @@ node('built-in') {
 
     stage('Build Plugins') {
         // Запуск локального скрипта сборки плагина. Он сам проверит версию и пропустит сборку, если JAR уже есть.
-        sh 'bash scripts/build-warden.sh'
+        sh 'bash scripts/build-plugin.sh WardenLog'
+        sh 'bash scripts/build-plugin.sh HalloumiTrader'
     }
 
     /*
@@ -71,6 +72,8 @@ Lightweight Paper plugin for logging TNT, grief, and suspicious events.
             mkdir -p /opt/minecraft/warden-monitor
             mkdir -p /opt/minecraft/data/plugins/WardenLog
             sudo chown -R \$(whoami) /opt/minecraft/data/plugins/WardenLog
+            # Remove old custom plugin jars so only the versions copied below stay (avoids "Ambiguous plugin name")
+            rm -f /opt/minecraft/data/plugins/WardenLog-*.jar /opt/minecraft/data/plugins/HalloumiTrader-*.jar
             '
             
             # Force copy scripts and warden-monitor from repository to server

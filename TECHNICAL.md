@@ -21,6 +21,11 @@ The Jenkins pipeline (`Jenkinsfile`) automatically:
 2. Skips building if the version hasn't changed.
 3. Copies the compiled `.jar` file to `/opt/minecraft/data/plugins/` on the production server.
 4. Pre-creates the `WardenLog` directory and sets correct permissions before starting the containers to avoid Docker root ownership conflicts.
+5. Before copying, removes old `WardenLog-*.jar` and `HalloumiTrader-*.jar` versions on the server to avoid duplicates (`Ambiguous plugin name`).
+
+The second custom plugin is `HalloumiTrader`, a wandering trader that sells halloumi. See [plugins-src/HalloumiTrader/README.md](plugins-src/HalloumiTrader/README.md).
+
+To build any plugin from `plugins-src`: `bash scripts/build-plugin.sh <FolderName>`.
 
 ## 💾 Data Persistence
 

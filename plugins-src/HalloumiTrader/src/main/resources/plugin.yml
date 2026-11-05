@@ -1,0 +1,15 @@
+name: HalloumiTrader
+version: '${project.version}'
+main: com.server.halloumi.HalloumiTraderPlugin
+api-version: '1.20'
+author: AI
+description: Wandering trader that sells halloumi.
+commands:
+  halloumi:
+    description: Halloumi trader admin commands
+    usage: /halloumi <spawn|random|give [amount]|count|reload>
+    permission: halloumi.admin
+permissions:
+  halloumi.admin:
+    description: Spawn the halloumi trader and get halloumi for testing
+    default: op
