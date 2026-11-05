@@ -33,6 +33,9 @@ if [ -f "$JAR_PATH" ]; then
 fi
 
 echo "🏗️ Сборка плагина $PLUGIN (версия $PLUGIN_VERSION) через Docker..."
+# Каталог кэша Maven должен существовать заранее: иначе Docker создаст его от root
+# при монтировании, и mvn (запущенный от пользователя Jenkins) не сможет в него писать.
+mkdir -p "$PROJECT_ROOT/.m2"
 docker run --rm \
     -u "$(id -u):$(id -g)" \
     -v "$PLUGIN_DIR:/usr/src/app" \
