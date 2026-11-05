@@ -22,6 +22,8 @@ To protect players' inventory and builds, the **AuthMeReloaded** plugin is used:
 A player with the username **`papa`** is the superadmin and automatically receives and retains vanilla operator rights upon login. 
 For all other admins, you can simply issue the `/op <nickname>` command in-game. A background daemon (`scripts/auto-perms.sh`) automatically scans for newly opped players every night at 03:00 AM. It grants them the full `admin` group in **LuckPerms** and immediately revokes their vanilla OP for security.
 
+The superadmin `papa` is allowed more than the other admins. Such abilities sit behind a dedicated permission: `auto-perms.sh` explicitly grants it to `papa` and explicitly denies it to group `admin` (which has `*`, so otherwise every admin would get it). Currently this is `halloumi.tavern`, building a tavern with `/halloumi tavern`.
+
 ### 4. Interactive Web Map (Squaremap)
 The server runs the Squaremap plugin, which generates a fast and smooth 2D map of your world in real-time.
 🌍 **`http://<SERVER_IP>:25581`**

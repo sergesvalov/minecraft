@@ -15,6 +15,11 @@ echo "[Auto-Perms] Запущен фоновый демон (режим выда
   rcon-cli "lp group admin permission set essentials.tp.override false floodgate=true" > /dev/null 2>&1
   rcon-cli "lp group admin permission set essentials.tpo false floodgate=true" > /dev/null 2>&1
 
+  # Суперадмин papa: права, которых нет у обычных админов.
+  # Группа admin имеет "*", поэтому такие права у неё нужно явно запретить.
+  rcon-cli "lp group admin permission set halloumi.tavern false" > /dev/null 2>&1
+  rcon-cli "lp user papa permission set halloumi.tavern true" > /dev/null 2>&1
+
   # Бесконечный цикл работы скрипта
   while true; do
     echo "[Auto-Perms] Проверяем ops.json на наличие новых операторов..."

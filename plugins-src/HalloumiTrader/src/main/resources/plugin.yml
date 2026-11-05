@@ -3,13 +3,17 @@ version: '${project.version}'
 main: com.server.halloumi.HalloumiTraderPlugin
 api-version: '1.20'
 author: AI
-description: Wandering trader that sells halloumi.
+description: Wandering halloumi traders and generated Cypriot taverns.
 commands:
   halloumi:
-    description: Halloumi trader admin commands
-    usage: /halloumi <spawn|random|give [amount]|count|reload>
-    permission: halloumi.admin
+    description: Halloumi trader and tavern commands
+    usage: /halloumi <spawn|random|give [amount]|count|taverns|reload|tavern [style]>
 permissions:
   halloumi.admin:
-    description: Spawn the halloumi trader and get halloumi for testing
+    description: Spawn traders, get halloumi, list taverns, reload config
     default: op
+  halloumi.tavern:
+    # Superadmin only. Not given to ops by default: the LuckPerms group "admin" has "*",
+    # so scripts/auto-perms.sh explicitly denies it there and grants it to papa.
+    description: Build a tavern in front of you
+    default: false

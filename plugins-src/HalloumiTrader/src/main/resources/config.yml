@@ -34,3 +34,112 @@ halloumi:
   # 8 / 12.8 — как у стейка
   nutrition: 8
   saturation: 12.8
+
+# ---------------------------------------------------------------------------
+# Таверны: генерируются сами в новых чанках обычного мира.
+# Мир делится на квадраты spacing-chunks x spacing-chunks чанков; в каждом не больше
+# одной таверны, и то с шансом chance — если там ровная естественная земля и подходящий биом.
+# Стиль постройки зависит от биома (равнины — дуб, тайга — ель, пустыня — песчаник и т.д.).
+tavern:
+  enabled: true
+  worlds: [world]
+  # 48 чанков = ~770 блоков: найти сложно, но можно
+  spacing-chunks: 48
+  chance: 0.6
+  # Максимальный перепад высоты под таверной
+  max-slope: 3
+  # Странствующий торговец халуми подсказывает, где ближайшая таверна
+  hints: true
+  innkeeper-name: "Трактирщик"
+  # Сколько раз можно купить каждое блюдо, потом трактирщик пополняет запасы
+  innkeeper-max-uses: 64
+  sign:
+    - ""
+    - "Таверна"
+    - "«Халуми»"
+    - ""
+  # Гости: странствующие торговцы халуми, которые заходят, когда рядом есть игроки
+  guests:
+    max: 2
+    # Шанс за проверку (раз в 10 секунд), если игрок ближе player-radius блоков
+    chance: 0.04
+    player-radius: 48
+
+  # Меню трактирщика (халуми из раздела halloumi идёт первым) и книга на кафедре у входа.
+  # item — ванильный предмет, на котором основано блюдо; nutrition/saturation — сколько оно насыщает.
+  menu-title: "Меню"
+  menu-intro: "Кипрское мезе. Цены в изумрудах, заказ — у трактирщика за стойкой."
+  menu:
+    - id: souvlaki
+      name: "Сувлаки"
+      item: cooked_porkchop
+      lore: ["Шашлычки из свинины на углях"]
+      nutrition: 8
+      saturation: 12.8
+      price: 3
+      amount: 3
+    - id: sheftalia
+      name: "Шефталья"
+      item: cooked_rabbit
+      lore: ["Колбаски из фарша с зеленью на углях"]
+      nutrition: 6
+      saturation: 7.2
+      price: 2
+      amount: 4
+    - id: kleftiko
+      name: "Клефтико"
+      item: cooked_mutton
+      lore: ["Ягнёнок, томлённый в глиняной печи"]
+      nutrition: 10
+      saturation: 16
+      price: 4
+      amount: 2
+    - id: moussaka
+      name: "Мусака"
+      item: baked_potato
+      lore: ["Запеканка из баклажанов, картофеля и фарша"]
+      nutrition: 9
+      saturation: 11
+      price: 3
+      amount: 3
+    - id: keftedes
+      name: "Кефтедес"
+      item: cooked_beef
+      lore: ["Жареные тефтели с мятой"]
+      nutrition: 6
+      saturation: 7.2
+      price: 2
+      amount: 4
+    - id: koupepia
+      name: "Куппепья"
+      item: dried_kelp
+      lore: ["Виноградные листья с рисом и мясом"]
+      nutrition: 4
+      saturation: 4.8
+      price: 1
+      amount: 6
+    - id: horiatiki
+      name: "Хориатики"
+      item: beetroot
+      lore: ["Деревенский салат: томаты, огурцы, фета, оливки"]
+      nutrition: 5
+      saturation: 6
+      price: 1
+      amount: 4
+    - id: loukoumades
+      name: "Лукумадес"
+      item: cookie
+      lore: ["Пончики в медовом сиропе"]
+      nutrition: 4
+      saturation: 2.4
+      price: 1
+      amount: 6
+    - id: coffee
+      name: "Кипрский кофе"
+      item: potion
+      lore: ["Крепкий, из медной турки. Бодрит!"]
+      effect: speed
+      effect-seconds: 60
+      color: "#6F4E37"
+      price: 1
+      amount: 1
