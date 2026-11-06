@@ -86,7 +86,7 @@ Names, descriptions, food values and prices are set in `tavern.menu`, where you 
 | `halloumi.admin` | ops | All commands except `tavern` |
 | `halloumi.tavern` | nobody | Building a tavern by command |
 
-In this project **papa is the superadmin** and is allowed more than the other admins. The other admins get the LuckPerms group `admin` with `*`, so on server start `scripts/auto-perms.sh` explicitly denies `halloumi.tavern` to group `admin` and grants it to papa.
+In this project **papa is the superadmin** and is allowed more than the other admins. Operators don't get `halloumi.tavern` (`default: false`). On every server start, `RCON_CMDS_STARTUP` in `docker-compose.yml` grants it to papa through LuckPerms.
 
 ## Configuration
 

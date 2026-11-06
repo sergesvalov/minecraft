@@ -31,6 +31,13 @@ services:
       DIFFICULTY: "easy"
       MOTD: "Ο διακομιστής του Στεπάν και του Άλεξ"
       OPS: "papa"
+      # Run by the image itself once the server is up, one command per line. Superadmin papa:
+      # - "op papa" goes through the server, so ops.json gets papa's offline UUID; OPS above can
+      #   write the online Mojang UUID, and then papa is not an operator (2026-11-06).
+      # - halloumi.tavern has "default: false": other ops don't get it, only papa.
+      RCON_CMDS_STARTUP: |-
+        op papa
+        lp user papa permission set halloumi.tavern true
       # Optional Java resource pack with tavern dish icons (resourcepack/). Players may decline it:
       # dishes then look like vanilla food. URL, SHA1 and ID are written by
       # resourcepack/tools/build-packs.mjs; Jenkins uploads the zip to the GitHub release.
@@ -51,9 +58,6 @@ services:
         # https://github.com/IntellectualSites/FastAsyncWorldEdit/releases/latest/download/FastAsyncWorldEdit-Bukkit.jar
     volumes:
       - ./data:/data           # Data will be stored in /opt/minecraft/data on host
-      - ./scripts/auto-patch-authme.sh:/custom-init.d/auto-patch-authme.sh:ro
-      - ./scripts/auto-perms.sh:/custom-init.d/auto-perms.sh:ro
-      - ./scripts/auto-patch-geyser.sh:/custom-init.d/auto-patch-geyser.sh:ro
     restart: unless-stopped
 
   # Convenient web interface for downloading mods/plugins and editing configs

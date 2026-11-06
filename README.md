@@ -18,11 +18,11 @@ To protect players' inventory and builds, the **AuthMeReloaded** plugin is used:
 - Java players create their password upon first login: `/register password password`, and then authenticate using `/login password`.
 - Bedrock players also **must register**, using chat commands (just like Java players). Temporarily, auto-login for them is disabled due to version incompatibility.
 
-### 3. Automatic Administrator Rights (LuckPerms Daemon)
-A player with the username **`papa`** is the superadmin and automatically receives and retains vanilla operator rights upon login. 
-For all other admins, you can simply issue the `/op <nickname>` command in-game. A background daemon (`scripts/auto-perms.sh`) automatically scans for newly opped players every night at 03:00 AM. It grants them the full `admin` group in **LuckPerms** and immediately revokes their vanilla OP for security.
+### 3. Administrator Rights
+A player with the username **`papa`** is the superadmin. On every server start, the server gives papa operator rights again (`RCON_CMDS_STARTUP` in `docker-compose.yml`).
+To make another player an admin, issue `/op <nickname>` in-game. They stay a regular operator.
 
-The superadmin `papa` is allowed more than the other admins. Such abilities sit behind a dedicated permission: `auto-perms.sh` explicitly grants it to `papa` and explicitly denies it to group `admin` (which has `*`, so otherwise every admin would get it). Currently this is `halloumi.tavern`, building a tavern with `/halloumi tavern`.
+The superadmin `papa` is allowed more than the other admins. Such abilities sit behind a dedicated permission that operators don't get by default. On every start the server grants it to `papa` through **LuckPerms**. Currently this is `halloumi.tavern`, building a tavern with `/halloumi tavern`.
 
 ### 4. Interactive Web Map (Squaremap)
 The server runs the Squaremap plugin, which generates a fast and smooth 2D map of your world in real-time.

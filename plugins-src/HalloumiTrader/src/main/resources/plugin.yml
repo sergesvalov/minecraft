@@ -13,7 +13,7 @@ permissions:
     description: Spawn traders, get halloumi, list taverns, reload config
     default: op
   halloumi.tavern:
-    # Superadmin only. Not given to ops by default: the LuckPerms group "admin" has "*",
-    # so scripts/auto-perms.sh explicitly denies it there and grants it to papa.
+    # Superadmin only, not given to ops. RCON_CMDS_STARTUP in docker-compose.yml grants it
+    # to papa through LuckPerms on every server start.
     description: Build a tavern in front of you
     default: false
