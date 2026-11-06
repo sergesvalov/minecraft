@@ -22,6 +22,12 @@ echo "[Auto-Perms] Запущен фоновый демон (режим выда
 
   # Бесконечный цикл работы скрипта
   while true; do
+    # Суперадмин papa всегда остаётся ванильным OP. OPS из docker-compose пишет ops.json
+    # до старта сервера и при ONLINE_MODE=false может записать чужой (онлайн) UUID.
+    # Команда op через RCON идёт через сам сервер, поэтому берёт оффлайн-UUID,
+    # с которым papa реально заходит.
+    rcon-cli "op papa" > /dev/null 2>&1
+
     echo "[Auto-Perms] Проверяем ops.json на наличие новых операторов..."
     
     if [ -f "/data/ops.json" ]; then
@@ -36,7 +42,8 @@ echo "[Auto-Perms] Запущен фоновый демон (режим выда
       if [ -n "$ALL_OPS" ]; then
         echo "$ALL_OPS" | while IFS= read -r player; do
           if [ -n "$player" ]; then
-            if [ "$player" = "papa" ]; then
+            # Без учёта регистра: "Papa" из ops.json — тоже суперадмин, его нельзя деопать
+            if [ "$(printf '%s' "$player" | tr '[:upper:]' '[:lower:]')" = "papa" ]; then
               echo "[Auto-Perms] Пропускаем суперадмина: $player (оставляем ванильный OP)"
               continue
             fi
