@@ -14,10 +14,9 @@
 | `tools/make-icons.mjs` | Рисует иконки в `src/textures/`. Без зависимостей; поправь фигуру и перезапусти |
 | `src/textures/<id>.png` | Иконки, по одной на каждый `id` блюда из `tavern.menu` (и `halloumi`) |
 | `tools/build-packs.mjs` | Собирает всё в `dist/` и прописывает URL, SHA1 и ID пака в `docker-compose.yml` |
-| `dist/HalloumiPack.zip` | Java-пак |
+| `dist/HalloumiPack.zip` | Java-пак. Java-игроки скачивают его прямо из этого репозитория (`raw.githubusercontent.com`, ветка `main`) |
 | `dist/HalloumiPack.mcpack` | Bedrock-пак, кладётся в `plugins/Geyser-Spigot/packs/` |
 | `dist/halloumitrader.json` | Сопоставление предметов для Geyser (формат v2), кладётся в `plugins/Geyser-Spigot/custom_mappings/` |
-| `tools/publish-release.sh` | Выкладывает Java-zip в GitHub-релиз `resourcepack-v<N>` |
 
 ## Как иконка находит блюдо
 
@@ -37,12 +36,13 @@ node resourcepack/tools/build-packs.mjs
 git add resourcepack docker-compose.yml
 ```
 
-Поднимай `PACK_VERSION` при любом изменении: выложенный релиз не перезаписывается, а Bedrock-клиенты кэшируют паки по версии. Новое блюдо без текстуры просто остаётся ванильным.
+Поднимай `PACK_VERSION` при любом изменении: Bedrock-клиенты кэшируют паки по версии. Java-клиенты узнают новый zip по SHA1. Новое блюдо без текстуры просто остаётся ванильным.
 
-При пуше Jenkins:
+После пуша новый zip сразу доступен в `main`, а Jenkins:
 
-1. Запускает `publish-release.sh` с токеном `git-access`. Скрипт создаёт релиз `resourcepack-v<N>` и загружает zip, а если такой zip там уже есть — ничего не делает. Если что-то пошло не так, сборка помечается нестабильной, но деплой продолжается.
-2. Копирует `.mcpack` и сопоставление в папки Geyser на сервере.
-3. Перезапускает сервер через `docker compose up -d`, потому что изменился `docker-compose.yml`.
+1. Копирует `.mcpack` и сопоставление в папки Geyser на сервере.
+2. Перезапускает сервер через `docker compose up -d`, потому что изменился `docker-compose.yml`.
+
+До этого перезапуска сервер ещё сообщает старый SHA1, поэтому Java-игрок, зашедший в эти несколько минут, увидит ошибку загрузки пака и будет играть без иконок.
 
 Zip пишется без сжатия и с фиксированными датами, поэтому из одних и тех же исходников всегда получается один и тот же SHA1.

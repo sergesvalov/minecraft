@@ -22,17 +22,6 @@ node('built-in') {
         sh 'bash scripts/build-plugin.sh HalloumiTrader'
     }
 
-    stage('Publish Resource Pack') {
-        // Java players download the optional pack from the GitHub release named in docker-compose.yml
-        // (RESOURCE_PACK). The script skips the upload when the release already has this exact zip.
-        // A failure only marks the build unstable: the pack is optional and the server works without it.
-        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-            withCredentials([string(credentialsId: 'git-access', variable: 'GH_TOKEN')]) {
-                sh 'bash resourcepack/tools/publish-release.sh'
-            }
-        }
-    }
-
     /*
     stage('Publish GitHub Release') {
         // Only publish when the build script actually compiled a new version

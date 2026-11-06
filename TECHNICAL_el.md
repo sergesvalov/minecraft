@@ -27,7 +27,7 @@
 
 Για να χτίσετε οποιοδήποτε πρόσθετο από το `plugins-src`: `bash scripts/build-plugin.sh <ΌνομαΦακέλου>`.
 
-Τα εικονίδια των πιάτων του `HalloumiTrader` προέρχονται από ένα προαιρετικό πακέτο πόρων στο [resourcepack/](resourcepack/README.md). Το Jenkins ανεβάζει το πακέτο Java στο GitHub release `resourcepack-v<N>` (ο διακομιστής το προσφέρει μέσω του `RESOURCE_PACK` στο `docker-compose.yml`) και αντιγράφει το πακέτο Bedrock και την αντιστοίχιση του Geyser στο `data/plugins/Geyser-Spigot/`.
+Τα εικονίδια των πιάτων του `HalloumiTrader` προέρχονται από ένα προαιρετικό πακέτο πόρων στο [resourcepack/](resourcepack/README.md). Οι παίκτες Java κατεβάζουν το πακέτο απευθείας από αυτό το αποθετήριο (ο διακομιστής το προσφέρει μέσω του `RESOURCE_PACK` στο `docker-compose.yml`). Το Jenkins αντιγράφει το πακέτο Bedrock και την αντιστοίχιση του Geyser στο `data/plugins/Geyser-Spigot/`.
 
 ## 💾 Διατήρηση Δεδομένων
 

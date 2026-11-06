@@ -27,7 +27,7 @@ The second custom plugin is `HalloumiTrader`, a wandering trader that sells hall
 
 To build any plugin from `plugins-src`: `bash scripts/build-plugin.sh <FolderName>`.
 
-Dish icons for `HalloumiTrader` come from an optional resource pack in [resourcepack/](resourcepack/README.md). Jenkins uploads the Java pack to the GitHub release `resourcepack-v<N>` (the server offers it through `RESOURCE_PACK` in `docker-compose.yml`) and copies the Bedrock pack and Geyser mapping to `data/plugins/Geyser-Spigot/`.
+Dish icons for `HalloumiTrader` come from an optional resource pack in [resourcepack/](resourcepack/README.md). Java players download the pack straight from this repo (the server offers it through `RESOURCE_PACK` in `docker-compose.yml`). Jenkins copies the Bedrock pack and Geyser mapping to `data/plugins/Geyser-Spigot/`.
 
 ## 💾 Data Persistence
 

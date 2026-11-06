@@ -14,10 +14,9 @@ Optional icons for the tavern dishes of the [HalloumiTrader](../plugins-src/Hall
 | `tools/make-icons.mjs` | Draws the icons into `src/textures/`. No dependencies; edit a shape there and rerun it |
 | `src/textures/<id>.png` | Icons, one per dish `id` from `tavern.menu` (plus `halloumi`) |
 | `tools/build-packs.mjs` | Builds everything in `dist/` and writes the pack URL, SHA1 and ID into `docker-compose.yml` |
-| `dist/HalloumiPack.zip` | Java pack |
+| `dist/HalloumiPack.zip` | Java pack. Java players download it straight from this repo (`raw.githubusercontent.com`, branch `main`) |
 | `dist/HalloumiPack.mcpack` | Bedrock pack, goes to `plugins/Geyser-Spigot/packs/` |
 | `dist/halloumitrader.json` | Geyser custom item mappings (format v2), go to `plugins/Geyser-Spigot/custom_mappings/` |
-| `tools/publish-release.sh` | Uploads the Java zip to the GitHub release `resourcepack-v<N>` |
 
 ## How the icons are matched
 
@@ -37,12 +36,13 @@ node resourcepack/tools/build-packs.mjs
 git add resourcepack docker-compose.yml
 ```
 
-Always bump `PACK_VERSION` when the content changes: a published release is never overwritten, and Bedrock clients cache packs by version. A new dish without a texture keeps the vanilla look.
+Always bump `PACK_VERSION` when the content changes: Bedrock clients cache packs by version. Java clients pick up the new zip by its SHA1. A new dish without a texture keeps the vanilla look.
 
-On push, Jenkins:
+On push, the new zip is available on `main` right away, and Jenkins:
 
-1. Runs `publish-release.sh` with the `git-access` token. It creates the release `resourcepack-v<N>` and uploads the zip, or does nothing if that exact zip is already there. If it fails, the build is marked unstable and the deploy continues.
-2. Copies the `.mcpack` and the mapping into the Geyser folders on the server.
-3. Restarts the server through `docker compose up -d` because `docker-compose.yml` changed.
+1. Copies the `.mcpack` and the mapping into the Geyser folders on the server.
+2. Restarts the server through `docker compose up -d` because `docker-compose.yml` changed.
+
+Until that restart, the server still announces the old SHA1, so a Java player who joins in those few minutes is told the download failed and plays without icons.
 
 The zips are written uncompressed with fixed dates, so the same sources always give the same SHA1.

@@ -40,8 +40,8 @@ services:
         lp user papa permission set halloumi.tavern true
       # Optional Java resource pack with tavern dish icons (resourcepack/). Players may decline it:
       # dishes then look like vanilla food. URL, SHA1 and ID are written by
-      # resourcepack/tools/build-packs.mjs; Jenkins uploads the zip to the GitHub release.
-      RESOURCE_PACK: "https://github.com/sergesvalov/minecraft/releases/download/resourcepack-v1/HalloumiPack.zip"
+      # resourcepack/tools/build-packs.mjs; the zip is served from the repo (resourcepack/dist on main).
+      RESOURCE_PACK: "https://raw.githubusercontent.com/sergesvalov/minecraft/main/resourcepack/dist/HalloumiPack.zip"
       RESOURCE_PACK_SHA1: "b4b5b2dd78c368041a0fb53e99644113b091efc1"
       RESOURCE_PACK_ID: "b44afdae-f7b3-4fdf-8ffe-ba9128351354"
       RESOURCE_PACK_ENFORCE: "FALSE"

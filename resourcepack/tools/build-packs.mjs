@@ -212,7 +212,9 @@ writeFileSync(join(dist, 'halloumitrader.json'), geyserMappings(dishes));
 writeFileSync(join(dist, 'pack-version.txt'), `${PACK_VERSION}\n`);
 
 const sha1 = createHash('sha1').update(java).digest('hex');
-const url = `https://github.com/${REPO}/releases/download/resourcepack-v${PACK_VERSION}/HalloumiPack.zip`;
+// Served straight from the public repo: the committed zip and this SHA1 land on main together.
+// No GitHub release, so the Jenkins build needs no API token.
+const url = `https://raw.githubusercontent.com/${REPO}/main/resourcepack/dist/HalloumiPack.zip`;
 let compose = readFileSync(composePath, 'utf8');
 const set = (k, v) => {
   const re = new RegExp(`^(\\s+${k}: ).*$`, 'm');
