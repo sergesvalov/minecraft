@@ -19,7 +19,7 @@ import { crc32 } from 'node:zlib';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const PACK_VERSION = 1;
+const PACK_VERSION = 2;
 const NS = 'halloumitrader';
 const REPO = 'sergesvalov/minecraft';
 const JAVA_PACK_ID = 'b44afdae-f7b3-4fdf-8ffe-ba9128351354'; // RESOURCE_PACK_ID: lets clients replace the cached copy

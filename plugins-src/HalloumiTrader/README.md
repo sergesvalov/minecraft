@@ -50,6 +50,16 @@ Taverns generate on their own in **new** overworld chunks, like villages. They d
 - **The innkeeper** always stands behind the counter. It doesn't move and can't be damaged. If it disappears (say, killed by a creative-mode player), a new one appears within seconds. When a dish sells out, the innkeeper restocks.
 - **Guests.** While a player is within 48 blocks, wandering halloumi traders sometimes drop in, at most two at a time. They leave after 30 minutes.
 
+### Guesthouse
+
+Next to every tavern stands a guesthouse in the same style: four times the tavern's floor area, two storeys.
+
+- **Ground floor**: a dining hall with two long tables and two small ones, a serving counter, barrels and smokers along the back wall, stairs up.
+- **Upper floor**: a corridor and eight bedrooms, white and blue, each with two beds, a barrel and a lantern.
+- **Yard** in front of the house: a fence with three gates, six tables with chairs, lanterns, and a mangal (three campfires, a smoker and a barrel). A path leads from the tavern door to the side gate.
+
+The house is built east of the tavern, or west if the east side doesn't fit. It is built in the live world, a few seconds after the chunks around the tavern have loaded, and only on roughly level natural ground with nothing but plants and trees: a house never replaces player builds. If neither side fits, the tavern stays without a house. Taverns generated before plugin 1.3 get their house the same way.
+
 ### Innkeeper's menu: Cypriot meze
 
 | Dish | What it is | Item | Per trade | Price |
@@ -63,14 +73,20 @@ Taverns generate on their own in **new** overworld chunks, like villages. They d
 | Куппепья (koupepia) | Vine leaves stuffed with rice and meat | dried kelp | 6 | 1 |
 | Хориатики (horiatiki) | Village salad: tomato, cucumber, feta, olives | beetroot | 4 | 1 |
 | Лукумадес (loukoumades) | Honey-syrup doughnuts | cookie | 6 | 1 |
+| Пастицио (pastitsio) | Baked macaroni with mince under béchamel and halloumi | pumpkin pie | 3 | 3 |
+| Рыбное мезе (fish meze) | Grilled red mullet, calamari and octopus with lemon | cooked cod | 2 | 4 |
+| Афелия (afelia) | Pork braised in red wine with coriander | rabbit stew | 1 | 3 |
+| Флаунес (flaounes) | Easter cheese pastries with raisins and sesame | bread | 4 | 1 |
+| Суджукос (soutzoukos) | Almonds dipped in thickened grape juice | melon slice | 6 | 1 |
 | Кипрский кофе (Cyprus coffee) | Strong, brewed in a copper pot | potion: Speed, 60 s | 1 | 1 |
 
-Names, descriptions, food values and prices are set in `tavern.menu`, where you can also add dishes.
+Names, descriptions, food values and prices are set in `tavern.menu`, where you can also add dishes. Dishes added to the default menu in a newer plugin version are appended to an existing `config.yml` once, on startup (`tavern.menu-version`).
 
 ## Commands
 
 | Command | Who | What it does |
 |---|---|---|
+| `/halloumi inn [style]` | **superadmin papa only** | Builds a tavern with its guesthouse and yard in front of you: the yard fence 3 blocks to the north, the tavern to the north-west. Styles as for `tavern` |
 | `/halloumi tavern [style]` | **superadmin papa only** | Builds a tavern right in front of you (door 3 blocks to the north) with an innkeeper, sign and menu. Style comes from the biome or is given explicitly: `oak`, `spruce`, `birch`, `acacia`, `sandstone`, `cherry`, `dark_oak`, `jungle` |
 | `/halloumi spawn` | ops | Summons a halloumi trader 2 blocks in front of you |
 | `/halloumi random` | ops | Runs a random visit now, skipping the chance roll and the trader limit |
@@ -85,8 +101,9 @@ Names, descriptions, food values and prices are set in `tavern.menu`, where you 
 |---|---|---|
 | `halloumi.admin` | ops | All commands except `tavern` |
 | `halloumi.tavern` | nobody | Building a tavern by command |
+| `halloumi.inn` | nobody | Building a tavern with a guesthouse by command |
 
-In this project **papa is the superadmin** and is allowed more than the other admins. Operators don't get `halloumi.tavern` (`default: false`). On every server start, `RCON_CMDS_STARTUP` in `docker-compose.yml` grants it to papa through LuckPerms.
+In this project **papa is the superadmin** and is allowed more than the other admins. Operators don't get `halloumi.tavern` and `halloumi.inn` (`default: false`). On every server start, `RCON_CMDS_STARTUP` in `docker-compose.yml` grants them to papa through LuckPerms.
 
 ## Configuration
 
@@ -115,11 +132,13 @@ File on the server: `/opt/minecraft/data/plugins/HalloumiTrader/config.yml`. It 
 | `tavern.sign` | `Таверна «Халуми»` | Four lines of the sign above the door |
 | `tavern.guests.max` / `chance` / `player-radius` | `2` / `0.04` / `48` | Guests: max, chance per check (every 10 s), distance to a player |
 | `tavern.menu-title` / `menu-intro` | `Меню` / … | Title and first page of the menu book |
-| `tavern.menu` | 9 dishes | Innkeeper's menu: `id`, `name`, `item`, `lore`, `nutrition`, `saturation`, `price`, `amount`; potion drinks also take `effect`, `effect-seconds`, `color` |
+| `tavern.house.enabled` | `true` | Build guesthouses next to taverns |
+| `tavern.house.sign` | `Гостевой дом «Халуми»` | Four lines of the sign above the guesthouse door |
+| `tavern.menu` | 14 dishes | Innkeeper's menu: `id`, `name`, `item`, `lore`, `nutrition`, `saturation`, `price`, `amount`; potion drinks also take `effect`, `effect-seconds`, `color` |
 
-Wandering traders already in the world keep their old trades. The innkeeper picks up a new menu when the number of dishes changes or something sells out. The sign and the book are written once, when the tavern is first loaded.
+Wandering traders already in the world keep their old trades. The innkeeper picks up a new menu when the number of dishes changes or something sells out. The sign is written once, when the tavern is first loaded; the menu book also gets rewritten whenever the number of dishes changes.
 
-Known taverns are stored in `data/plugins/HalloumiTrader/taverns.txt`.
+Known taverns are stored in `data/plugins/HalloumiTrader/taverns.txt`, together with whether and on which side their guesthouse stands.
 
 ## Build and deploy
 

@@ -17,6 +17,22 @@
           "value": "halloumitrader:halloumi",
           "index": 0
         }
+      },
+      {
+        "type": "definition",
+        "model": "minecraft:bread",
+        "bedrock_identifier": "halloumitrader:flaounes",
+        "display_name": "Флаунес",
+        "bedrock_options": {
+          "icon": "halloumitrader_flaounes",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:flaounes",
+          "index": 0
+        }
       }
     ],
     "minecraft:cooked_porkchop": [
@@ -159,6 +175,78 @@
           "type": "match",
           "property": "custom_model_data",
           "value": "halloumitrader:loukoumades",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:pumpkin_pie": [
+      {
+        "type": "definition",
+        "model": "minecraft:pumpkin_pie",
+        "bedrock_identifier": "halloumitrader:pastitsio",
+        "display_name": "Пастицио",
+        "bedrock_options": {
+          "icon": "halloumitrader_pastitsio",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:pastitsio",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:cooked_cod": [
+      {
+        "type": "definition",
+        "model": "minecraft:cooked_cod",
+        "bedrock_identifier": "halloumitrader:fish_meze",
+        "display_name": "Рыбное мезе",
+        "bedrock_options": {
+          "icon": "halloumitrader_fish_meze",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:fish_meze",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:rabbit_stew": [
+      {
+        "type": "definition",
+        "model": "minecraft:rabbit_stew",
+        "bedrock_identifier": "halloumitrader:afelia",
+        "display_name": "Афелия",
+        "bedrock_options": {
+          "icon": "halloumitrader_afelia",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:afelia",
+          "index": 0
+        }
+      }
+    ],
+    "minecraft:melon_slice": [
+      {
+        "type": "definition",
+        "model": "minecraft:melon_slice",
+        "bedrock_identifier": "halloumitrader:soutzoukos",
+        "display_name": "Суджукос",
+        "bedrock_options": {
+          "icon": "halloumitrader_soutzoukos",
+          "allow_offhand": true
+        },
+        "predicate": {
+          "type": "match",
+          "property": "custom_model_data",
+          "value": "halloumitrader:soutzoukos",
           "index": 0
         }
       }

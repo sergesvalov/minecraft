@@ -72,7 +72,7 @@ final class TavernPopulator extends BlockPopulator {
         }
         oy += 1;
         TavernBuilder.build(blocks, ox, oy, oz, palette);
-        onPlaced.accept(new Tavern(worldInfo.getName(), ox, oy, oz, false));
+        onPlaced.accept(new Tavern(worldInfo.getName(), ox, oy, oz, false, Tavern.Annex.PENDING));
     }
 
     private static TavernBuilder.Blocks blocks(LimitedRegion region) {

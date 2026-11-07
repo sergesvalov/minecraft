@@ -34,15 +34,16 @@ services:
       # Run by the image itself once the server is up, one command per line. Superadmin papa:
       # - "op papa" goes through the server, so ops.json gets papa's offline UUID; OPS above can
       #   write the online Mojang UUID, and then papa is not an operator (2026-11-06).
-      # - halloumi.tavern has "default: false": other ops don't get it, only papa.
+      # - halloumi.tavern and halloumi.inn have "default: false": other ops don't get them, only papa.
       RCON_CMDS_STARTUP: |-
         op papa
         lp user papa permission set halloumi.tavern true
+        lp user papa permission set halloumi.inn true
       # Optional Java resource pack with tavern dish icons (resourcepack/). Players may decline it:
       # dishes then look like vanilla food. URL, SHA1 and ID are written by
       # resourcepack/tools/build-packs.mjs; the zip is served from the repo (resourcepack/dist on main).
       RESOURCE_PACK: "https://raw.githubusercontent.com/sergesvalov/minecraft/main/resourcepack/dist/HalloumiPack.zip"
-      RESOURCE_PACK_SHA1: "b4b5b2dd78c368041a0fb53e99644113b091efc1"
+      RESOURCE_PACK_SHA1: "298bd538ee6887bfc528af08771f42642a80ecf8"
       RESOURCE_PACK_ID: "b44afdae-f7b3-4fdf-8ffe-ba9128351354"
       RESOURCE_PACK_ENFORCE: "FALSE"
       RESOURCE_PACK_PROMPT: '{"text":"Иконки блюд таверны «Халуми». Можно отказаться: еда будет обычной."}'

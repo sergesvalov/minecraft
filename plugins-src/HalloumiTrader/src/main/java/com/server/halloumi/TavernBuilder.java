@@ -3,6 +3,7 @@ package com.server.halloumi;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Tag;
+import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
@@ -20,7 +21,7 @@ import java.util.Set;
 
 /**
  * Builds the tavern. Used both from world generation (through a LimitedRegion) and from the
- * /halloumi tavern command (through the live world), so block access goes through {@link Blocks}.
+ * /halloumi tavern and /halloumi inn commands (through the live world), so block access goes through {@link Blocks}.
  *
  * <p>Layout, relative to the origin (ox, oy, oz) = floor corner; the door faces south (+z):
  * walls x 0..10, z 0..8; floor at oy; roof with overhang x -1..11, z -1..9, ridge at oy+10.
@@ -61,6 +62,30 @@ final class TavernBuilder {
     }
 
     private TavernBuilder() {
+    }
+
+    static boolean isNaturalGround(Material type) {
+        return NATURAL_GROUND.contains(type);
+    }
+
+    /** Block access to the live world, without physics: doors, beds and lanterns are placed piece by piece. */
+    static Blocks worldBlocks(World world) {
+        return new Blocks() {
+            @Override
+            public Material type(int x, int y, int z) {
+                return world.getType(x, y, z);
+            }
+
+            @Override
+            public void set(int x, int y, int z, BlockData data) {
+                world.getBlockAt(x, y, z).setBlockData(data, false);
+            }
+
+            @Override
+            public int highestY(int x, int z) {
+                return world.getHighestBlockYAt(x, z);
+            }
+        };
     }
 
     /** Topmost ground block, skipping air, plants, snow layers, leaves and tree trunks. NO_SPOT on water/lava. */
@@ -211,7 +236,7 @@ final class TavernBuilder {
         b.set(ox + LECTERN_X, oy + LECTERN_Y, oz + LECTERN_Z, facing(Material.LECTERN, BlockFace.EAST));
     }
 
-    private static void fillDown(Blocks b, int x, int startY, int z, BlockData base) {
+    static void fillDown(Blocks b, int x, int startY, int z, BlockData base) {
         for (int y = startY; y > startY - 8; y--) {
             Material type = b.type(x, y, z);
             if (type.isSolid() && !Tag.LEAVES.isTagged(type) && !Tag.LOGS.isTagged(type)) {
@@ -221,7 +246,7 @@ final class TavernBuilder {
         }
     }
 
-    private static BlockData stairs(Material material, BlockFace face) {
+    static BlockData stairs(Material material, BlockFace face) {
         return Bukkit.createBlockData(material, d -> {
             if (d instanceof Stairs s) {
                 s.setFacing(face);
@@ -230,7 +255,7 @@ final class TavernBuilder {
         });
     }
 
-    private static BlockData slab(Material material) {
+    static BlockData slab(Material material) {
         return Bukkit.createBlockData(material, d -> {
             if (d instanceof Slab s) {
                 s.setType(Slab.Type.BOTTOM);
@@ -238,7 +263,7 @@ final class TavernBuilder {
         });
     }
 
-    private static BlockData door(Material material, Bisected.Half half) {
+    static BlockData door(Material material, Bisected.Half half) {
         return Bukkit.createBlockData(material, d -> {
             if (d instanceof Door door) {
                 door.setFacing(BlockFace.NORTH);
@@ -248,7 +273,7 @@ final class TavernBuilder {
         });
     }
 
-    private static BlockData lantern(boolean hanging) {
+    static BlockData lantern(boolean hanging) {
         return Bukkit.createBlockData(Material.LANTERN, d -> {
             if (d instanceof Lantern l) {
                 l.setHanging(hanging);
@@ -256,7 +281,7 @@ final class TavernBuilder {
         });
     }
 
-    private static BlockData facing(Material material, BlockFace face) {
+    static BlockData facing(Material material, BlockFace face) {
         return Bukkit.createBlockData(material, d -> {
             if (d instanceof Directional dir) {
                 dir.setFacing(face);

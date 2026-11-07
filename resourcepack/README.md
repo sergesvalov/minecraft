@@ -2,7 +2,7 @@
 
 **English** | [Русский](README_ru.md)
 
-Optional icons for the tavern dishes of the [HalloumiTrader](../plugins-src/HalloumiTrader/README.md) plugin: halloumi and the 9 meze dishes, 16×16, drawn in the vanilla item style.
+Optional icons for the tavern dishes of the [HalloumiTrader](../plugins-src/HalloumiTrader/README.md) plugin: halloumi and the 14 meze dishes, 16×16, drawn in the vanilla item style.
 
 - **Java**: the server offers the pack on join. A player can decline it; the dishes then look like the vanilla items they are based on (bread, cooked porkchop, cookie…).
 - **Bedrock** (via Geyser): the pack is sent together with Geyser's own pack. Geyser's `force-resource-packs: true` is on, so Bedrock players can't decline it. It is ~8 KB.

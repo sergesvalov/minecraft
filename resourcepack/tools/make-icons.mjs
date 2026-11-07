@@ -275,6 +275,67 @@ const icons = {
     i.paint(pts([6, 4], [7, 3], [7, 2], [6, 1], [9, 4], [9, 3], [10, 2], [10, 1]), '#e6e6e6', { onlyOver: false, alpha: 150 });
     return i;
   },
+
+  // Pastitsio: a slice — browned bechamel on top, meat sauce, then a layer of tube pasta
+  pastitsio: () => {
+    const i = new Icon(11);
+    i.shape(rect(2, 4, 13, 13), '#e3b866');
+    i.paint(rect(3, 5, 12, 7), '#f4dc96');
+    i.paint(pts([4, 5], [7, 6], [10, 5], [12, 6], [5, 7]), '#b9782d');
+    i.paint(rect(3, 8, 12, 9), '#8a3b22');
+    i.paint(pts([5, 8], [9, 9], [11, 8]), '#5e2414');
+    i.paint(rect(3, 10, 12, 12), '#f0d79a');
+    i.paint(pts([4, 11], [6, 11], [8, 11], [10, 11], [12, 11]), '#b88a45');
+    i.paint(pts([2, 4], [13, 4]), '#000000', { alpha: 0 });
+    return i;
+  },
+
+  // Fish meze: a grilled red mullet, two calamari rings and a lemon wedge
+  fish_meze: () => {
+    const i = new Icon(12);
+    const tail = pixels((px, py) => px >= 11 && px <= 15 && Math.abs(py - 6) <= (px - 11) * 0.8 + 0.4);
+    i.shape(union(ellipse(6.5, 6, 5.2, 2.6), tail), '#c8553d');
+    i.paint(pts([3, 5]), '#1c1c1c');
+    i.paint(union(line(5, 8, 7, 4), line(8, 8, 10, 4)), '#5a2416');
+    for (const [cx, cy] of [[4.5, 12.5], [9.5, 12.5]]) {
+      i.shape(minus(disc(cx, cy, 2.4), disc(cx, cy, 1)), '#ecd49a', { outline: 'soft' });
+    }
+    i.shape(ellipse(13.5, 12.5, 1.9, 1.7), '#f2d434', { outline: 'soft' });
+    return i;
+  },
+
+  // Afelia: pork cubes in a dark red-wine sauce with coriander seeds, in a clay bowl
+  afelia: () => {
+    const i = new Icon(13);
+    i.shape(ellipse(8, 8.5, 6, 3, 'top'), '#6b1d2b');
+    for (const [x, y] of [[4, 6], [8, 5], [11, 7], [6, 8]]) {
+      i.shape(rect(x, y, x + 1, y + 1), '#a0603c', { outline: 'soft' });
+    }
+    i.paint(pts([5, 8], [9, 7], [12, 6], [7, 6], [10, 8]), '#d8c08a');
+    i.shape(minus(ellipse(8, 8, 7, 6, 'bottom'), rect(0, 0, 15, 8)), '#a5532c');
+    i.paint(pts([3, 11], [6, 12], [9, 12], [12, 11]), '#d28a55');
+    return i;
+  },
+
+  // Flaounes: a golden square pastry with the cheese filling showing, raisins and sesame on top
+  flaounes: () => {
+    const i = new Icon(14);
+    i.shape(minus(rect(2, 2, 13, 13), pts([2, 2], [13, 2], [2, 13], [13, 13])), '#cf8f35');
+    i.shape(rect(5, 5, 10, 10), '#f2dc8e', { outline: 'soft' });
+    i.paint(pts([6, 7], [9, 6], [8, 9]), '#4a2a1a');
+    i.paint(pts([3, 4], [5, 3], [8, 3], [11, 4], [12, 7], [3, 8], [4, 11], [8, 12], [11, 12], [12, 10]), '#f7ecd2');
+    return i;
+  },
+
+  // Soutzoukos: a knobbly string of almonds dipped in thickened grape must
+  soutzoukos: () => {
+    const i = new Icon(15);
+    i.shape(capsule(3, 12.5, 12, 3.5, 2), '#7b2632');
+    i.paint(pts([4, 11], [6, 9], [8, 7], [10, 5]), '#a8474f');
+    i.paint(pts([5, 11], [7, 9], [9, 7], [11, 5]), '#4e1520');
+    i.paint(line(12, 3, 14, 1), '#ece3c7', { onlyOver: false });
+    return i;
+  },
 };
 
 mkdirSync(outDir, { recursive: true });

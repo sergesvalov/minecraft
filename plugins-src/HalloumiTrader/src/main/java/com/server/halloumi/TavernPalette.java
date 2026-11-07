@@ -79,4 +79,14 @@ enum TavernPalette {
     static TavernPalette forBiome(String biomeKey) {
         return BY_BIOME.get(biomeKey);
     }
+
+    /** The palette whose wall material this is (every palette has its own), or null. */
+    static TavernPalette byWall(Material wall) {
+        for (TavernPalette palette : values()) {
+            if (palette.wall == wall) {
+                return palette;
+            }
+        }
+        return null;
+    }
 }

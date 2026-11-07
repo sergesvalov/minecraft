@@ -64,11 +64,23 @@ tavern:
     # Шанс за проверку (раз в 10 секунд), если игрок ближе player-radius блоков
     chance: 0.04
     player-radius: 48
+  # Гостевой дом рядом с таверной: два этажа (обеденный зал и спальни), двор с мангалом и столиками.
+  # Строится, когда чанки вокруг таверны загружены и рядом (к востоку или западу) есть ровная
+  # естественная земля без чужих построек; иначе таверна остаётся без дома.
+  house:
+    enabled: true
+    sign:
+      - ""
+      - "Гостевой дом"
+      - "«Халуми»"
+      - "Ночлег и мезе"
 
   # Меню трактирщика (халуми из раздела halloumi идёт первым) и книга на кафедре у входа.
   # item — ванильный предмет, на котором основано блюдо; nutrition/saturation — сколько оно насыщает.
   menu-title: "Меню"
   menu-intro: "Кипрское мезе. Цены в изумрудах, заказ — у трактирщика за стойкой."
+  # Версия меню по умолчанию: при её росте новые блюда один раз дописываются в существующий config.yml
+  menu-version: 2
   menu:
     - id: souvlaki
       name: "Сувлаки"
@@ -132,6 +144,46 @@ tavern:
       lore: ["Пончики в медовом сиропе"]
       nutrition: 4
       saturation: 2.4
+      price: 1
+      amount: 6
+    - id: pastitsio
+      name: "Пастицио"
+      item: pumpkin_pie
+      lore: ["Запечённые макароны с фаршем под бешамелем и халуми"]
+      nutrition: 9
+      saturation: 12
+      price: 3
+      amount: 3
+    - id: fish_meze
+      name: "Рыбное мезе"
+      item: cooked_cod
+      lore: ["Барбуни, кальмары и осьминог на гриле с лимоном"]
+      nutrition: 8
+      saturation: 12.8
+      price: 4
+      amount: 2
+    - id: afelia
+      name: "Афелия"
+      item: rabbit_stew
+      lore: ["Свинина, тушённая в красном вине с кориандром"]
+      nutrition: 10
+      saturation: 14
+      price: 3
+      amount: 1
+    - id: flaounes
+      name: "Флаунес"
+      item: bread
+      lore: ["Пасхальные пирожки с сыром, изюмом и кунжутом"]
+      nutrition: 5
+      saturation: 6
+      price: 1
+      amount: 4
+    - id: soutzoukos
+      name: "Суджукос"
+      item: melon_slice
+      lore: ["Миндаль в загустевшем виноградном соке"]
+      nutrition: 3
+      saturation: 3.6
       price: 1
       amount: 6
     - id: coffee

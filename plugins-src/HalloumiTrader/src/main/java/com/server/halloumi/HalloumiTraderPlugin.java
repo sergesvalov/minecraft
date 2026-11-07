@@ -12,7 +12,6 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -32,6 +31,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,6 +68,7 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        migrateMenu();
         // Add keys introduced by newer versions (tavern, menu) to an existing config.yml
         getConfig().options().copyDefaults(true);
         saveConfig();
@@ -157,12 +158,16 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
         attachPopulator(event.getWorld());
     }
 
-    /** Builds a tavern right in front of (north of) the player: /halloumi tavern [palette]. */
-    private void buildTavernAt(Player player, TavernPalette forced) {
+    /**
+     * /halloumi tavern [palette]: a tavern right in front of (north of) the player, door 3 blocks away.
+     * /halloumi inn [palette]: the tavern with its guesthouse to the east and the yard, 3 blocks north of the player.
+     */
+    private void buildTavernAt(Player player, TavernPalette forced, boolean withHouse) {
         World world = player.getWorld();
         Location loc = player.getLocation();
         int ox = loc.getBlockX() - 5;
-        int oz = loc.getBlockZ() - 13; // doorstep ends up 3 blocks north of the player
+        // Tavern: doorstep 3 blocks north of the player. Inn: the yard fence 3 blocks north of the player.
+        int oz = loc.getBlockZ() - (withHouse ? 22 : 13);
         int oy = loc.getBlockY();
         TavernPalette palette = forced != null ? forced
                 : TavernPalette.forBiome(world.getBiome(loc).getKey().getKey());
@@ -170,28 +175,46 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
             palette = TavernPalette.OAK;
         }
 
-        TavernBuilder.build(new TavernBuilder.Blocks() {
-            @Override
-            public Material type(int x, int y, int z) {
-                return world.getType(x, y, z);
-            }
-
-            @Override
-            public void set(int x, int y, int z, BlockData data) {
-                Block block = world.getBlockAt(x, y, z);
-                block.setBlockData(data, false); // no physics: doors and lanterns are placed piece by piece
-            }
-
-            @Override
-            public int highestY(int x, int z) {
-                return world.getHighestBlockYAt(x, z);
-            }
-        }, ox, oy, oz, palette);
-
-        taverns.add(new Tavern(world.getName(), ox, oy, oz, false));
+        TavernBuilder.build(TavernBuilder.worldBlocks(world), ox, oy, oz, palette);
+        Tavern.Annex annex = withHouse ? Tavern.Annex.EAST : Tavern.Annex.NONE;
+        Tavern tavern = new Tavern(world.getName(), ox, oy, oz, false, annex);
+        if (withHouse) {
+            taverns.buildHouse(world, tavern, annex, palette);
+        }
+        taverns.add(tavern);
         taverns.tick(); // innkeeper and sign right away
-        player.sendMessage(Component.text("Таверна построена (" + palette.name().toLowerCase(Locale.ROOT)
-                + ") на " + ox + " " + oy + " " + oz + ".", NamedTextColor.GREEN));
+        player.sendMessage(Component.text((withHouse ? "Таверна с гостевым домом построена (" : "Таверна построена (")
+                + palette.name().toLowerCase(Locale.ROOT) + ") на " + ox + " " + oy + " " + oz + ".", NamedTextColor.GREEN));
+    }
+
+    /**
+     * Dishes added to the default menu in a newer version are appended to an existing config.yml once
+     * (copyDefaults doesn't merge lists). tavern.menu-version remembers it, so dishes removed later stay removed.
+     */
+    private void migrateMenu() {
+        FileConfiguration cfg = getConfig();
+        var defaults = cfg.getDefaults();
+        if (defaults == null) {
+            return;
+        }
+        int current = defaults.getInt("tavern.menu-version", 1);
+        int seen = cfg.contains("tavern.menu-version", true) ? cfg.getInt("tavern.menu-version") : 1;
+        if (seen >= current || !cfg.contains("tavern.menu", true)) {
+            return;
+        }
+        List<Map<?, ?>> menuList = new ArrayList<>(cfg.getMapList("tavern.menu"));
+        Set<String> ids = new HashSet<>();
+        menuList.forEach(dish -> ids.add(String.valueOf(dish.get("id"))));
+        int added = 0;
+        for (Map<?, ?> dish : defaults.getMapList("tavern.menu")) {
+            if (ids.add(String.valueOf(dish.get("id")))) {
+                menuList.add(dish);
+                added++;
+            }
+        }
+        cfg.set("tavern.menu", menuList);
+        cfg.set("tavern.menu-version", current);
+        getLogger().info("tavern.menu: added " + added + " new dishes to config.yml");
     }
 
     // ---------------------------------------------------------------- random visits
@@ -457,13 +480,13 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String sub = args.length > 0 ? args[0].toLowerCase(Locale.ROOT) : "";
-        if (sub.equals("tavern")) {
-            if (!sender.hasPermission("halloumi.tavern")) {
+        if (sub.equals("tavern") || sub.equals("inn")) {
+            if (!sender.hasPermission("halloumi." + sub)) {
                 sender.sendMessage(Component.text("Строить таверны может только суперадмин.", NamedTextColor.RED));
                 return true;
             }
             if (!(sender instanceof Player player)) {
-                sender.sendMessage("Only a player can use /halloumi tavern");
+                sender.sendMessage("Only a player can use /halloumi " + sub);
                 return true;
             }
             TavernPalette palette = null;
@@ -475,7 +498,7 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
                     return true;
                 }
             }
-            buildTavernAt(player, palette);
+            buildTavernAt(player, palette, sub.equals("inn"));
             return true;
         }
 
@@ -568,12 +591,15 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
             if (sender.hasPermission("halloumi.admin")) {
                 options.addAll(List.of("spawn", "random", "give", "count", "taverns", "reload"));
             }
-            if (sender.hasPermission("halloumi.tavern")) {
-                options.add("tavern");
+            for (String build : List.of("tavern", "inn")) {
+                if (sender.hasPermission("halloumi." + build)) {
+                    options.add(build);
+                }
             }
             return options.stream().filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).sorted().toList();
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("tavern") && sender.hasPermission("halloumi.tavern")) {
+        String build = args.length == 2 ? args[0].toLowerCase(Locale.ROOT) : "";
+        if ((build.equals("tavern") || build.equals("inn")) && sender.hasPermission("halloumi." + build)) {
             return Arrays.stream(TavernPalette.values()).map(p -> p.name().toLowerCase(Locale.ROOT))
                     .filter(s -> s.startsWith(args[1].toLowerCase(Locale.ROOT))).toList();
         }

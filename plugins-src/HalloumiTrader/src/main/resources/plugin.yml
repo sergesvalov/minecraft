@@ -7,7 +7,7 @@ description: Wandering halloumi traders and generated Cypriot taverns.
 commands:
   halloumi:
     description: Halloumi trader and tavern commands
-    usage: /halloumi <spawn|random|give [amount]|count|taverns|reload|tavern [style]>
+    usage: /halloumi <spawn|random|give [amount]|count|taverns|reload|tavern [style]|inn [style]>
 permissions:
   halloumi.admin:
     description: Spawn traders, get halloumi, list taverns, reload config
@@ -16,4 +16,8 @@ permissions:
     # Superadmin only, not given to ops. RCON_CMDS_STARTUP in docker-compose.yml grants it
     # to papa through LuckPerms on every server start.
     description: Build a tavern in front of you
+    default: false
+  halloumi.inn:
+    # Superadmin only, like halloumi.tavern (granted to papa in RCON_CMDS_STARTUP).
+    description: Build a tavern with its guesthouse and yard in front of you
     default: false
