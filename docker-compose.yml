@@ -34,11 +34,13 @@ services:
       # Run by the image itself once the server is up, one command per line. Superadmin papa:
       # - "op papa" goes through the server, so ops.json gets papa's offline UUID; OPS above can
       #   write the online Mojang UUID, and then papa is not an operator (2026-11-06).
-      # - halloumi.tavern and halloumi.inn have "default: false": other ops don't get them, only papa.
+      # - halloumi.tavern, halloumi.inn and greatbuildings.build have "default: false": other ops
+      #   don't get them, only papa.
       RCON_CMDS_STARTUP: |-
         op papa
         lp user papa permission set halloumi.tavern true
         lp user papa permission set halloumi.inn true
+        lp user papa permission set greatbuildings.build true
       # Optional Java resource pack with tavern dish icons (resourcepack/). Players may decline it:
       # dishes then look like vanilla food. URL, SHA1 and ID are written by
       # resourcepack/tools/build-packs.mjs; the zip is served from the repo (resourcepack/dist on main).

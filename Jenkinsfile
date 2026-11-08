@@ -20,6 +20,7 @@ node('built-in') {
         // Запуск локального скрипта сборки плагина. Он сам проверит версию и пропустит сборку, если JAR уже есть.
         sh 'bash scripts/build-plugin.sh WardenLog'
         sh 'bash scripts/build-plugin.sh HalloumiTrader'
+        sh 'bash scripts/build-plugin.sh GreatBuildings'
     }
 
     /*
@@ -74,7 +75,7 @@ Lightweight Paper plugin for logging TNT, grief, and suspicious events.
             mkdir -p /opt/minecraft/data/plugins/WardenLog
             sudo chown -R \$(whoami) /opt/minecraft/data/plugins/WardenLog
             # Remove old custom plugin jars so only the versions copied below stay (avoids "Ambiguous plugin name")
-            rm -f /opt/minecraft/data/plugins/WardenLog-*.jar /opt/minecraft/data/plugins/HalloumiTrader-*.jar
+            rm -f /opt/minecraft/data/plugins/WardenLog-*.jar /opt/minecraft/data/plugins/HalloumiTrader-*.jar /opt/minecraft/data/plugins/GreatBuildings-*.jar
             mkdir -p /opt/minecraft/data/plugins/Geyser-Spigot/packs /opt/minecraft/data/plugins/Geyser-Spigot/custom_mappings
             # Drop dangling images left by previous deploys (old :latest pulls, warden-monitor rebuilds).
             # They filled the SD card before 2026-11-05. Images used by containers are not touched.

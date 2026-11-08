@@ -21,9 +21,11 @@
 2. Παραλείπει το χτίσιμο αν η έκδοση δεν έχει αλλάξει.
 3. Αντιγράφει το μεταγλωττισμένο αρχείο `.jar` στο `/opt/minecraft/data/plugins/` στον διακομιστή παραγωγής.
 4. Προ-δημιουργεί τον φάκελο `WardenLog` και ορίζει τα σωστά δικαιώματα (permissions) πριν την εκκίνηση των containers, για να αποφευχθούν διενέξεις με τα δικαιώματα root του Docker.
-5. Πριν την αντιγραφή, διαγράφει στον διακομιστή τις παλιές εκδόσεις `WardenLog-*.jar` και `HalloumiTrader-*.jar`, ώστε να μην υπάρχουν διπλότυπα (`Ambiguous plugin name`).
+5. Πριν την αντιγραφή, διαγράφει στον διακομιστή τις παλιές εκδόσεις `WardenLog-*.jar`, `HalloumiTrader-*.jar` και `GreatBuildings-*.jar`, ώστε να μην υπάρχουν διπλότυπα (`Ambiguous plugin name`).
 
 Το δεύτερο προσαρμοσμένο πρόσθετο είναι το `HalloumiTrader`, ένας περιπλανώμενος έμπορος που πουλά χαλούμι. Λεπτομέρειες στο [plugins-src/HalloumiTrader/README.md](plugins-src/HalloumiTrader/README.md).
+
+Το τρίτο είναι το `GreatBuildings` («Μεγάλα κτίρια του κόσμου»): διάσημα κτίρια σε κλίμακα 1:1, που ο κύριος διαχειριστής χτίζει με εντολή. Λεπτομέρειες στο [plugins-src/GreatBuildings/README.md](plugins-src/GreatBuildings/README.md).
 
 Για να χτίσετε οποιοδήποτε πρόσθετο από το `plugins-src`: `bash scripts/build-plugin.sh <ΌνομαΦακέλου>`.
 

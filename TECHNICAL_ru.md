@@ -21,9 +21,11 @@
 2. Пропускает сборку, если версия не менялась.
 3. Копирует готовый `.jar` файл в папку `/opt/minecraft/data/plugins/` на боевом сервере.
 4. Перед запуском контейнеров Jenkins принудительно создает папку `WardenLog` и устанавливает правильные права доступа, чтобы избежать конфликтов с Docker-демоном (который по умолчанию создает директории от имени `root`).
-5. Перед копированием удаляет на сервере старые версии `WardenLog-*.jar` и `HalloumiTrader-*.jar`, чтобы не было дублей (`Ambiguous plugin name`).
+5. Перед копированием удаляет на сервере старые версии `WardenLog-*.jar`, `HalloumiTrader-*.jar` и `GreatBuildings-*.jar`, чтобы не было дублей (`Ambiguous plugin name`).
 
 Второй кастомный плагин — `HalloumiTrader`, странствующий торговец, который продаёт халуми. Подробности в [plugins-src/HalloumiTrader/README_ru.md](plugins-src/HalloumiTrader/README_ru.md).
+
+Третий — `GreatBuildings` («Великие здания мира»): знаменитые здания в масштабе 1:1, суперадмин строит их командой. Подробности в [plugins-src/GreatBuildings/README_ru.md](plugins-src/GreatBuildings/README_ru.md).
 
 Сборка любого плагина из `plugins-src`: `bash scripts/build-plugin.sh <ИмяПапки>`.
 

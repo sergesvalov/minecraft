@@ -1,0 +1,20 @@
+name: GreatBuildings
+version: '${project.version}'
+main: com.server.greatbuildings.GreatBuildingsPlugin
+api-version: '1.20'
+author: AI
+description: Великие здания мира — знаменитые здания в масштабе 1:1.
+commands:
+  greatbuildings:
+    description: Великие здания мира
+    aliases: [gb]
+    usage: /gb <list|build <здание>|confirm|undo>
+permissions:
+  greatbuildings.build:
+    # Superadmin only, not given to ops. RCON_CMDS_STARTUP in docker-compose.yml grants it
+    # to papa through LuckPerms on every server start.
+    description: Build a great building in front of you, confirm it, undo the last one
+    default: false
+  greatbuildings.list:
+    description: See where the great buildings are
+    default: true

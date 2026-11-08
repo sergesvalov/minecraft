@@ -21,9 +21,11 @@ The Jenkins pipeline (`Jenkinsfile`) automatically:
 2. Skips building if the version hasn't changed.
 3. Copies the compiled `.jar` file to `/opt/minecraft/data/plugins/` on the production server.
 4. Pre-creates the `WardenLog` directory and sets correct permissions before starting the containers to avoid Docker root ownership conflicts.
-5. Before copying, removes old `WardenLog-*.jar` and `HalloumiTrader-*.jar` versions on the server to avoid duplicates (`Ambiguous plugin name`).
+5. Before copying, removes old `WardenLog-*.jar`, `HalloumiTrader-*.jar` and `GreatBuildings-*.jar` versions on the server to avoid duplicates (`Ambiguous plugin name`).
 
 The second custom plugin is `HalloumiTrader`, a wandering trader that sells halloumi. See [plugins-src/HalloumiTrader/README.md](plugins-src/HalloumiTrader/README.md).
+
+The third is `GreatBuildings` ("Great buildings of the world"): famous buildings at 1:1 scale that the superadmin builds on command. See [plugins-src/GreatBuildings/README.md](plugins-src/GreatBuildings/README.md).
 
 To build any plugin from `plugins-src`: `bash scripts/build-plugin.sh <FolderName>`.
 
