@@ -15,9 +15,9 @@ import java.util.function.Consumer;
 /**
  * Places taverns into newly generated chunks, like a vanilla "random spread" structure:
  * the world is split into cells of {@code spacing x spacing} chunks, each cell gets at most one
- * candidate chunk (deterministic from the world seed), and the tavern is built there only if the
- * roll succeeds and the terrain and biome fit. Runs on world generation threads, so it only
- * touches the LimitedRegion and immutable settings.
+ * candidate chunk (deterministic from the world seed), and a tavern is planned there only if the
+ * roll succeeds and the terrain and biome fit; it is built later, in the live world. Runs on world
+ * generation threads, so it only reads the LimitedRegion and immutable settings.
  */
 final class TavernPopulator extends BlockPopulator {
 
@@ -55,7 +55,8 @@ final class TavernPopulator extends BlockPopulator {
             return;
         }
 
-        // Origin inside the chunk so the whole tavern incl. roof overhang stays in this chunk
+        // Only the spot is picked here: the tavern spans several chunks and is built in the live world once
+        // they are all loaded (see TavernManager), so trees of neighbouring chunks can't grow through it
         int ox = (chunkX << 4) + 2;
         int oz = (chunkZ << 4) + 2;
         TavernBuilder.Blocks blocks = blocks(region);
@@ -67,12 +68,10 @@ final class TavernPopulator extends BlockPopulator {
             return;
         }
         int oy = TavernBuilder.findFloorY(blocks, ox, oz, worldInfo.getMinHeight(), maxSlope);
-        if (oy == TavernBuilder.NO_SPOT || oy + 12 >= worldInfo.getMaxHeight()) {
+        if (oy == TavernBuilder.NO_SPOT || oy + 1 + TavernBuilder.HEIGHT >= worldInfo.getMaxHeight()) {
             return;
         }
-        oy += 1;
-        TavernBuilder.build(blocks, ox, oy, oz, palette);
-        onPlaced.accept(new Tavern(worldInfo.getName(), ox, oy, oz, false, Tavern.Annex.PENDING));
+        onPlaced.accept(new Tavern(worldInfo.getName(), ox, oy + 1, oz, false, Tavern.State.PENDING));
     }
 
     private static TavernBuilder.Blocks blocks(LimitedRegion region) {
@@ -84,9 +83,7 @@ final class TavernPopulator extends BlockPopulator {
 
             @Override
             public void set(int x, int y, int z, BlockData data) {
-                if (region.isInRegion(x, y, z)) {
-                    region.setBlockData(x, y, z, data);
-                }
+                throw new UnsupportedOperationException("taverns are not built during world generation");
             }
 
             @Override

@@ -15,9 +15,9 @@ permissions:
   halloumi.tavern:
     # Superadmin only, not given to ops. RCON_CMDS_STARTUP in docker-compose.yml grants it
     # to papa through LuckPerms on every server start.
-    description: Build a tavern in front of you
+    description: Build a tavern (two storeys and a yard) in front of you
     default: false
   halloumi.inn:
     # Superadmin only, like halloumi.tavern (granted to papa in RCON_CMDS_STARTUP).
-    description: Build a tavern with its guesthouse and yard in front of you
+    description: Same as halloumi.tavern (/halloumi inn is an alias of /halloumi tavern)
     default: false

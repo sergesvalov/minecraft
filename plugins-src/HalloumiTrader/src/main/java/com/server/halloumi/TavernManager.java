@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Lectern;
@@ -12,6 +13,7 @@ import org.bukkit.block.sign.Side;
 import org.bukkit.block.sign.SignSide;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 import org.bukkit.entity.WanderingTrader;
 import org.bukkit.inventory.LecternInventory;
 import org.bukkit.persistence.PersistentDataType;
@@ -24,14 +26,15 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Keeps the list of taverns (taverns.txt) and, for taverns in loaded chunks, makes sure the innkeeper
- * stands behind the counter, writes the sign and lets wandering halloumi traders drop in as guests.
+ * Keeps the list of taverns (taverns.txt). Builds taverns whose spot was picked during world generation once the
+ * chunks around them are loaded, tears down old (before 1.4) ones, and for built taverns in loaded chunks makes
+ * sure the innkeeper stands behind the counter, writes the signs, puts cushions on the chairs and lets wandering
+ * halloumi traders drop in as guests.
  */
 final class TavernManager {
 
@@ -58,9 +61,10 @@ final class TavernManager {
         dirty = true;
     }
 
+    /** Built taverns and the ones waiting to be built (old ones being torn down don't count). */
     List<Tavern> all() {
         drainPlaced();
-        return List.copyOf(taverns);
+        return taverns.stream().filter(t -> !t.state().old()).toList();
     }
 
     /** Nearest known tavern in the same world, or null. */
@@ -83,10 +87,32 @@ final class TavernManager {
         for (int i = 0; i < taverns.size(); i++) {
             Tavern tavern = taverns.get(i);
             World world = Bukkit.getWorld(tavern.world());
-            if (world == null || !world.isChunkLoaded(tavern.chunkX(), tavern.chunkZ())) {
+            if (world == null) {
                 continue;
             }
-            if (!world.getChunkAt(tavern.chunkX(), tavern.chunkZ()).isEntitiesLoaded()) {
+            if (tavern.state().old()) {
+                if (areaLoaded(world, OldTaverns.area(tavern), true)) {
+                    OldTaverns.demolish(world, tavern, this::ours);
+                    plugin.getLogger().info("Old tavern torn down at " + where(tavern));
+                    taverns.remove(i--);
+                    dirty = true;
+                }
+                continue;
+            }
+            if (tavern.state() == Tavern.State.PENDING) {
+                if (!areaLoaded(world, TavernBuilder.area(tavern.x(), tavern.z()), false)) {
+                    continue;
+                }
+                tavern = tryBuild(world, tavern);
+                dirty = true;
+                if (tavern == null) {
+                    taverns.remove(i--);
+                    continue;
+                }
+                taverns.set(i, tavern);
+            }
+            if (!world.isChunkLoaded(tavern.chunkX(), tavern.chunkZ())
+                    || !world.getChunkAt(tavern.chunkX(), tavern.chunkZ()).isEntitiesLoaded()) {
                 continue;
             }
             if (!tavern.decorated()) {
@@ -95,14 +121,6 @@ final class TavernManager {
                 taverns.set(i, tavern);
                 dirty = true;
             }
-            if (tavern.annex() == Tavern.Annex.PENDING && plugin.getConfig().getBoolean("tavern.house.enabled", true)) {
-                Tavern.Annex annex = tryBuildHouse(world, tavern);
-                if (annex != Tavern.Annex.PENDING) {
-                    tavern = tavern.withAnnex(annex);
-                    taverns.set(i, tavern);
-                    dirty = true;
-                }
-            }
             tickTavern(world, tavern);
         }
         if (dirty) {
@@ -110,9 +128,51 @@ final class TavernManager {
         }
     }
 
+    /** True if every chunk of the area is loaded (and, if asked, its entities too). Never loads chunks itself. */
+    private static boolean areaLoaded(World world, int[] area, boolean entities) {
+        for (int cx = area[0] >> 4; cx <= area[2] >> 4; cx++) {
+            for (int cz = area[1] >> 4; cz <= area[3] >> 4; cz++) {
+                if (!world.isChunkLoaded(cx, cz) || (entities && !world.getChunkAt(cx, cz).isEntitiesLoaded())) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean ours(Entity entity) {
+        var pdc = entity.getPersistentDataContainer();
+        return pdc.has(plugin.innkeeperKey(), PersistentDataType.BYTE) || pdc.has(plugin.guestKey(), PersistentDataType.BYTE);
+    }
+
+    /**
+     * Builds a tavern whose spot was picked during world generation. Building in the live world means the
+     * neighbouring chunks are fully generated and their trees can't grow through the house later.
+     * Returns the built tavern, or null if the site doesn't fit after all.
+     */
+    private Tavern tryBuild(World world, Tavern tavern) {
+        TavernBuilder.Blocks blocks = TavernBuilder.worldBlocks(world);
+        int oy = TavernBuilder.siteFloorY(blocks, tavern.x(), tavern.z(), world.getMinHeight(), world.getMaxHeight());
+        if (oy == TavernBuilder.NO_SPOT) {
+            plugin.getLogger().info("No room for the tavern planned at " + where(tavern));
+            return null;
+        }
+        TavernPalette palette = TavernPalette.forBiome(
+                world.getBiome(tavern.x() + 5, oy, tavern.z() + 4).getKey().getKey());
+        TavernBuilder.build(blocks, tavern.x(), oy, tavern.z(), palette != null ? palette : TavernPalette.OAK);
+        Tavern built = tavern.built(oy);
+        plugin.getLogger().info("Tavern built at " + where(built));
+        return built;
+    }
+
+    private static String where(Tavern t) {
+        return t.world() + " " + t.x() + " " + t.y() + " " + t.z();
+    }
+
     private void tickTavern(World world, Tavern tavern) {
         BoundingBox box = new BoundingBox(tavern.x() - 1, tavern.y(), tavern.z() - 1,
-                tavern.x() + TavernBuilder.SIZE_X + 1, tavern.y() + 6, tavern.z() + TavernBuilder.SIZE_Z + 1);
+                tavern.x() + TavernBuilder.SIZE_X + 1, tavern.y() + TavernBuilder.DECK + 1,
+                tavern.z() + TavernBuilder.SIZE_Z + 1);
         WanderingTrader innkeeper = null;
         int guests = 0;
         for (Entity entity : world.getNearbyEntities(box, e -> e instanceof WanderingTrader)) {
@@ -125,7 +185,7 @@ final class TavernManager {
         }
 
         if (innkeeper == null) {
-            spawnInnkeeper(world, tavern);
+            innkeeper = spawnInnkeeper(world, tavern);
         } else {
             // Restock when sold out; also picks up menu changes from config.yml
             var recipes = innkeeper.getRecipes();
@@ -138,6 +198,18 @@ final class TavernManager {
                 writeMenuBook(world, tavern);
             }
         }
+
+        // The resident lives on both floors; he can't leave, but look a bit wider in case a command moved him
+        BoundingBox house = new BoundingBox(tavern.x() - 8, tavern.y() - 2, tavern.z() - 8,
+                tavern.x() + TavernBuilder.SIZE_X + 8, tavern.y() + TavernBuilder.CEILING, tavern.z() + TavernBuilder.SIZE_Z + 8);
+        Villager resident = null;
+        for (Entity entity : world.getNearbyEntities(house, e -> e instanceof Villager && plugin.residents().isResident(e))) {
+            resident = (Villager) entity;
+        }
+        if (resident == null) {
+            resident = plugin.residents().spawn(world, tavern);
+        }
+        plugin.residents().track(resident, tavern, innkeeper);
 
         int maxGuests = plugin.getConfig().getInt("tavern.guests.max", 2);
         double chance = plugin.getConfig().getDouble("tavern.guests.chance", 0.04);
@@ -174,11 +246,25 @@ final class TavernManager {
         });
     }
 
-    /** One-time: sign text above the door and the menu book on the lectern. Skips blocks players already broke. */
+    /**
+     * One-time: the two signs above the door, the menu book on the lectern and cushions on every chair.
+     * Skips blocks players already broke.
+     */
     private void decorate(World world, Tavern tavern) {
-        writeSign(world.getBlockAt(tavern.x() + TavernBuilder.SIGN_X, tavern.y() + TavernBuilder.SIGN_Y,
-                tavern.z() + TavernBuilder.SIGN_Z), plugin.getConfig().getStringList("tavern.sign"));
+        int sx = tavern.x() + TavernBuilder.SIGN_X;
+        int sy = tavern.y() + TavernBuilder.SIGN_Y;
+        int sz = tavern.z() + TavernBuilder.SIGN_Z;
+        writeSign(world.getBlockAt(sx, sy, sz), plugin.getConfig().getStringList("tavern.sign"));
+        writeSign(world.getBlockAt(sx + 1, sy, sz), plugin.getConfig().getStringList("tavern.sign-right"));
         writeMenuBook(world, tavern);
+
+        int[] area = TavernBuilder.area(tavern.x(), tavern.z());
+        plugin.seats().removeCushions(world, new BoundingBox(area[0], tavern.y(), area[1],
+                area[2] + 1, tavern.y() + TavernBuilder.CEILING, area[3] + 1));
+        for (TavernBuilder.Chair chair : TavernBuilder.CHAIRS) {
+            plugin.seats().placeCushion(world, tavern.x() + chair.x(), tavern.y() + chair.y(), tavern.z() + chair.z(),
+                    Material.RED_CARPET);
+        }
     }
 
     /** Also called when the menu changed (new dishes in config.yml), so the book matches the innkeeper. */
@@ -202,62 +288,12 @@ final class TavernManager {
         }
     }
 
-    /**
-     * Builds the guesthouse of a generated tavern east of it, or west if the east side doesn't fit.
-     * Waits (returns PENDING) until every chunk either side could use is loaded; building in the live world
-     * means the neighbouring chunks are fully generated and their trees can't grow through the house later.
-     */
-    private Tavern.Annex tryBuildHouse(World world, Tavern tavern) {
-        if (tavern.y() + GuesthouseBuilder.HEIGHT >= world.getMaxHeight()) {
-            return Tavern.Annex.NONE;
-        }
-        for (Tavern.Annex side : List.of(Tavern.Annex.EAST, Tavern.Annex.WEST)) {
-            int[] area = GuesthouseBuilder.area(tavern.x(), tavern.z(), side);
-            for (int cx = area[0] >> 4; cx <= area[2] >> 4; cx++) {
-                for (int cz = area[1] >> 4; cz <= area[3] >> 4; cz++) {
-                    if (!world.isChunkLoaded(cx, cz)) {
-                        return Tavern.Annex.PENDING;
-                    }
-                }
-            }
-        }
-        TavernBuilder.Blocks blocks = TavernBuilder.worldBlocks(world);
-        for (Tavern.Annex side : List.of(Tavern.Annex.EAST, Tavern.Annex.WEST)) {
-            if (GuesthouseBuilder.siteOk(blocks, tavern.x(), tavern.y(), tavern.z(), side, world.getMinHeight())) {
-                buildHouse(world, tavern, side, paletteOf(world, tavern));
-                plugin.getLogger().info("Guesthouse built " + side.name().toLowerCase(Locale.ROOT) + " of the tavern at "
-                        + tavern.world() + " " + tavern.x() + " " + tavern.y() + " " + tavern.z());
-                return side;
-            }
-        }
-        plugin.getLogger().info("No room for a guesthouse next to the tavern at "
-                + tavern.world() + " " + tavern.x() + " " + tavern.y() + " " + tavern.z());
-        return Tavern.Annex.NONE;
-    }
-
-    /** Builds the guesthouse, its yard and the path to it, and writes its sign. */
-    void buildHouse(World world, Tavern tavern, Tavern.Annex side, TavernPalette palette) {
-        GuesthouseBuilder.buildNextTo(TavernBuilder.worldBlocks(world), tavern.x(), tavern.y(), tavern.z(), side, palette);
-        writeSign(world.getBlockAt(GuesthouseBuilder.originX(tavern.x(), side) + GuesthouseBuilder.SIGN_X,
-                        tavern.y() + GuesthouseBuilder.SIGN_Y, GuesthouseBuilder.originZ(tavern.z()) + GuesthouseBuilder.SIGN_Z),
-                plugin.getConfig().getStringList("tavern.house.sign"));
-    }
-
-    /** Style of an existing tavern, recognised by its front wall; falls back to the biome, then oak. */
-    private static TavernPalette paletteOf(World world, Tavern tavern) {
-        TavernPalette palette = TavernPalette.byWall(world.getType(tavern.x() + 1, tavern.y() + 2, tavern.z()));
-        if (palette == null) {
-            palette = TavernPalette.forBiome(world.getBiome(tavern.x() + 5, tavern.y(), tavern.z() + 4).getKey().getKey());
-        }
-        return palette != null ? palette : TavernPalette.OAK;
-    }
-
     private void drainPlaced() {
         Tavern tavern;
         while ((tavern = placed.poll()) != null) {
             taverns.add(tavern);
             dirty = true;
-            plugin.getLogger().info("Tavern generated at " + tavern.world() + " " + tavern.x() + " " + tavern.y() + " " + tavern.z());
+            plugin.getLogger().info("Tavern planned at " + where(tavern) + ", built once the chunks around are loaded");
         }
     }
 
@@ -279,7 +315,8 @@ final class TavernManager {
     void save() {
         drainPlaced();
         List<String> lines = new ArrayList<>();
-        lines.add("# world,x,y,z,signWritten,guesthouse — generated by HalloumiTrader, one tavern per line");
+        lines.add("# world,x,y,z,decorated,state (inn = built, inn-pending = not built yet, none/east/west = old one"
+                + " to tear down) — generated by HalloumiTrader, one tavern per line");
         taverns.forEach(t -> lines.add(t.serialize()));
         try {
             Files.createDirectories(file.getParentFile().toPath());

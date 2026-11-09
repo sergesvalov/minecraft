@@ -63,6 +63,8 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
     private BukkitTask tavernTask;
     private TavernManager taverns;
     private TavernPopulator populator;
+    private Seats seats;
+    private Residents residents;
     private final Map<UUID, Long> hintCooldowns = new HashMap<>();
 
     @Override
@@ -79,8 +81,13 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
         dishKey = new NamespacedKey(this, "dish");
         menu = Dish.load(getConfig(), getLogger());
 
+        seats = new Seats(this);
+        residents = new Residents(this);
         taverns = new TavernManager(this);
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(seats, this);
+        getServer().getPluginManager().registerEvents(residents, this);
+        residents.start();
         var command = getCommand("halloumi");
         if (command != null) {
             command.setExecutor(this);
@@ -101,6 +108,12 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
             tavernTask.cancel();
         }
         unregisterPopulator();
+        if (residents != null) {
+            residents.stop();
+        }
+        if (seats != null) {
+            seats.removeSeats();
+        }
         if (taverns != null) {
             taverns.save();
         }
@@ -108,6 +121,14 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
 
     NamespacedKey traderKey() {
         return traderKey;
+    }
+
+    Seats seats() {
+        return seats;
+    }
+
+    Residents residents() {
+        return residents;
     }
 
     NamespacedKey guestKey() {
@@ -159,16 +180,19 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
     }
 
     /**
-     * /halloumi tavern [palette]: a tavern right in front of (north of) the player, door 3 blocks away.
-     * /halloumi inn [palette]: the tavern with its guesthouse to the east and the yard, 3 blocks north of the player.
+     * /halloumi tavern [palette] (or inn): the tavern with its yard right in front of (north of) the player:
+     * the yard gate 3 blocks away, the front door in line with the player.
      */
-    private void buildTavernAt(Player player, TavernPalette forced, boolean withHouse) {
+    private void buildTavernAt(Player player, TavernPalette forced) {
         World world = player.getWorld();
         Location loc = player.getLocation();
-        int ox = loc.getBlockX() - 5;
-        // Tavern: doorstep 3 blocks north of the player. Inn: the yard fence 3 blocks north of the player.
-        int oz = loc.getBlockZ() - (withHouse ? 22 : 13);
+        int ox = loc.getBlockX() - TavernBuilder.DOOR_X;
+        int oz = loc.getBlockZ() - 3 - TavernBuilder.YARD_END_Z;
         int oy = loc.getBlockY();
+        if (oy + TavernBuilder.HEIGHT >= world.getMaxHeight()) {
+            player.sendMessage(Component.text("Слишком высоко для таверны.", NamedTextColor.RED));
+            return;
+        }
         TavernPalette palette = forced != null ? forced
                 : TavernPalette.forBiome(world.getBiome(loc).getKey().getKey());
         if (palette == null) {
@@ -176,15 +200,10 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
         }
 
         TavernBuilder.build(TavernBuilder.worldBlocks(world), ox, oy, oz, palette);
-        Tavern.Annex annex = withHouse ? Tavern.Annex.EAST : Tavern.Annex.NONE;
-        Tavern tavern = new Tavern(world.getName(), ox, oy, oz, false, annex);
-        if (withHouse) {
-            taverns.buildHouse(world, tavern, annex, palette);
-        }
-        taverns.add(tavern);
-        taverns.tick(); // innkeeper and sign right away
-        player.sendMessage(Component.text((withHouse ? "Таверна с гостевым домом построена (" : "Таверна построена (")
-                + palette.name().toLowerCase(Locale.ROOT) + ") на " + ox + " " + oy + " " + oz + ".", NamedTextColor.GREEN));
+        taverns.add(new Tavern(world.getName(), ox, oy, oz, false, Tavern.State.BUILT));
+        taverns.tick(); // innkeeper, signs and cushions right away
+        player.sendMessage(Component.text("Таверна построена (" + palette.name().toLowerCase(Locale.ROOT) + ") на "
+                + ox + " " + oy + " " + oz + ".", NamedTextColor.GREEN));
     }
 
     /**
@@ -432,7 +451,8 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
     /** Keep the offer list to halloumi only. */
     @EventHandler(ignoreCancelled = true)
     public void onAcquireTrade(VillagerAcquireTradeEvent event) {
-        if (has(event.getEntity(), traderKey) || has(event.getEntity(), innkeeperKey)) {
+        if (has(event.getEntity(), traderKey) || has(event.getEntity(), innkeeperKey)
+                || residents.isResident(event.getEntity())) {
             event.setCancelled(true);
         }
     }
@@ -498,7 +518,7 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
                     return true;
                 }
             }
-            buildTavernAt(player, palette, sub.equals("inn"));
+            buildTavernAt(player, palette);
             return true;
         }
 
@@ -561,8 +581,11 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
                                     TavernManager.distanceSq(b, player.getLocation())))
                             .limit(5)
                             .forEach(t -> sender.sendMessage(Component.text(String.format(Locale.ROOT,
-                                    "  %d %d %d — %.0f блоков", t.x() + 5, t.y() + 1, t.z() + 10,
-                                    Math.sqrt(TavernManager.distanceSq(t, player.getLocation()))), NamedTextColor.GRAY)));
+                                    "  %d %d %d — %.0f блоков%s", t.x() + TavernBuilder.DOOR_X, t.y() + 1,
+                                    t.z() + TavernBuilder.SIZE_Z,
+                                    Math.sqrt(TavernManager.distanceSq(t, player.getLocation())),
+                                    t.state() == Tavern.State.PENDING ? " (ещё не построена)" : ""),
+                                    NamedTextColor.GRAY)));
                 }
             }
             case "reload" -> {
