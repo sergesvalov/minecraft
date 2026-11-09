@@ -45,6 +45,7 @@ public final class GreatBuildingsPlugin extends JavaPlugin implements TabExecuto
     public void onEnable() {
         saveDefaultConfig();
         register(new Svetitskhoveli());
+        register(new Bagrati());
         registry = new Registry(getDataFolder(), getLogger());
         var command = getCommand("greatbuildings");
         if (command != null) {

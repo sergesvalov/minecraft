@@ -36,6 +36,33 @@ Name plaques are in Georgian (სვეტიცხოველი, at the gates
 
 The Java client draws Georgian letters with its built-in Unifont. A Bedrock client whose font lacks them may show boxes instead.
 
+### Bagrati Cathedral (`bagrati`)
+
+Cathedral of the Dormition atop Ukimerioni Hill in Kutaisi (Georgia). Consecrated in 1003 by King Bagrat III; site of the coronation of King David IV the Builder in 1089.
+
+Dimensions from the Orthodox Encyclopedia ("Баграта храм", pravenc.ru) and architectural surveys:
+
+| | Real | In game |
+|---|---|---|
+| Cathedral length with the west portico | ~44–45 m | 45 blocks |
+| Width across transept conchs | ~34 m (~38 m with south portico) | 34 blocks (38 blocks with portico) |
+| West arm width (nave and aisles) | ~22 m | 21 blocks |
+| Outer height | ~35 m (~38 m with the cross) | 38 blocks with the cross |
+| Ukimerioni hill terrace | — | 71 × 67 blocks |
+
+From the sources:
+
+- **Plan.** Developed triconch: three semicircular conchs (east sanctuary, north and south transept arms) and an extended western arm with nave and side aisles. The dome rests on four free-standing cruciform piers linked by high transverse arches.
+- **Porticos.** The famous 1030s southern open portico (ichkari): two-tier open arcade with twin carved arches, columns, vaulted ceiling, and ceremonial steps. Vaulted western portico protecting the triple entrance.
+- **Facades and drum.** 16-faceted cylindrical drum with 16 narrow arched windows and blind arcade moldings. East facade features three sanctuary windows and two deep triangular niches.
+- **Roof.** Distinctive turquoise copper patina (oxidized copper) conical dome and gabled roofs, faithful to the 2012 restoration.
+- **Inside.** Semicircular stone synthronon in the apse, chiseled chancel barrier, altar with candles, the royal coronation seat of David the Builder at the southwest pier, western choir gallery on the second tier with stone stairs, hanging chandelier beneath the dome.
+- **Surroundings.** Ukimerioni hill plateau: ruins of the ancient fortress wall and round citadel tower, foundations of the 6th-century basilica, stone paths, cypresses, and lanterns.
+
+The builder stands on the southern plaza of the hill and faces north — looking directly at the ceremonial South Portico and facade.
+
+Name plaques in Georgian (`ბაგრატის ტაძარი`) and Russian (`Храм Баграта`). A lectern by the west entrance holds a book about the cathedral's history.
+
 ## Commands
 
 | Command | Who | What it does |
