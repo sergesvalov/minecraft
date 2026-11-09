@@ -10,7 +10,6 @@ import java.util.List;
 
 import static com.server.greatbuildings.States.b;
 import static com.server.greatbuildings.States.candles;
-import static com.server.greatbuildings.States.door;
 import static com.server.greatbuildings.States.lantern;
 import static com.server.greatbuildings.States.leaves;
 import static com.server.greatbuildings.States.logY;
@@ -707,18 +706,35 @@ public final class Bagrati implements Building {
             }
         }
 
-        // West portal doors (triple entrance)
-        entranceDoor(p, 0, 2, 0, Face.EAST);
+        // West portal double doors (triple entrance)
         entranceDoor(p, 0, 2, -4, Face.EAST);
-        entranceDoor(p, 0, 2, 4, Face.EAST);
+        entranceDoor(p, 0, 2, 0, Face.EAST);
+        entranceDoor(p, 0, 2, 3, Face.EAST);
 
-        // South portal door (leading from the South Portico into the south conch)
+        // South portal double door (leading from the South Portico into the south conch)
         entranceDoor(p, DOME_U, 2, 14, Face.NORTH);
     }
 
+    /**
+     * Double door in the outer face of the wall at (u, v) and the next cell along it, with a passage through
+     * the plastered core behind, so the door actually leads inside.
+     */
     private void entranceDoor(Plan p, int u, int y, int v, Face in) {
-        setRel(p, u, y, v, door(DOOR, in, false, false));
-        setRel(p, u, y + 1, v, door(DOOR, in, true, false));
+        p.doubleDoor(CU + u, y, CV + v, DOOR, in);
+        boolean alongU = in == Face.NORTH || in == Face.SOUTH;
+        for (int leaf = 0; leaf <= 1; leaf++) {
+            int lu = alongU ? u + leaf : u;
+            int lv = alongU ? v : v + leaf;
+            for (int step = 1; step <= 3; step++) {
+                int cu = lu + in.dx * step;
+                int cv = lv + in.dz * step;
+                if (depth(cu, cv) == 3) {
+                    break;
+                }
+                setRel(p, cu, y, cv, AIR);
+                setRel(p, cu, y + 1, cv, AIR);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ porticos

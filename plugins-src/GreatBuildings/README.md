@@ -85,7 +85,7 @@ From the sources:
 
 - **Fortress and masonry.** Squat, heavy rectangular keep built of warm Cypriot limestone blocks (`smooth_sandstone`, `cut_sandstone`) with walls up to 3 metres thick.
 - **Moat and bridge.** The landward approach is protected by a seawater moat (`water`), crossed by an arched stone bridge.
-- **Entrance and 1592 inscription.** Single arched portal with heavy dark oak doors. Set above the gate is the authentic white marble slab (`calcite`) commemorating the 1592 Ottoman reconstruction by Ahmet Pasha.
+- **Entrance and 1592 inscription.** Single arched portal with heavy dark oak double doors. Set above the gate is the authentic white marble slab (`calcite`) commemorating the 1592 Ottoman reconstruction by Ahmet Pasha.
 - **Ground floor.** Central barrel-vaulted hall dividing two wings. West wing houses Ottoman prison dungeons with heavy iron bars (`iron_bars`), chains, and bunks. East wing contains the British salt warehouse (smooth quartz blocks and barrels) and armory/guardroom.
 - **Roof deck and artillery.** A wide stone staircase leads to the spacious open terrace. Along the parapet are **12 cannon embrasures (ramparts)** mounting coastal defense cannons (polished blackstone and dispensers) pointing out to sea and harbor approaches.
 - **Upper keep.** Rising above the roof deck is a secondary tower housing the garrison guardhouse and a small Ottoman prayer chamber (mosque) with carpets and a mihrab niche. Topped by an upper lookout terrace and signal beacon/flagpole.

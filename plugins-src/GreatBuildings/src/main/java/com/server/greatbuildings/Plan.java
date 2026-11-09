@@ -85,6 +85,23 @@ public final class Plan {
         cells[index(x, y, z)] = id;
     }
 
+    /**
+     * Double door: two leaves side by side, hinged on the outer sides so they open apart, at (x, z) and the
+     * next cell along the wall (+x for doors facing north/south, +z for east/west). {@code facing} points into
+     * the room, the way a player walks in; y is the lower half.
+     */
+    public void doubleDoor(int x, int y, int z, String id, Face facing) {
+        boolean alongX = facing == Face.NORTH || facing == Face.SOUTH;
+        int x2 = alongX ? x + 1 : x;
+        int z2 = alongX ? z : z + 1;
+        // Seen walking in, the lower-coordinate leaf is on the left when facing north or east
+        boolean firstRight = facing == Face.SOUTH || facing == Face.WEST;
+        for (int half = 0; half <= 1; half++) {
+            set(x, y + half, z, States.door(id, facing, half == 1, firstRight));
+            set(x2, y + half, z2, States.door(id, facing, half == 1, !firstRight));
+        }
+    }
+
     public void fill(int x1, int y1, int z1, int x2, int y2, int z2, String state) {
         for (int y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
             for (int z = Math.min(z1, z2); z <= Math.max(z1, z2); z++) {

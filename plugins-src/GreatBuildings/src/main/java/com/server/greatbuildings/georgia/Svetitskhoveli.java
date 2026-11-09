@@ -10,7 +10,6 @@ import java.util.List;
 
 import static com.server.greatbuildings.States.b;
 import static com.server.greatbuildings.States.candles;
-import static com.server.greatbuildings.States.door;
 import static com.server.greatbuildings.States.facing;
 import static com.server.greatbuildings.States.lantern;
 import static com.server.greatbuildings.States.leaves;
@@ -686,8 +685,8 @@ public final class Svetitskhoveli implements Building {
             }
         }
         set(p, 4, 2, 0, AIR);
-        set(p, 5, 2, 0, door(DOOR, Face.EAST, false, false));
-        set(p, 5, 3, 0, door(DOOR, Face.EAST, true, false));
+        set(p, 4, 2, 1, AIR);
+        p.doubleDoor(CU + 5, 2, CV, DOOR, Face.EAST);
 
         // East: apse window framed in red stone, deep through the thick east wall
         for (int v = -2; v <= 2; v++) {
@@ -726,12 +725,12 @@ public final class Svetitskhoveli implements Building {
         }
     }
 
-    /** Door in the inner wall layer behind a portal in the outer layer, and a step in front. */
+    /** Double door (u and u + 1) in the inner wall layer behind a portal in the outer layer, and a step in front. */
     private void entrance(Plan p, int u, int y, int outerV, int innerV, Face in) {
         set(p, u, y, outerV, AIR);
-        set(p, u, y, innerV, door(DOOR, in, false, false));
-        set(p, u, y + 1, innerV, door(DOOR, in, true, false));
-        for (int du = -1; du <= 1; du++) {
+        set(p, u + 1, y, outerV, AIR);
+        p.doubleDoor(CU + u, y, CV + innerV, DOOR, in);
+        for (int du = -1; du <= 2; du++) {
             set(p, u + du, 1, outerV - in.dz, stairs("smooth_sandstone_stairs", in, false));
         }
     }

@@ -9,7 +9,6 @@ import com.server.greatbuildings.Terrain;
 import java.util.List;
 
 import static com.server.greatbuildings.States.b;
-import static com.server.greatbuildings.States.door;
 import static com.server.greatbuildings.States.lantern;
 import static com.server.greatbuildings.States.leaves;
 import static com.server.greatbuildings.States.logY;
@@ -257,31 +256,34 @@ public final class Paphos implements Building {
             }
         }
 
-        // Single arched entrance portal at south wall (x = 22..24, z = 26..28)
-        for (int x = GATE_X - 1; x <= GATE_X + 1; x++) {
+        // Single arched entrance portal at south wall (x = 22..25, z = 26..28)
+        for (int x = GATE_X - 1; x <= GATE_X + 2; x++) {
             for (int z = CZ2 - 2; z <= CZ2; z++) {
                 p.set(x, 1, z, paving(x, z));
                 p.set(x, 2, z, AIR);
                 p.set(x, 3, z, AIR);
             }
             // Portal arch head
-            p.set(x, 4, CZ2, stairs(STAIRS_STONE, x == GATE_X - 1 ? Face.WEST : x == GATE_X + 1 ? Face.EAST : Face.SOUTH, true));
+            p.set(x, 4, CZ2, stairs(STAIRS_STONE, x == GATE_X - 1 ? Face.WEST : x == GATE_X + 2 ? Face.EAST : Face.SOUTH, true));
         }
 
-        // Heavy dark oak entrance doors
-        p.set(GATE_X, 2, CZ2 - 1, door(DOOR, Face.NORTH, false, false));
-        p.set(GATE_X, 3, CZ2 - 1, door(DOOR, Face.NORTH, true, false));
+        // Heavy dark oak double doors between stone jambs
+        for (int x : new int[]{GATE_X - 1, GATE_X + 2}) {
+            p.set(x, 2, CZ2 - 1, ashlar(x, 2, CZ2 - 1));
+            p.set(x, 3, CZ2 - 1, ashlar(x, 3, CZ2 - 1));
+        }
+        p.doubleDoor(GATE_X, 2, CZ2 - 1, DOOR, Face.NORTH);
 
         // The famous 1592 white marble inscription slab of Ahmet Pasha above the entrance
-        for (int x = GATE_X - 1; x <= GATE_X + 1; x++) {
+        for (int x = GATE_X - 1; x <= GATE_X + 2; x++) {
             p.set(x, 5, CZ2, MARBLE);
         }
 
         // Plaques flanking the entrance portal in Greek and Russian
         p.set(GATE_X - 2, 3, CZ2 + 1, wallSign("dark_oak", Face.SOUTH));
         p.signs.add(new Plan.SignText(GATE_X - 2, 3, CZ2 + 1, PLAQUE_EL));
-        p.set(GATE_X + 2, 3, CZ2 + 1, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(GATE_X + 2, 3, CZ2 + 1, PLAQUE_RU));
+        p.set(GATE_X + 3, 3, CZ2 + 1, wallSign("dark_oak", Face.SOUTH));
+        p.signs.add(new Plan.SignText(GATE_X + 3, 3, CZ2 + 1, PLAQUE_RU));
     }
 
     private static final List<String> PLAQUE_EL = List.of("Κάστρο", "της Πάφου", "1592", "Κύπρος");
@@ -349,8 +351,7 @@ public final class Paphos implements Building {
         }
         // East storage / guardroom doors (wooden doors)
         for (int zDoor : new int[]{10, 16, 23}) {
-            p.set(eastWallX, 2, zDoor, door(DOOR, Face.EAST, false, false));
-            p.set(eastWallX, 3, zDoor, door(DOOR, Face.EAST, true, false));
+            p.doubleDoor(eastWallX, 2, zDoor, DOOR, Face.EAST);
         }
 
         // Dungeon furnishings (west wing): prisoner bunks, iron chains
@@ -525,8 +526,7 @@ public final class Paphos implements Building {
         }
 
         // Entrance door into upper keep from the roof terrace (south side, z = 18)
-        p.set(GATE_X, floorY + 1, kz2, door(DOOR, Face.NORTH, false, false));
-        p.set(GATE_X, floorY + 2, kz2, door(DOOR, Face.NORTH, true, false));
+        p.doubleDoor(GATE_X, floorY + 1, kz2, DOOR, Face.NORTH);
 
         // Arched lookout windows in the keep walls
         p.set(kx1, floorY + 2, 13, b("glass"));
