@@ -1,4 +1,10 @@
-package com.server.greatbuildings;
+package com.server.greatbuildings.georgia;
+
+import com.server.greatbuildings.Building;
+import com.server.greatbuildings.Country;
+import com.server.greatbuildings.Face;
+import com.server.greatbuildings.Plan;
+import com.server.greatbuildings.Terrain;
 
 import java.util.List;
 
@@ -37,7 +43,7 @@ import static com.server.greatbuildings.States.wallSign;
  * walls at x = 0..{@value #EX}, z = 0..{@value #EZ}. The cathedral is drawn in its own coordinates
  * u = x - CU (west to east) and v = z - CV (north to south, 0 on the axis).
  */
-final class Svetitskhoveli implements Building {
+public final class Svetitskhoveli implements Building {
 
     static final int EX = 121, EZ = 110;
     private static final int TOP = 50;
@@ -71,6 +77,11 @@ final class Svetitskhoveli implements Building {
     @Override
     public String id() {
         return "svetitskhoveli";
+    }
+
+    @Override
+    public Country country() {
+        return Country.GEORGIA;
     }
 
     @Override

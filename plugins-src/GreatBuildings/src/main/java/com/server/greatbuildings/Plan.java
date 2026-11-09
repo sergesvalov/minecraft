@@ -10,27 +10,27 @@ import java.util.Map;
  * building stands on. A box of cells, each either untouched or one block state from a palette.
  * Pure data, no server classes: it can be drawn off the main thread and rendered in tests.
  */
-final class Plan {
+public final class Plan {
 
-    static final String AIR = "minecraft:air";
+    public static final String AIR = "minecraft:air";
 
-    final int minX, minY, minZ, maxX, maxY, maxZ;
-    final int sizeX, sizeY, sizeZ;
+    public final int minX, minY, minZ, maxX, maxY, maxZ;
+    public final int sizeX, sizeY, sizeZ;
     /** 0 = untouched, otherwise palette index + 1. */
     private final short[] cells;
     private final List<String> palette = new ArrayList<>();
     private final Map<String, Short> ids = new HashMap<>();
-    final List<SignText> signs = new ArrayList<>();
-    final List<int[]> lecterns = new ArrayList<>();
+    public final List<SignText> signs = new ArrayList<>();
+    public final List<int[]> lecterns = new ArrayList<>();
 
-    record SignText(int x, int y, int z, List<String> lines) {
+    public record SignText(int x, int y, int z, List<String> lines) {
     }
 
-    Plan(int[] bounds) {
+    public Plan(int[] bounds) {
         this(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]);
     }
 
-    Plan(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+    public Plan(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         this.minX = minX;
         this.minY = minY;
         this.minZ = minZ;
@@ -43,33 +43,33 @@ final class Plan {
         this.cells = new short[sizeX * sizeY * sizeZ];
     }
 
-    boolean contains(int x, int y, int z) {
+    public boolean contains(int x, int y, int z) {
         return x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
     }
 
     /** Cells are ordered bottom-up, so applying them in index order lays foundations first. */
-    int index(int x, int y, int z) {
+    public int index(int x, int y, int z) {
         return ((y - minY) * sizeZ + (z - minZ)) * sizeX + (x - minX);
     }
 
-    int x(int index) {
+    public int x(int index) {
         return index % sizeX + minX;
     }
 
-    int z(int index) {
+    public int z(int index) {
         return (index / sizeX) % sizeZ + minZ;
     }
 
-    int y(int index) {
+    public int y(int index) {
         return index / (sizeX * sizeZ) + minY;
     }
 
-    int volume() {
+    public int volume() {
         return cells.length;
     }
 
     /** Silently ignores cells outside the box. */
-    void set(int x, int y, int z, String state) {
+    public void set(int x, int y, int z, String state) {
         if (!contains(x, y, z)) {
             return;
         }
@@ -85,7 +85,7 @@ final class Plan {
         cells[index(x, y, z)] = id;
     }
 
-    void fill(int x1, int y1, int z1, int x2, int y2, int z2, String state) {
+    public void fill(int x1, int y1, int z1, int x2, int y2, int z2, String state) {
         for (int y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
             for (int z = Math.min(z1, z2); z <= Math.max(z1, z2); z++) {
                 for (int x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
@@ -96,7 +96,7 @@ final class Plan {
     }
 
     /** State at a cell, or null if untouched (or outside the box). */
-    String get(int x, int y, int z) {
+    public String get(int x, int y, int z) {
         if (!contains(x, y, z)) {
             return null;
         }

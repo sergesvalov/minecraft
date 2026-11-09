@@ -1,4 +1,10 @@
-package com.server.greatbuildings;
+package com.server.greatbuildings.cyprus;
+
+import com.server.greatbuildings.Building;
+import com.server.greatbuildings.Country;
+import com.server.greatbuildings.Face;
+import com.server.greatbuildings.Plan;
+import com.server.greatbuildings.Terrain;
 
 import java.util.List;
 
@@ -22,7 +28,7 @@ import static com.server.greatbuildings.States.wallSign;
  * barracks, and British salt store, a stone grand staircase, an open roof platform with 12 embrasures
  * mounting coastal cannons, and an upper keep housing the garrison quarters and mosque.
  */
-final class Paphos implements Building {
+public final class Paphos implements Building {
 
     static final int EX = 46, EZ = 52;
     private static final int TOP = 20;
@@ -60,6 +66,11 @@ final class Paphos implements Building {
     @Override
     public String id() {
         return "paphos";
+    }
+
+    @Override
+    public Country country() {
+        return Country.CYPRUS;
     }
 
     @Override

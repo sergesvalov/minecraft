@@ -3,10 +3,13 @@ package com.server.greatbuildings;
 import java.util.List;
 
 /** A famous building that can be built in the world. Implementations only draw into a {@link Plan}. */
-interface Building {
+public interface Building {
 
     /** Id for commands, e.g. "svetitskhoveli". */
     String id();
+
+    /** Country / region of the building. */
+    Country country();
 
     /** Name for players. */
     String title();

@@ -1,4 +1,10 @@
-package com.server.greatbuildings;
+package com.server.greatbuildings.georgia;
+
+import com.server.greatbuildings.Building;
+import com.server.greatbuildings.Country;
+import com.server.greatbuildings.Face;
+import com.server.greatbuildings.Plan;
+import com.server.greatbuildings.Terrain;
 
 import java.util.List;
 
@@ -26,7 +32,7 @@ import static com.server.greatbuildings.States.wallSign;
  * and Georgian architectural surveys: ~44 m long, ~34 m wide across conchs (with south portico ~38 m),
  * dome height ~35 m, cross up to ~38 m.
  */
-final class Bagrati implements Building {
+public final class Bagrati implements Building {
 
     static final int EX = 66, EZ = 62;
     private static final int TOP = 40;
@@ -57,6 +63,11 @@ final class Bagrati implements Building {
     @Override
     public String id() {
         return "bagrati";
+    }
+
+    @Override
+    public Country country() {
+        return Country.GEORGIA;
     }
 
     @Override

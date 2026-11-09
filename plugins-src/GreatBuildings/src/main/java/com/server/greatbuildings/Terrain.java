@@ -1,7 +1,7 @@
 package com.server.greatbuildings;
 
 /** Ground under the plan, read from the world before drawing. */
-interface Terrain {
+public interface Terrain {
 
     int NONE = Integer.MIN_VALUE;
 

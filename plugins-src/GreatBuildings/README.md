@@ -6,9 +6,11 @@ Paper 26.3 plugin: famous buildings of the world at **1:1** scale (one block = o
 
 No client mods needed. Works for Java and Bedrock players (through Geyser).
 
-## Buildings
+## Buildings by Country
 
-### Svetitskhoveli (`svetitskhoveli`)
+### Georgia (`georgia`)
+
+#### Svetitskhoveli (`svetitskhoveli`)
 
 The cathedral in Mtskheta (Georgia), near Tbilisi, with its fortress enclosure. Oriented like the real one: the altar to the east, the main gate of the enclosure to the south.
 
@@ -36,7 +38,7 @@ Name plaques are in Georgian (სვეტიცხოველი, at the gates
 
 The Java client draws Georgian letters with its built-in Unifont. A Bedrock client whose font lacks them may show boxes instead.
 
-### Bagrati Cathedral (`bagrati`)
+#### Bagrati Cathedral (`bagrati`)
 
 Cathedral of the Dormition atop Ukimerioni Hill in Kutaisi (Georgia). Consecrated in 1003 by King Bagrat III; site of the coronation of King David IV the Builder in 1089.
 
@@ -63,7 +65,9 @@ The builder stands on the southern plaza of the hill and faces north — looking
 
 Name plaques in Georgian (`ბაგრატის ტაძარი`) and Russian (`Храм Баграта`). A lectern by the west entrance holds a book about the cathedral's history.
 
-### Paphos Castle (`paphos`)
+### Cyprus (`cyprus`)
+
+#### Paphos Castle (`paphos`)
 
 Medieval coastal fortress on the western mole of Kato Paphos harbor in Cyprus. Originally built by Byzantines and Lusignans (13th century), dismantled by Venetians in 1570, and reconstructed in 1592 by Ottoman governor Ahmet Pasha. UNESCO World Heritage Site.
 
@@ -95,12 +99,12 @@ Name plaques in Greek (`Κάστρο της Πάφου`) and Russian (`Пафо�
 
 | Command | Who | What it does |
 |---|---|---|
-| `/gb list` (or just `/gb`) | everyone | Where the built buildings are and how far away |
-| `/gb build <building>` | `papa` only | Shows the area the building will take and asks to confirm |
+| `/gb list [country]` (or just `/gb`) | everyone | Where built buildings are, grouped by country (or filtered: `/gb list georgia`, `/gb list cyprus`) |
+| `/gb build <building>` or `/gb build <country> <building>` | `papa` only | Shows the area and asks to confirm (with country tab-completion) |
 | `/gb confirm` | `papa` only | Builds it (the confirmation is valid for a minute) |
 | `/gb undo` | `papa` only | Takes the last building down and restores the terrain |
 
-The building goes **north** of the player with its entrance facing him. For Svetitskhoveli the player stands 4 blocks in front of the south gate. The yard is level with the ground under the player's feet. Everything in the site (134 × 123 blocks, up to 50 high) is replaced: hills are cut, hollows filled with earth, foundations laid under the walls.
+The building goes **north** of the player with its entrance facing him. For Svetitskhoveli the player stands 4 blocks in front of the south gate, for Bagrati on the southern plaza of Ukimerioni hill, for Paphos on the harbor promenade before the bridge. The yard is level with the ground under the player's feet. Everything in the site is replaced: hills are cut, hollows filled with earth, foundations laid under the walls.
 
 The `greatbuildings.build` permission is off by default, even for operators. `RCON_CMDS_STARTUP` in `docker-compose.yml` grants it to `papa` on every server start.
 
@@ -109,11 +113,11 @@ The `greatbuildings.build` permission is off by default, even for operators. `RC
 To keep the Raspberry Pi responsive, it builds in steps:
 
 1. Loads all chunks of the site asynchronously and keeps them loaded until done.
-2. Reads the ground height and draws the plan (about 750 thousand cells) on another thread.
-3. Places at most `blocks-per-tick` (4000) blocks per tick. Cells that already hold the right block, such as air above the ground, are skipped. The action bar shows the progress.
+2. Reads the ground height and draws the plan on another thread.
+3. Places at most `blocks-per-tick` (4000) blocks per tick. Cells that already hold the right block are skipped. The action bar shows the progress.
 4. Writes the plaques and puts the book on the lectern, then records the building in `plugins/GreatBuildings/buildings.txt`.
 
-`/gb undo` remembers what the last build replaced, but only until the server restarts. Chests that were in the site lose their contents, and undo can't bring them back.
+`/gb undo` remembers what the last build replaced, but only until the server restarts.
 
 ## Settings (`config.yml`)
 
@@ -124,7 +128,7 @@ To keep the Raspberry Pi responsive, it builds in steps:
 
 ## Adding a building
 
-A building is a class that implements `Building` and draws itself into a `Plan` as block state strings (`minecraft:oak_stairs[facing=north,half=bottom]`). The plan doesn't depend on the server, so it can be rendered to images and checked without running Minecraft. Then register the building in `GreatBuildingsPlugin.onEnable()`.
+A building is a class that implements `Building` placed in its country subpackage (`com.server.greatbuildings.georgia` or `com.server.greatbuildings.cyprus`). Its `country()` method returns `Country.GEORGIA` or `Country.CYPRUS`. It draws itself into a `Plan` as block state strings (`minecraft:oak_stairs[facing=north,half=bottom]`). The plan doesn't depend on the server, so it can be verified in tests without running Minecraft. Then register the building in `GreatBuildingsPlugin.onEnable()`.
 
 ## Build
 
