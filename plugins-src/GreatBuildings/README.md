@@ -63,6 +63,34 @@ The builder stands on the southern plaza of the hill and faces north — looking
 
 Name plaques in Georgian (`ბაგრატის ტაძარი`) and Russian (`Храм Баграта`). A lectern by the west entrance holds a book about the cathedral's history.
 
+### Paphos Castle (`paphos`)
+
+Medieval coastal fortress on the western mole of Kato Paphos harbor in Cyprus. Originally built by Byzantines and Lusignans (13th century), dismantled by Venetians in 1570, and reconstructed in 1592 by Ottoman governor Ahmet Pasha. UNESCO World Heritage Site.
+
+Dimensions from historical and archaeological surveys of the Department of Antiquities of Cyprus:
+
+| | Real | In game |
+|---|---|---|
+| Stone fortress footprint | ~33–40 × 20–23 m | 33 × 23 blocks |
+| Lower roof deck height with battlements | ~11–12 m | 11–13 blocks |
+| Upper keep height with beacon | ~15–16 m | 16–20 blocks |
+| Seawater moat and bridge | moat width ~8 m | 8 blocks, stone arched bridge |
+| Site with harbor mole and sea | — | 55 × 59 blocks |
+
+From the sources:
+
+- **Fortress and masonry.** Squat, heavy rectangular keep built of warm Cypriot limestone blocks (`smooth_sandstone`, `cut_sandstone`) with walls up to 3 metres thick.
+- **Moat and bridge.** The landward approach is protected by a seawater moat (`water`), crossed by an arched stone bridge.
+- **Entrance and 1592 inscription.** Single arched portal with heavy dark oak doors. Set above the gate is the authentic white marble slab (`calcite`) commemorating the 1592 Ottoman reconstruction by Ahmet Pasha.
+- **Ground floor.** Central barrel-vaulted hall dividing two wings. West wing houses Ottoman prison dungeons with heavy iron bars (`iron_bars`), chains, and bunks. East wing contains the British salt warehouse (smooth quartz blocks and barrels) and armory/guardroom.
+- **Roof deck and artillery.** A wide stone staircase leads to the spacious open terrace. Along the parapet are **12 cannon embrasures (ramparts)** mounting coastal defense cannons (polished blackstone and dispensers) pointing out to sea and harbor approaches.
+- **Upper keep.** Rising above the roof deck is a secondary tower housing the garrison guardhouse and a small Ottoman prayer chamber (mosque) with carpets and a mihrab niche. Topped by an upper lookout terrace and signal beacon/flagpole.
+- **Surroundings.** The western breakwater of Paphos harbor: paved promenade with mooring bollards, Mediterranean palms, lanterns, and rocky sea breakwaters.
+
+The builder stands on the harbor promenade and faces north — looking directly across the stone bridge over the seawater moat into the castle gate.
+
+Name plaques in Greek (`Κάστρο της Πάφου`) and Russian (`Пафосский замок`). A lectern by the bridge holds a book about the castle's history.
+
 ## Commands
 
 | Command | Who | What it does |
