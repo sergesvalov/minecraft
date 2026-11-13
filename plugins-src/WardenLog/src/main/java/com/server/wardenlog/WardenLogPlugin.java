@@ -104,7 +104,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         entityLimit = getConfig().getInt("limits.entities_per_chunk", 150);
-        griefBlocks = getConfig().getInt("limits.grief_blocks", 30);
+        griefBlocks = getConfig().getInt("limits.grief_blocks", 45);
         lagMachinePistons = getConfig().getInt("limits.lag_machine_pistons", 500);
         logRetentionDays = Math.max(1, getConfig().getInt("log_retention_days", 14));
 
@@ -263,7 +263,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
             logEvent(json);
         }
 
-        // Grief detection: >30 blocks in 10 seconds
+        // Grief detection: >45 blocks in 10 seconds
         List<Long> breaks = breakTracker.computeIfAbsent(playerName, k -> new ArrayList<>());
         breaks.add(now);
         breaks.removeIf(t -> now - t > 10000);

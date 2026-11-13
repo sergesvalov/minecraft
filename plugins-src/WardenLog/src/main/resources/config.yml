@@ -1,6 +1,6 @@
 limits:
   entities_per_chunk: 150
-  grief_blocks: 30
+  grief_blocks: 45
   lag_machine_pistons: 500
 
 # events.jsonl rotates daily into events-YYYY-MM-DD.jsonl; archives older than this are deleted
