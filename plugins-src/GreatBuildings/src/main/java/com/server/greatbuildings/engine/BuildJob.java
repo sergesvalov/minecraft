@@ -1,5 +1,8 @@
-package com.server.greatbuildings;
+package com.server.greatbuildings.engine;
 
+import com.server.greatbuildings.model.Building;
+import com.server.greatbuildings.model.Plan;
+import com.server.greatbuildings.model.Terrain;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -10,13 +13,14 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Lectern;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.sign.Side;
 import org.bukkit.block.sign.SignSide;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.LecternInventory;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
@@ -31,13 +35,13 @@ import java.util.function.Consumer;
  * loads the chunks asynchronously, reads the ground, draws the plan off the main thread, then places
  * a limited number of blocks per tick. Remembers what it replaced, so the build can be undone.
  */
-final class BuildJob {
+public final class BuildJob {
 
-    private final GreatBuildingsPlugin plugin;
-    final Building building;
-    final World world;
+    private final JavaPlugin plugin;
+    private final Building building;
+    private final World world;
     /** World position of the plan origin; oy is the ground level. */
-    final int ox, oy, oz;
+    private final int ox, oy, oz;
     private final UUID owner;
     private final int writesPerTick;
     private final int checksPerTick;
@@ -53,7 +57,7 @@ final class BuildJob {
     private int nextReport = 25;
     private boolean finished;
 
-    BuildJob(GreatBuildingsPlugin plugin, Building building, World world, int ox, int oy, int oz, UUID owner) {
+    public BuildJob(JavaPlugin plugin, Building building, World world, int ox, int oy, int oz, UUID owner) {
         this.plugin = plugin;
         this.building = building;
         this.world = world;
@@ -71,14 +75,18 @@ final class BuildJob {
         }
     }
 
-    boolean finished() {
+    public Building building() {
+        return building;
+    }
+
+    public boolean finished() {
         return finished;
     }
 
     /** Runs the whole build; {@code done} gets null on success or an error message, on the main thread. */
-    void start(Consumer<String> done) {
+    public void start(Consumer<String> done) {
         tell("Загружаю " + chunks.size() + " чанков...");
-        List<CompletableFuture<Chunk>> loads = new ArrayList<>();
+        List<CompletableFuture<Chunk>> loads = new ArrayList<>(chunks.size());
         for (int[] c : chunks) {
             loads.add(world.getChunkAtAsync(c[0], c[1], true));
         }
@@ -234,7 +242,7 @@ final class BuildJob {
     }
 
     /** Puts back everything this build replaced, newest first. {@code done} runs on the main thread. */
-    void undo(Runnable done) {
+    public void undo(Runnable done) {
         tell("Разбираю " + building.title() + "...");
         task = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
             int i = undoCount - 1;
@@ -253,21 +261,23 @@ final class BuildJob {
                 if (i < 0) {
                     task.cancel();
                     undoCount = 0;
+                    finished = true;
                     done.run();
                 }
             }
         }, 1L, 1L);
     }
 
-    int changedBlocks() {
+    public int changedBlocks() {
         return undoCount;
     }
 
-    void cancel() {
+    public void cancel() {
         if (task != null) {
             task.cancel();
         }
         releaseChunks();
+        finished = true;
     }
 
     private void releaseChunks() {
@@ -311,3 +321,4 @@ final class BuildJob {
         plugin.getLogger().info(building.id() + ": " + message);
     }
 }
+

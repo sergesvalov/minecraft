@@ -1,4 +1,4 @@
-package com.server.greatbuildings;
+package com.server.greatbuildings.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,20 +6,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * What a building puts where, in coordinates relative to its origin: y = 0 is the ground level the
- * building stands on. A box of cells, each either untouched or one block state from a palette.
- * Pure data, no server classes: it can be drawn off the main thread and rendered in tests.
+ * A building's block plan: a bounded 3D grid of block-state strings plus the sign texts and lectern
+ * locations that go with them. Untouched cells are left alone in the world (useful outside the walls).
  */
 public final class Plan {
 
     public static final String AIR = "minecraft:air";
 
     public final int minX, minY, minZ, maxX, maxY, maxZ;
-    public final int sizeX, sizeY, sizeZ;
-    /** 0 = untouched, otherwise palette index + 1. */
+    private final int sizeX, sizeZ;
     private final short[] cells;
     private final List<String> palette = new ArrayList<>();
     private final Map<String, Short> ids = new HashMap<>();
+
     public final List<SignText> signs = new ArrayList<>();
     public final List<int[]> lecterns = new ArrayList<>();
 
@@ -38,8 +37,8 @@ public final class Plan {
         this.maxY = maxY;
         this.maxZ = maxZ;
         this.sizeX = maxX - minX + 1;
-        this.sizeY = maxY - minY + 1;
         this.sizeZ = maxZ - minZ + 1;
+        int sizeY = maxY - minY + 1;
         this.cells = new short[sizeX * sizeY * sizeZ];
     }
 
@@ -47,30 +46,28 @@ public final class Plan {
         return x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
     }
 
-    /** Cells are ordered bottom-up, so applying them in index order lays foundations first. */
+    public int volume() {
+        return cells.length;
+    }
+
     public int index(int x, int y, int z) {
         return ((y - minY) * sizeZ + (z - minZ)) * sizeX + (x - minX);
     }
 
     public int x(int index) {
-        return index % sizeX + minX;
+        return minX + index % sizeX;
     }
 
     public int z(int index) {
-        return (index / sizeX) % sizeZ + minZ;
+        return minZ + (index / sizeX) % sizeZ;
     }
 
     public int y(int index) {
-        return index / (sizeX * sizeZ) + minY;
+        return minY + index / (sizeX * sizeZ);
     }
 
-    public int volume() {
-        return cells.length;
-    }
-
-    /** Silently ignores cells outside the box. */
     public void set(int x, int y, int z, String state) {
-        if (!contains(x, y, z)) {
+        if (!contains(x, y, z) || state == null) {
             return;
         }
         Short id = ids.get(state);
@@ -120,17 +117,18 @@ public final class Plan {
         return stateAt(index(x, y, z));
     }
 
-    String stateAt(int index) {
+    public String stateAt(int index) {
         short id = cells[index];
         return id == 0 ? null : palette.get(id - 1);
     }
 
     /** Palette id at a cell: 0 = untouched, otherwise an index + 1 into {@link #palette()}. */
-    int rawAt(int index) {
+    public int rawAt(int index) {
         return cells[index];
     }
 
-    List<String> palette() {
+    public List<String> palette() {
         return palette;
     }
 }
+

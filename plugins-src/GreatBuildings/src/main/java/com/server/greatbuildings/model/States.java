@@ -1,4 +1,4 @@
-package com.server.greatbuildings;
+package com.server.greatbuildings.model;
 
 /**
  * Block states as vanilla strings ("minecraft:oak_stairs[facing=north,half=bottom]").
@@ -53,3 +53,4 @@ public final class States {
         return b(id) + "[facing=" + facing.id() + "]";
     }
 }
+

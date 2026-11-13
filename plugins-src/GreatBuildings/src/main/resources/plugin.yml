@@ -8,7 +8,7 @@ commands:
   greatbuildings:
     description: Великие здания мира
     aliases: [gb]
-    usage: /gb <list|build <здание>|confirm|undo>
+    usage: /gb <list|build <здание>|confirm|undo|tp <здание>>
 permissions:
   greatbuildings.build:
     # Superadmin only, not given to ops. RCON_CMDS_STARTUP in docker-compose.yml grants it

@@ -1,22 +1,23 @@
 package com.server.greatbuildings.georgia;
 
-import com.server.greatbuildings.Building;
-import com.server.greatbuildings.Country;
-import com.server.greatbuildings.Face;
-import com.server.greatbuildings.Plan;
-import com.server.greatbuildings.Terrain;
+import com.server.greatbuildings.buildings.Shapes;
+import com.server.greatbuildings.model.Building;
+import com.server.greatbuildings.model.Country;
+import com.server.greatbuildings.model.Face;
+import com.server.greatbuildings.model.Plan;
+import com.server.greatbuildings.model.Terrain;
 
 import java.util.List;
 
-import static com.server.greatbuildings.States.b;
-import static com.server.greatbuildings.States.candles;
-import static com.server.greatbuildings.States.facing;
-import static com.server.greatbuildings.States.lantern;
-import static com.server.greatbuildings.States.leaves;
-import static com.server.greatbuildings.States.logY;
-import static com.server.greatbuildings.States.slab;
-import static com.server.greatbuildings.States.stairs;
-import static com.server.greatbuildings.States.wallSign;
+import static com.server.greatbuildings.model.States.b;
+import static com.server.greatbuildings.model.States.candles;
+import static com.server.greatbuildings.model.States.facing;
+import static com.server.greatbuildings.model.States.lantern;
+import static com.server.greatbuildings.model.States.leaves;
+import static com.server.greatbuildings.model.States.logY;
+import static com.server.greatbuildings.model.States.slab;
+import static com.server.greatbuildings.model.States.stairs;
+import static com.server.greatbuildings.model.States.wallSign;
 
 /**
  * Svetitskhoveli Cathedral in Mtskheta (Georgia) inside its fortress enclosure, 1 block = 1 metre,
@@ -116,11 +117,7 @@ public final class Svetitskhoveli implements Building {
     // ------------------------------------------------------------------ materials
 
     static int hash(int x, int y, int z) {
-        int h = x * 73856093 ^ y * 19349663 ^ z * 83492791;
-        h ^= h >>> 13;
-        h *= 0x5bd1e995;
-        h ^= h >>> 15;
-        return h & 0x7fffffff;
+        return Shapes.hash(x, y, z);
     }
 
     /** Facade masonry: light and dark sandstone with green tuff; the north facade is mostly tuff. */
@@ -160,10 +157,7 @@ public final class Svetitskhoveli implements Building {
     }
 
     private static void foundation(Plan p, Terrain t, int x, int z, String state) {
-        int ground = t.groundY(x, z);
-        for (int y = ground == Terrain.NONE ? p.minY : Math.max(p.minY, ground + 1); y < 0; y++) {
-            p.set(x, y, z, state);
-        }
+        Shapes.foundation(p, t, x, z, state);
     }
 
     private static void foundationRubble(Plan p, Terrain t, int x, int z) {
@@ -174,9 +168,7 @@ public final class Svetitskhoveli implements Building {
     }
 
     private static void clearColumn(Plan p, int x, int z) {
-        for (int y = 1; y <= TOP; y++) {
-            p.set(x, y, z, AIR);
-        }
+        Shapes.clearColumn(p, x, z, TOP);
     }
 
     // ------------------------------------------------------------------ yard

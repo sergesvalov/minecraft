@@ -1,10 +1,11 @@
-package com.server.greatbuildings;
+package com.server.greatbuildings.model;
 
-import java.util.Locale;
-
-/** Horizontal direction. x grows to the east, z grows to the south (Minecraft axes). */
+/** Cardinal direction in plan coordinates (x east, z south). */
 public enum Face {
-    NORTH(0, -1), SOUTH(0, 1), WEST(-1, 0), EAST(1, 0);
+    NORTH(0, -1),
+    SOUTH(0, 1),
+    WEST(-1, 0),
+    EAST(1, 0);
 
     public final int dx;
     public final int dz;
@@ -15,7 +16,7 @@ public enum Face {
     }
 
     public String id() {
-        return name().toLowerCase(Locale.ROOT);
+        return name().toLowerCase();
     }
 
     public Face opposite() {
@@ -27,3 +28,4 @@ public enum Face {
         };
     }
 }
+
