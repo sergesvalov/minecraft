@@ -10,7 +10,9 @@ services:
     oom_score_adj: -500
     ports:
       - "25566:25565"          # Java Edition TCP
-      - "19132:19132/udp"      # Bedrock Edition UDP
+      - "19132:19132/udp"      # Bedrock Edition UDP (RakNet)
+      - "19132:19132/tcp"      # Bedrock Edition TCP (NetherNet HTTP signaling)
+      - "19133:19133/udp"      # Bedrock Edition UDP (NetherNet WebRTC)
       - "25581:8080"           # Squaremap Web Interface
     environment:
       TZ: "Europe/Athens"
