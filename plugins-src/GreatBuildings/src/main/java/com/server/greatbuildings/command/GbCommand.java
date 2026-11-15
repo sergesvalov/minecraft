@@ -15,6 +15,7 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -133,11 +134,7 @@ public final class GbCommand implements TabExecutor {
         List<BuildingRegistry.Entry> all = registry.all();
 
         if (all.isEmpty()) {
-            sender.sendMessage(Component.text("Великих зданий в мире пока нет. Доступны для постройки:", NamedTextColor.YELLOW));
-            for (Country c : Country.values()) {
-                List<String> ids = catalog.byCountry(c).stream().map(Building::id).toList();
-                sender.sendMessage(Component.text("  " + c.russian() + ": " + String.join(", ", ids), NamedTextColor.GRAY));
-            }
+            sendCatalogFallback(sender);
             return;
         }
 
@@ -153,43 +150,55 @@ public final class GbCommand implements TabExecutor {
                 return b != null && b.country() == country;
             }).toList();
 
-            if (countryEntries.isEmpty() && filterCountry != null) {
-                sender.sendMessage(Component.text("  В категории " + country.russian() + " пока ничего не построено.",
-                        NamedTextColor.YELLOW));
+            if (countryEntries.isEmpty()) {
+                if (filterCountry != null) {
+                    sender.sendMessage(Component.text("  В категории " + country.russian() + " пока ничего не построено.",
+                            NamedTextColor.YELLOW));
+                }
                 continue;
             }
 
-            if (!countryEntries.isEmpty()) {
-                sender.sendMessage(Component.text("  [" + country.russian() + "]", NamedTextColor.AQUA));
-                for (BuildingRegistry.Entry e : countryEntries) {
-                    Building building = catalog.byId(e.id());
-                    String title = building != null ? building.title() + " (" + building.where() + ")" : e.id();
-                    StringBuilder line = new StringBuilder("    ")
-                            .append(title).append(" — ")
-                            .append(e.x()).append(' ').append(e.y()).append(' ').append(e.z());
-                    if (sender instanceof Player player && player.getWorld().getName().equals(e.world())) {
-                        double dx = e.x() + 0.5 - player.getLocation().getX();
-                        double dz = e.z() + 0.5 - player.getLocation().getZ();
-                        double distance = Math.sqrt(dx * dx + dz * dz);
-                        double angle = Math.toDegrees(Math.atan2(dx, -dz));
-                        int index = (int) Math.round(((angle % 360) + 360) % 360 / 45.0) % 8;
-                        line.append(distance < 50 ? ", ты рядом"
-                                : String.format(Locale.ROOT, ", %.0f блоков %s", distance, DIRECTIONS[index]));
-                    } else if (!(sender instanceof Player)) {
-                        line.append(" (").append(e.world()).append(')');
-                    }
-
-                    Component msg = Component.text(line.toString(), NamedTextColor.YELLOW);
-                    if (canTeleport && building != null) {
-                        msg = msg.append(Component.text(" [ТП]", NamedTextColor.GREEN)
-                                .clickEvent(ClickEvent.runCommand("/gb tp " + building.id()))
-                                .hoverEvent(HoverEvent.showText(
-                                        Component.text("Телепортироваться к " + building.title(), NamedTextColor.GRAY))));
-                    }
-                    sender.sendMessage(msg);
-                }
+            sender.sendMessage(Component.text("  [" + country.russian() + "]", NamedTextColor.AQUA));
+            for (BuildingRegistry.Entry entry : countryEntries) {
+                sender.sendMessage(formatEntryComponent(sender, entry, canTeleport));
             }
         }
+    }
+
+    private void sendCatalogFallback(CommandSender sender) {
+        sender.sendMessage(Component.text("Великих зданий в мире пока нет. Доступны для постройки:", NamedTextColor.YELLOW));
+        for (Country c : Country.values()) {
+            List<String> ids = catalog.byCountry(c).stream().map(Building::id).toList();
+            sender.sendMessage(Component.text("  " + c.russian() + ": " + String.join(", ", ids), NamedTextColor.GRAY));
+        }
+    }
+
+    private Component formatEntryComponent(CommandSender sender, BuildingRegistry.Entry entry, boolean canTeleport) {
+        Building building = catalog.byId(entry.id());
+        String title = building != null ? building.title() + " (" + building.where() + ")" : entry.id();
+        StringBuilder line = new StringBuilder("    ")
+                .append(title).append(" — ")
+                .append(entry.x()).append(' ').append(entry.y()).append(' ').append(entry.z());
+        if (sender instanceof Player player && player.getWorld().getName().equals(entry.world())) {
+            double dx = entry.x() + 0.5 - player.getLocation().getX();
+            double dz = entry.z() + 0.5 - player.getLocation().getZ();
+            double distance = Math.sqrt(dx * dx + dz * dz);
+            double angle = Math.toDegrees(Math.atan2(dx, -dz));
+            int index = (int) Math.round(((angle % 360) + 360) % 360 / 45.0) % 8;
+            line.append(distance < 50 ? ", ты рядом"
+                    : String.format(Locale.ROOT, ", %.0f блоков %s", distance, DIRECTIONS[index]));
+        } else if (!(sender instanceof Player)) {
+            line.append(" (").append(entry.world()).append(')');
+        }
+
+        Component msg = Component.text(line.toString(), NamedTextColor.YELLOW);
+        if (canTeleport && building != null) {
+            msg = msg.append(Component.text(" [ТП]", NamedTextColor.GREEN)
+                    .clickEvent(ClickEvent.runCommand("/gb tp " + building.id()))
+                    .hoverEvent(HoverEvent.showText(
+                            Component.text("Телепортироваться к " + building.title(), NamedTextColor.GRAY))));
+        }
+        return msg;
     }
 
     @Override
@@ -200,43 +209,43 @@ public final class GbCommand implements TabExecutor {
             if (builder) {
                 options.addAll(List.of("build", "confirm", "undo", "tp"));
             }
-            return options.stream().filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
+            return filterPrefix(options, args[0]);
         }
         if (args.length == 2) {
             String sub = args[0].toLowerCase(Locale.ROOT);
             if (sub.equals("list")) {
-                List<String> countries = new ArrayList<>();
-                for (Country c : Country.values()) {
-                    countries.add(c.id());
-                }
-                return countries.stream().filter(s -> s.startsWith(args[1].toLowerCase(Locale.ROOT))).toList();
+                return filterPrefix(countryIds(), args[1]);
             }
             if (builder && sub.equals("build")) {
-                List<String> options = new ArrayList<>();
-                for (Country c : Country.values()) {
-                    options.add(c.id());
-                }
+                List<String> options = new ArrayList<>(countryIds());
                 options.addAll(catalog.ids());
-                return options.stream().filter(s -> s.startsWith(args[1].toLowerCase(Locale.ROOT))).toList();
+                return filterPrefix(options, args[1]);
             }
             if (builder && sub.equals("tp")) {
-                return registry.all().stream()
-                        .map(BuildingRegistry.Entry::id)
-                        .distinct()
-                        .filter(s -> s.startsWith(args[1].toLowerCase(Locale.ROOT)))
-                        .toList();
+                List<String> builtIds = registry.all().stream().map(BuildingRegistry.Entry::id).distinct().toList();
+                return filterPrefix(builtIds, args[1]);
             }
         }
         if (args.length == 3 && builder && args[0].equalsIgnoreCase("build")) {
             Country country = Country.fromString(args[1]);
             if (country != null) {
-                return catalog.byCountry(country).stream()
-                        .map(Building::id)
-                        .filter(s -> s.startsWith(args[2].toLowerCase(Locale.ROOT)))
-                        .toList();
+                return filterPrefix(catalog.byCountry(country).stream().map(Building::id).toList(), args[2]);
             }
         }
         return List.of();
+    }
+
+    private static List<String> countryIds() {
+        List<String> ids = new ArrayList<>(Country.values().length);
+        for (Country c : Country.values()) {
+            ids.add(c.id());
+        }
+        return ids;
+    }
+
+    private static List<String> filterPrefix(Collection<String> options, String prefix) {
+        String lower = prefix.toLowerCase(Locale.ROOT);
+        return options.stream().filter(s -> s.startsWith(lower)).toList();
     }
 }
 

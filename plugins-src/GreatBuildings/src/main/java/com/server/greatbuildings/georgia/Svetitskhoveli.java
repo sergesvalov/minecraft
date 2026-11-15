@@ -161,10 +161,7 @@ public final class Svetitskhoveli implements Building {
     }
 
     private static void foundationRubble(Plan p, Terrain t, int x, int z) {
-        int ground = t.groundY(x, z);
-        for (int y = ground == Terrain.NONE ? p.minY : Math.max(p.minY, ground + 1); y < 0; y++) {
-            p.set(x, y, z, rubble(x, y, z));
-        }
+        Shapes.foundation(p, t, x, z, y -> rubble(x, y, z));
     }
 
     private static void clearColumn(Plan p, int x, int z) {
@@ -175,13 +172,7 @@ public final class Svetitskhoveli implements Building {
 
     /** Levels the yard: air above, grass at y = 0, earth down to the real ground. Paved aprons outside the gates. */
     private void site(Plan p, Terrain t) {
-        for (int x = 0; x <= EX; x++) {
-            for (int z = 0; z <= EZ; z++) {
-                clearColumn(p, x, z);
-                p.set(x, 0, z, b("grass_block"));
-                foundation(p, t, x, z, b("dirt"));
-            }
-        }
+        Shapes.levelGround(p, t, 0, 0, EX, EZ, TOP, b("grass_block"), b("dirt"));
         for (int x = GATE_X - 3; x <= GATE_X + 3; x++) {
             for (int z = EZ + 1; z <= EZ + 6; z++) {
                 apron(p, t, x, z);
@@ -320,14 +311,10 @@ public final class Svetitskhoveli implements Building {
         belfry(p, 0, WGATE_Z);
 
         // Plaques at both gates: Georgian on the left of the south gate and at the west gate, Russian on the right
-        p.set(GATE_X - 3, 3, EZ + 5, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(GATE_X - 3, 3, EZ + 5, PLAQUE_KA));
-        p.set(GATE_X + 3, 3, EZ + 5, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(GATE_X + 3, 3, EZ + 5, PLAQUE_RU));
-        p.set(-5, 3, WGATE_Z - 3, wallSign("dark_oak", Face.WEST));
-        p.signs.add(new Plan.SignText(-5, 3, WGATE_Z - 3, PLAQUE_KA));
-        p.set(-5, 3, WGATE_Z + 3, wallSign("dark_oak", Face.WEST));
-        p.signs.add(new Plan.SignText(-5, 3, WGATE_Z + 3, PLAQUE_RU));
+        p.wallSign(GATE_X - 3, 3, EZ + 5, "dark_oak", Face.SOUTH, PLAQUE_KA);
+        p.wallSign(GATE_X + 3, 3, EZ + 5, "dark_oak", Face.SOUTH, PLAQUE_RU);
+        p.wallSign(-5, 3, WGATE_Z - 3, "dark_oak", Face.WEST, PLAQUE_KA);
+        p.wallSign(-5, 3, WGATE_Z + 3, "dark_oak", Face.WEST, PLAQUE_RU);
     }
 
     /** სვეტიცხოველი doesn't fit one sign line; split where the word joins: სვეტი (pillar) + ცხოველი (living). */
@@ -771,8 +758,7 @@ public final class Svetitskhoveli implements Building {
         }
         set(p, 2, 9, 0, lantern(true));
         // Georgian name on the portico gable, above the arch of the main entrance
-        set(p, -1, 11, 0, wallSign("dark_oak", Face.WEST));
-        p.signs.add(new Plan.SignText(CU - 1, 11, CV, PLAQUE_KA));
+        p.wallSign(CU - 1, 11, CV, "dark_oak", Face.WEST, PLAQUE_KA);
     }
 
     // ------------------------------------------------------------------ inside
@@ -804,8 +790,7 @@ public final class Svetitskhoveli implements Building {
 
         // Font to the right of the west entrance, lectern with the history to the left
         set(p, 7, 2, 3, b("water_cauldron") + "[level=3]");
-        set(p, 7, 2, -3, facing("lectern", Face.WEST));
-        p.lecterns.add(new int[]{CU + 7, 2, CV - 3});
+        p.lectern(CU + 7, 2, CV - 3, Face.WEST);
 
         // Royal tombs before the altar; Vakhtang Gorgasali's in the middle with a candle
         for (int v = -4; v <= 4; v += 2) {

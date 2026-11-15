@@ -220,8 +220,7 @@ public final class Paphos implements Building {
         }
 
         // Lectern with historical book at the southern bridgehead
-        p.set(x1 - 1, 1, z2 + 1, b("lectern") + "[facing=east]");
-        p.lecterns.add(new int[]{x1 - 1, 1, z2 + 1});
+        p.lectern(x1 - 1, 1, z2 + 1, Face.EAST);
     }
 
     // ------------------------------------------------------------------ castle core structure
@@ -269,10 +268,8 @@ public final class Paphos implements Building {
         p.set(GATE_X + 2, 5, CZ2, CARVED);
 
         // Plaques flanking the entrance portal in Greek and Russian
-        p.set(GATE_X - 2, 3, CZ2 + 1, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(GATE_X - 2, 3, CZ2 + 1, PLAQUE_EL));
-        p.set(GATE_X + 3, 3, CZ2 + 1, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(GATE_X + 3, 3, CZ2 + 1, PLAQUE_RU));
+        p.wallSign(GATE_X - 2, 3, CZ2 + 1, "dark_oak", Face.SOUTH, PLAQUE_EL);
+        p.wallSign(GATE_X + 3, 3, CZ2 + 1, "dark_oak", Face.SOUTH, PLAQUE_RU);
     }
 
     private static final List<String> PLAQUE_EL = List.of("Κάστρο", "της Πάφου", "1592", "Κύπρος");

@@ -95,16 +95,44 @@ The builder stands on the harbor promenade and faces north — looking directly 
 
 Name plaques in Greek (`Κάστρο της Πάφου`) and Russian (`Пафосский замок`). A lectern by the bridge holds a book about the castle's history.
 
+#### Kourion Ancient Amphitheatre (`kourion`)
+
+Greco-Roman theatre on the coastal cliff of Kourion (near Limassol, Cyprus), originally built in the 2nd century BC and expanded in the 2nd century AD.
+
+- **Orchestra and cavea.** Semicircular 17 m limestone orchestra with a marble centre mosaic, surrounded by tiered limestone seating (`cavea`) rising to 17 m with wide radial staircases (2+ blocks wide) and upper gallery.
+- **Stage and parodoi.** Two-tier stage building (`skene`) with double doors, colonnade, and wide arched side entrances (`parodoi`).
+- **Surroundings.** Paved southern approach plaza, Mediterranean cypresses, bilingual Greek (`Αρχαίο Θέατρο Κουρίου`) and Russian (`Амфитеатр Куриона`) plaques, and a lectern with a history book.
+
+#### Statue of Apollo Hylates (`apollo`)
+
+Monumental statue and sacred courtyard of Apollo Hylates ("Apollo of the Woodland") at the Sanctuary of Kourion, Cyprus.
+
+- **Sanctuary court.** Paved temenos enclosed by a low limestone wall and Doric colonnade with a sacrificial altar.
+- **Pedestal and statue.** Stepped limestone and marble pedestal bearing a monumental (~9 m) reconstruction of Apollo in bronze, gilded copper, and stone — holding a golden lyre and bow, with quiver and laurel wreath.
+- **Surroundings.** Sacred cypress grove, bilingual Greek (`Απόλλων Υλάτης`) and Russian (`Аполлон Гилат`) plaques, and a lectern with a history book.
+
+### Israel (`israel`)
+
+#### Second Jerusalem Temple (`temple`)
+
+Herod's Temple in Jerusalem at **1:1** scale in its full splendour, built with walkable interiors and 2+ block wide stairs and passages throughout.
+
+- **Court of Women (`62 × 62 m`).** Surrounded by limestone walls and colonnades with four corner chambers (Nazarites, Wood, Lepers, Oil) and 4-block wide doorways.
+- **Nicanor Gate and Court of Priests.** 12-block wide semicircular-inspired steps leading through the Corinthian bronze Nicanor Gate into the Court of Israel and Court of Priests, featuring the **14 × 14 m** unhewn stone Altar of Burnt Offering with a 4-block ramp and the bronze Laver (`Kiyor`).
+- **Sanctuary (`Ulam`, `Hekhal`, `Holy of Holies`).** 12 marble steps rise to the **48 × 48 m** monumental Ulam facade. Inside the 20 m Hekhal stand the Golden Menorah, Table of Showbread, and Incense Altar. A 2-block wide passage through the double veil (`Parokhet`) leads into the **10 × 10 × 10 m** Holy of Holies with the Foundation Stone (`Even ha-Shetiyah`), flanked by 3-story side chambers.
+- **Surroundings.** Paved entrance plaza, cypresses, bilingual Hebrew (`בית המקדש`) and Russian (`Иерусалимский Храм`) plaques, and a lectern with a history book.
+
 ## Commands
 
 | Command | Who | What it does |
 |---|---|---|
-| `/gb list [country]` (or just `/gb`) | everyone | Where built buildings are, grouped by country (or filtered: `/gb list georgia`, `/gb list cyprus`) |
-| `/gb build <building>` or `/gb build <country> <building>` | `papa` only | Shows the area and asks to confirm (with country tab-completion) |
+| `/gb list [country]` (or just `/gb`) | everyone | Where built buildings are, grouped by country (with clickable `[ТП]` button for `papa`) |
+| `/gb build <building>` or `/gb build <country> <building>` | `papa` only | Shows the area in front of you and asks to confirm (with country tab-completion) |
 | `/gb confirm` | `papa` only | Builds it (the confirmation is valid for a minute) |
 | `/gb undo` | `papa` only | Takes the last building down and restores the terrain |
+| `/gb tp <building>` | `papa` only | Teleports to a built building |
 
-The building goes **north** of the player with its entrance facing him. For Svetitskhoveli the player stands 4 blocks in front of the south gate, for Bagrati on the southern plaza of Ukimerioni hill, for Paphos on the harbor promenade before the bridge. The yard is level with the ground under the player's feet. Everything in the site is replaced: hills are cut, hollows filled with earth, foundations laid under the walls.
+The building is rotated in 90° increments based on where you are looking (`Placement.rotationFromYaw`) and placed **2–6 blocks in front of your face** with its entrance facing you. The yard is level with the ground under the player's feet. Everything in the site is replaced: hills are cut, hollows filled with earth, foundations laid under the walls. All stairs and passages are at least 2 blocks wide so characters can walk through every room comfortably.
 
 The `greatbuildings.build` permission is off by default, even for operators. `RCON_CMDS_STARTUP` in `docker-compose.yml` grants it to `papa` on every server start.
 
@@ -126,9 +154,15 @@ To keep the Raspberry Pi responsive, it builds in steps:
 | `blocks-per-tick` | 4000 | Blocks placed per tick |
 | `checks-per-tick` | 30000 | Plan cells checked per tick |
 
-## Adding a building
+## Architecture & Adding a Building
 
-A building is a class that implements `Building` placed in its country subpackage (`com.server.greatbuildings.georgia` or `com.server.greatbuildings.cyprus`). Its `country()` method returns `Country.GEORGIA` or `Country.CYPRUS`. It draws itself into a `Plan` as block state strings (`minecraft:oak_stairs[facing=north,half=bottom]`). The plan doesn't depend on the server, so it can be verified in tests without running Minecraft. Then register the building in `GreatBuildingsPlugin.onEnable()`.
+- `model`: `Building`, `Country`, `Face`, `Plan` (with `doubleDoor`, `wallSign`, `lectern`), `States`, `Terrain`.
+- `buildings`: `BuildingCatalog` (central registry of all buildings), `Shapes` (shared `levelGround`, `foundation`, `clearColumn`, `cypress`, `plaquePillar`).
+- `engine`: `BuildManager`, `BuildJob`, `Placement`.
+- `storage`: `BuildingRegistry` (`buildings.txt` persistence).
+- `command`: `GbCommand`.
+
+To add a building, implement `Building` in its country subpackage (`georgia`, `cyprus`, `israel`, etc.) and register it in `BuildingCatalog`. The `Plan` does not depend on Bukkit, so it can be snapshot-tested offline via `BuildingSnapshotTest`.
 
 ## Build
 

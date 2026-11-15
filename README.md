@@ -22,7 +22,7 @@ To protect players' inventory and builds, the **AuthMeReloaded** plugin is used:
 A player with the username **`papa`** is the superadmin. On every server start, the server gives papa operator rights again (`RCON_CMDS_STARTUP` in `docker-compose.yml`).
 To make another player an admin, issue `/op <nickname>` in-game. They stay a regular operator.
 
-The superadmin `papa` is allowed more than the other admins. Such abilities sit behind a dedicated permission that operators don't get by default. On every start the server grants it to `papa` through **LuckPerms**. Currently these are `halloumi.tavern` and `halloumi.inn`, building a two-storey tavern with a yard with `/halloumi tavern` (or its alias `/halloumi inn`), and `greatbuildings.build`, building great buildings of the world (Svetitskhoveli, Bagrati, Paphos Castle at 1:1 scale) with `/gb build`.
+The superadmin `papa` is allowed more than the other admins. Such abilities sit behind a dedicated permission that operators don't get by default. On every start the server grants it to `papa` through **LuckPerms**. Currently these are `halloumi.tavern` and `halloumi.inn`, building a two-storey tavern with a yard with `/halloumi tavern` (or its alias `/halloumi inn`), and `greatbuildings.build`, building great buildings of the world at 1:1 scale (Svetitskhoveli, Bagrati, Paphos Castle, Kourion Amphitheatre, Statue of Apollo Hylates, Second Jerusalem Temple) with `/gb build` (and teleporting with `/gb tp`). See [GreatBuildings README](plugins-src/GreatBuildings/README.md).
 
 ### 4. Interactive Web Map (Squaremap)
 The server runs the Squaremap plugin, which generates a fast and smooth 2D map of your world in real-time.

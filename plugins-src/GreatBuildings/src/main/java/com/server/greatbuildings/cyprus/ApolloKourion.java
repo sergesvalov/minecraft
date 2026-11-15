@@ -108,19 +108,9 @@ public final class ApolloKourion implements Building {
     }
 
     private void sanctuaryCourt(Plan p, Terrain t) {
-        for (int x = 0; x <= EX; x++) {
-            for (int z = 0; z <= EZ; z++) {
-                Shapes.clearColumn(p, x, z, TOP);
-                Shapes.foundation(p, t, x, z, b("stone"));
-
-                boolean insideTemenos = (x >= 2 && x <= EX - 2 && z >= 2 && z <= EZ - 2);
-                if (insideTemenos) {
-                    p.set(x, 0, z, paving(x, z));
-                } else {
-                    p.set(x, 0, z, b("grass_block"));
-                }
-            }
-        }
+        Shapes.levelGround(p, t, 0, 0, EX, EZ, TOP,
+                (x, z) -> (x >= 2 && x <= EX - 2 && z >= 2 && z <= EZ - 2) ? paving(x, z) : b("grass_block"),
+                b("stone"));
 
         // Low temenos perimeter wall with wide southern entrance
         for (int x = 2; x <= EX - 2; x++) {
@@ -305,8 +295,7 @@ public final class ApolloKourion implements Building {
 
     private void sacredGroveAndSigns(Plan p) {
         // Lectern with book at the entrance
-        p.set(CX - 3, 1, EZ - 1, b("lectern") + "[facing=south]");
-        p.lecterns.add(new int[]{CX - 3, 1, EZ - 1});
+        p.lectern(CX - 3, 1, EZ - 1, Face.SOUTH);
 
         // Bilingual plaques flanking the pedestal approach
         Shapes.plaquePillar(p, CX - 3, 25, CARVED, "dark_oak", Face.SOUTH, PLAQUE_EL);

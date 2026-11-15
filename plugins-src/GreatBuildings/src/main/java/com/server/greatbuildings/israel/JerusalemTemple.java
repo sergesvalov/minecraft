@@ -127,13 +127,7 @@ public final class JerusalemTemple implements Building {
     // ------------------------------------------------------------------ base platform & terraces
 
     private void siteAndCourtyards(Plan p, Terrain t) {
-        for (int x = 0; x <= EX; x++) {
-            for (int z = 0; z <= EZ; z++) {
-                Shapes.clearColumn(p, x, z, TOP);
-                Shapes.foundation(p, t, x, z, b("stone"));
-                p.set(x, 0, z, paving(x, z));
-            }
-        }
+        Shapes.levelGround(p, t, 0, 0, EX, EZ, TOP, JerusalemTemple::paving, b("stone"));
 
         // Elevated terrace for Court of Israel & Priests (z = 50..85, y = 1..3)
         for (int x = 6; x <= 67; x++) {
@@ -505,8 +499,7 @@ public final class JerusalemTemple implements Building {
 
     private void approachAndTrees(Plan p) {
         // Lectern with history book in front of the main gate
-        p.set(CX - 6, 1, EZ, b("lectern") + "[facing=south]");
-        p.lecterns.add(new int[]{CX - 6, 1, EZ});
+        p.lectern(CX - 6, 1, EZ, Face.SOUTH);
 
         // Bilingual plaques flanking the outer gate
         Shapes.plaquePillar(p, CX - 5, EZ, MARBLE_CARVED, "dark_oak", Face.SOUTH, PLAQUE_HE);

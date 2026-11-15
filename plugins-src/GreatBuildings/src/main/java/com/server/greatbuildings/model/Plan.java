@@ -109,6 +109,18 @@ public final class Plan {
         }
     }
 
+    /** Places a wall sign with the given wood type and registers its front-side text. */
+    public void wallSign(int x, int y, int z, String wood, Face facing, List<String> lines) {
+        set(x, y, z, States.wallSign(wood, facing));
+        signs.add(new SignText(x, y, z, lines));
+    }
+
+    /** Places a lectern facing {@code facing} and registers it to receive the building's book. */
+    public void lectern(int x, int y, int z, Face facing) {
+        set(x, y, z, States.facing("lectern", facing));
+        lecterns.add(new int[]{x, y, z});
+    }
+
     /** State at a cell, or null if untouched (or outside the box). */
     public String get(int x, int y, int z) {
         if (!contains(x, y, z)) {

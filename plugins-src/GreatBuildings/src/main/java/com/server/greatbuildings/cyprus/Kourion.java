@@ -114,13 +114,7 @@ public final class Kourion implements Building {
     // ------------------------------------------------------------------ site
 
     private void site(Plan p, Terrain t) {
-        for (int x = 0; x <= EX; x++) {
-            for (int z = 0; z <= EZ; z++) {
-                Shapes.clearColumn(p, x, z, TOP);
-                p.set(x, 0, z, b("grass_block"));
-                Shapes.foundation(p, t, x, z, b("dirt"));
-            }
-        }
+        Shapes.levelGround(p, t, 0, 0, EX, EZ, TOP, b("grass_block"), b("dirt"));
         // Paved southern approach plaza in front of the stage and parodoi
         for (int x = CX - 20; x <= CX + 20; x++) {
             for (int z = CZ + 8; z <= EZ; z++) {
@@ -327,8 +321,7 @@ public final class Kourion implements Building {
 
     private void approachAndTrees(Plan p) {
         // Lectern with historical book in front of the stage approach
-        p.set(CX - 4, 1, EZ - 1, b("lectern") + "[facing=south]");
-        p.lecterns.add(new int[]{CX - 4, 1, EZ - 1});
+        p.lectern(CX - 4, 1, EZ - 1, Face.SOUTH);
 
         // Bilingual plaques on stone pedestals flanking the central approach
         Shapes.plaquePillar(p, CX - 6, stageZ2() + 2, CARVED, "dark_oak", Face.SOUTH, PLAQUE_EL);

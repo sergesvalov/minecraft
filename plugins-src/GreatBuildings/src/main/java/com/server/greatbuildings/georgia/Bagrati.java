@@ -133,10 +133,7 @@ public final class Bagrati implements Building {
     }
 
     private static void foundationRubble(Plan p, Terrain t, int x, int z) {
-        int ground = t.groundY(x, z);
-        for (int y = ground == Terrain.NONE ? p.minY : Math.max(p.minY, ground + 1); y < 0; y++) {
-            p.set(x, y, z, rubble(x, y, z));
-        }
+        Shapes.foundation(p, t, x, z, y -> rubble(x, y, z));
     }
 
     private static void clearColumn(Plan p, int x, int z) {
@@ -151,13 +148,7 @@ public final class Bagrati implements Building {
 
     /** Prepares the Ukimerioni hill plateau: grass at y = 0, foundations down to terrain. */
     private void site(Plan p, Terrain t) {
-        for (int x = 0; x <= EX; x++) {
-            for (int z = 0; z <= EZ; z++) {
-                clearColumn(p, x, z);
-                p.set(x, 0, z, b("grass_block"));
-                foundation(p, t, x, z, b("dirt"));
-            }
-        }
+        Shapes.levelGround(p, t, 0, 0, EX, EZ, TOP, b("grass_block"), b("dirt"));
 
         // Stone walkways: around the cathedral, to the south plaza, and west entrance
         for (int x = CU - 8; x <= CU + 42; x++) {
@@ -806,10 +797,8 @@ public final class Bagrati implements Building {
         setRel(p, DOME_U, 6, 17, lantern(true));
 
         // Plaque at the south entrance in Georgian and Russian
-        setRel(p, DOME_U - 2, 3, v2 + 1, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(CU + DOME_U - 2, 3, CV + v2 + 1, PLAQUE_KA));
-        setRel(p, DOME_U + 2, 3, v2 + 1, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(CU + DOME_U + 2, 3, CV + v2 + 1, PLAQUE_RU));
+        p.wallSign(CU + DOME_U - 2, 3, CV + v2 + 1, "dark_oak", Face.SOUTH, PLAQUE_KA);
+        p.wallSign(CU + DOME_U + 2, 3, CV + v2 + 1, "dark_oak", Face.SOUTH, PLAQUE_RU);
     }
 
     /** Western entrance portico protecting the main western doors. */
@@ -854,17 +843,14 @@ public final class Bagrati implements Building {
         }
 
         // Lectern with history book at the west entrance
-        setRel(p, u1 + 1, 2, 2, b("lectern") + "[facing=east]");
-        p.lecterns.add(new int[]{CU + u1 + 1, 2, CV + 2});
+        p.lectern(CU + u1 + 1, 2, CV + 2, Face.EAST);
 
         // Lantern hanging in the portico
         setRel(p, -3, 6, 0, lantern(true));
 
         // Plaque on the west portico
-        setRel(p, u1, 3, -2, wallSign("dark_oak", Face.WEST));
-        p.signs.add(new Plan.SignText(CU + u1, 3, CV - 2, PLAQUE_KA));
-        setRel(p, u1, 3, 2, wallSign("dark_oak", Face.WEST));
-        p.signs.add(new Plan.SignText(CU + u1, 3, CV + 2, PLAQUE_RU));
+        p.wallSign(CU + u1, 3, CV - 2, "dark_oak", Face.WEST, PLAQUE_KA);
+        p.wallSign(CU + u1, 3, CV + 2, "dark_oak", Face.WEST, PLAQUE_RU);
     }
 
     private static final List<String> PLAQUE_KA = List.of("ბაგრატის", "ტაძარი", "ქუთაისი", "1003");
