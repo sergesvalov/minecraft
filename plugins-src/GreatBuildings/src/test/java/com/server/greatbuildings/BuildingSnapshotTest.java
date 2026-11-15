@@ -43,12 +43,14 @@ class BuildingSnapshotTest {
     @Test
     void catalogAndMetadataAreValid() {
         BuildingCatalog catalog = new BuildingCatalog();
-        assertEquals(5, catalog.all().size());
+        assertEquals(6, catalog.all().size());
         assertEquals(2, catalog.byCountry(Country.GEORGIA).size());
         assertEquals(3, catalog.byCountry(Country.CYPRUS).size());
+        assertEquals(1, catalog.byCountry(Country.ISRAEL).size());
         assertNotNull(catalog.byId("BAGRATI"));
         assertNotNull(catalog.byId("KOURION"));
         assertNotNull(catalog.byId("APOLLO"));
+        assertNotNull(catalog.byId("TEMPLE"));
         assertNull(catalog.byId("unknown"));
 
         for (Building b : catalog.all()) {
@@ -167,6 +169,25 @@ class BuildingSnapshotTest {
         assertTrue(kourion.get(36, northStairY, 22).contains("stone_brick_stairs")
                 && (kourion.get(35, northStairY, 22).contains("stone_brick_stairs")
                 || kourion.get(37, northStairY, 22).contains("stone_brick_stairs")));
+    }
+
+    @Test
+    void jerusalemTempleHasUlamAltarMenorahAndHolyOfHolies() {
+        Building temple = new BuildingCatalog().byId("temple");
+        Plan plan = new Plan(temple.bounds());
+        temple.draw(plan, FLAT_TERRAIN);
+
+        // Monumental Ulam facade at y = 54 with gold cornice
+        assertEquals("minecraft:gold_block", plan.get(36, 54, 46));
+        // Altar of Burnt Offering (unhewn stone + perpetual fire at y = 9)
+        assertEquals("minecraft:fire", plan.get(35, 9, 64));
+        // Golden Menorah inside Hekhal
+        assertEquals("minecraft:gold_block", plan.get(34, 10, 29));
+        // Double Veil passage 2 blocks wide (x = 36..37)
+        assertEquals(Plan.AIR, plan.get(36, 8, 19));
+        assertEquals(Plan.AIR, plan.get(37, 8, 19));
+        // Foundation Stone in Holy of Holies
+        assertEquals("minecraft:andesite", plan.get(36, 8, 13));
     }
 
     @Test

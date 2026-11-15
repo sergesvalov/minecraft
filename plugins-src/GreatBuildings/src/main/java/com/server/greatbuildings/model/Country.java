@@ -2,7 +2,8 @@ package com.server.greatbuildings.model;
 
 public enum Country {
     GEORGIA("georgia", "Грузия", "Georgia"),
-    CYPRUS("cyprus", "Кипр", "Cyprus");
+    CYPRUS("cyprus", "Кипр", "Cyprus"),
+    ISRAEL("israel", "Израиль", "Israel");
 
     private final String id;
     private final String russian;

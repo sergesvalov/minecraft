@@ -5,6 +5,7 @@ import com.server.greatbuildings.cyprus.Kourion;
 import com.server.greatbuildings.cyprus.Paphos;
 import com.server.greatbuildings.georgia.Bagrati;
 import com.server.greatbuildings.georgia.Svetitskhoveli;
+import com.server.greatbuildings.israel.JerusalemTemple;
 import com.server.greatbuildings.model.Building;
 import com.server.greatbuildings.model.Country;
 
@@ -26,6 +27,7 @@ public final class BuildingCatalog {
         register(new Paphos());
         register(new Kourion());
         register(new ApolloKourion());
+        register(new JerusalemTemple());
     }
 
     private void register(Building building) {

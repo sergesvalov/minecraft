@@ -29,6 +29,8 @@ class StatesTest {
         assertEquals(Country.GEORGIA, Country.fromString("georgia"));
         assertEquals(Country.GEORGIA, Country.fromString("Грузия"));
         assertEquals(Country.CYPRUS, Country.fromString("Кипр"));
+        assertEquals(Country.ISRAEL, Country.fromString("israel"));
+        assertEquals(Country.ISRAEL, Country.fromString("Израиль"));
         assertNull(Country.fromString("unknown"));
         assertNull(Country.fromString(null));
 
