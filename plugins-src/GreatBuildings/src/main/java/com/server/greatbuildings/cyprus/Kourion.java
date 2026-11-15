@@ -331,15 +331,8 @@ public final class Kourion implements Building {
         p.lecterns.add(new int[]{CX - 4, 1, EZ - 1});
 
         // Bilingual plaques on stone pedestals flanking the central approach
-        p.set(CX - 6, 1, stageZ2() + 2, CARVED);
-        p.set(CX - 6, 2, stageZ2() + 2, CARVED);
-        p.set(CX - 6, 2, stageZ2() + 3, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(CX - 6, 2, stageZ2() + 3, PLAQUE_EL));
-
-        p.set(CX + 6, 1, stageZ2() + 2, CARVED);
-        p.set(CX + 6, 2, stageZ2() + 2, CARVED);
-        p.set(CX + 6, 2, stageZ2() + 3, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(CX + 6, 2, stageZ2() + 3, PLAQUE_RU));
+        Shapes.plaquePillar(p, CX - 6, stageZ2() + 2, CARVED, "dark_oak", Face.SOUTH, PLAQUE_EL);
+        Shapes.plaquePillar(p, CX + 6, stageZ2() + 2, CARVED, "dark_oak", Face.SOUTH, PLAQUE_RU);
 
         // Mediterranean cypresses framing the hillside theatre
         int[][] cypresses = {
@@ -348,26 +341,12 @@ public final class Kourion implements Building {
                 {8, EZ - 2}, {EX - 8, EZ - 2}
         };
         for (int[] c : cypresses) {
-            cypress(p, c[0], c[1]);
+            Shapes.cypress(p, c[0], c[1], CYPRESS);
         }
     }
 
     private static int stageZ2() {
         return CZ + 7;
-    }
-
-    private static void cypress(Plan p, int x, int z) {
-        for (int y = 1; y <= 6; y++) {
-            p.set(x, y, z, logY("spruce_log"));
-        }
-        for (int y = 2; y <= 7; y++) {
-            for (Face f : Face.values()) {
-                p.set(x + f.dx, y, z + f.dz, CYPRESS);
-            }
-        }
-        p.set(x, 7, z, CYPRESS);
-        p.set(x, 8, z, CYPRESS);
-        p.set(x, 9, z, CYPRESS);
     }
 
     // ------------------------------------------------------------------ book

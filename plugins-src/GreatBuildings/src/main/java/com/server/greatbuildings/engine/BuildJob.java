@@ -77,7 +77,7 @@ public final class BuildJob {
         this.writesPerTick = Math.max(100, plugin.getConfig().getInt("blocks-per-tick", 4000));
         this.checksPerTick = Math.max(writesPerTick, plugin.getConfig().getInt("checks-per-tick", 30000));
 
-        int[] wb = worldBounds(building, anchorWorldX, anchorWorldZ, rotation);
+        int[] wb = Placement.worldBounds(building, anchorWorldX, anchorWorldZ, rotation);
         for (int cx = wb[0] >> 4; cx <= wb[2] >> 4; cx++) {
             for (int cz = wb[1] >> 4; cz <= wb[3] >> 4; cz++) {
                 chunks.add(new int[]{cx, cz});
@@ -85,55 +85,12 @@ public final class BuildJob {
         }
     }
 
-    /** Computes rotated world {minX, minZ, maxX, maxZ} for a building placed at the given player anchor. */
-    public static int[] worldBounds(Building building, int anchorWorldX, int anchorWorldZ, StructureRotation rotation) {
-        int[] b = building.bounds();
-        int[] a = building.anchor();
-        int[] xs = {b[0], b[3]};
-        int[] zs = {b[2], b[5]};
-        int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
-        for (int lx : xs) {
-            for (int lz : zs) {
-                int wx = toWorldX(lx, lz, a[0], a[1], anchorWorldX, rotation);
-                int wz = toWorldZ(lx, lz, a[0], a[1], anchorWorldZ, rotation);
-                minX = Math.min(minX, wx);
-                minZ = Math.min(minZ, wz);
-                maxX = Math.max(maxX, wx);
-                maxZ = Math.max(maxZ, wz);
-            }
-        }
-        return new int[]{minX, minZ, maxX, maxZ};
-    }
-
-    private static int toWorldX(int lx, int lz, int ax, int az, int anchorWorldX, StructureRotation rot) {
-        int dx = lx - ax;
-        int dz = lz - az;
-        return anchorWorldX + switch (rot) {
-            case NONE -> dx;
-            case CLOCKWISE_90 -> -dz;
-            case CLOCKWISE_180 -> -dx;
-            case COUNTERCLOCKWISE_90 -> dz;
-        };
-    }
-
-    private static int toWorldZ(int lx, int lz, int ax, int az, int anchorWorldZ, StructureRotation rot) {
-        int dx = lx - ax;
-        int dz = lz - az;
-        return anchorWorldZ + switch (rot) {
-            case NONE -> dz;
-            case CLOCKWISE_90 -> dx;
-            case CLOCKWISE_180 -> -dz;
-            case COUNTERCLOCKWISE_90 -> -dx;
-        };
-    }
-
     private int worldX(int lx, int lz) {
-        return toWorldX(lx, lz, anchorLocalX, anchorLocalZ, anchorWorldX, rotation);
+        return Placement.toWorldX(lx, lz, anchorLocalX, anchorLocalZ, anchorWorldX, rotation);
     }
 
     private int worldZ(int lx, int lz) {
-        return toWorldZ(lx, lz, anchorLocalX, anchorLocalZ, anchorWorldZ, rotation);
+        return Placement.toWorldZ(lx, lz, anchorLocalX, anchorLocalZ, anchorWorldZ, rotation);
     }
 
     public Building building() {

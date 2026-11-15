@@ -23,6 +23,18 @@ class BuildingSnapshotTest {
     }
 
     private static final Map<String, ExpectedSnapshot> EXPECTED = Map.of(
+            "svetitskhoveli", new ExpectedSnapshot(
+                    707268, 62, 7, 1,
+                    "e138ba36c2037777bfe34050753520857d925eb3921eeada5d33f202bbaff1ee"),
+            "bagrati", new ExpectedSnapshot(
+                    173061, 53, 4, 1,
+                    "a25f31a3ee03b586f95d24b88aba5b7b65764bbfa594e0d1df947bf4a2539d3c"),
+            "paphos", new ExpectedSnapshot(
+                    95912, 51, 2, 1,
+                    "08cfe72d6d18224b35e46ebcae3b0f55abbd39a3d5f5bfeaf546eae2b6a65299"),
+            "kourion", new ExpectedSnapshot(
+                    88987, 26, 2, 1,
+                    "26a06fbac06e11b33a3c10918bfccfd13e1d836c08893d1a4f4f9361458f64b0"),
             "apollo", new ExpectedSnapshot(
                     24025, 31, 2, 1,
                     "9878543da38845b86f05b200cfc906a170874dd61cb5e6b590920978a35edb6f")

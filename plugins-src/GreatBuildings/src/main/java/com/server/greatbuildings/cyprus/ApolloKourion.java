@@ -309,15 +309,8 @@ public final class ApolloKourion implements Building {
         p.lecterns.add(new int[]{CX - 3, 1, EZ - 1});
 
         // Bilingual plaques flanking the pedestal approach
-        p.set(CX - 3, 1, 25, CARVED);
-        p.set(CX - 3, 2, 25, CARVED);
-        p.set(CX - 3, 2, 26, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(CX - 3, 2, 26, PLAQUE_EL));
-
-        p.set(CX + 3, 1, 25, CARVED);
-        p.set(CX + 3, 2, 25, CARVED);
-        p.set(CX + 3, 2, 26, wallSign("dark_oak", Face.SOUTH));
-        p.signs.add(new Plan.SignText(CX + 3, 2, 26, PLAQUE_RU));
+        Shapes.plaquePillar(p, CX - 3, 25, CARVED, "dark_oak", Face.SOUTH, PLAQUE_EL);
+        Shapes.plaquePillar(p, CX + 3, 25, CARVED, "dark_oak", Face.SOUTH, PLAQUE_RU);
 
         // Sanctuary lanterns
         p.set(CX - 3, 3, 25, lantern(false));
@@ -330,22 +323,8 @@ public final class ApolloKourion implements Building {
                 {3, 4}, {EX - 3, 4}
         };
         for (int[] tree : trees) {
-            cypress(p, tree[0], tree[1]);
+            Shapes.cypress(p, tree[0], tree[1], CYPRESS);
         }
-    }
-
-    private static void cypress(Plan p, int x, int z) {
-        for (int y = 1; y <= 6; y++) {
-            p.set(x, y, z, logY("spruce_log"));
-        }
-        for (int y = 2; y <= 7; y++) {
-            for (Face f : Face.values()) {
-                p.set(x + f.dx, y, z + f.dz, CYPRESS);
-            }
-        }
-        p.set(x, 7, z, CYPRESS);
-        p.set(x, 8, z, CYPRESS);
-        p.set(x, 9, z, CYPRESS);
     }
 
     // ------------------------------------------------------------------ book

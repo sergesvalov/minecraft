@@ -62,8 +62,8 @@ public final class BuildManager {
             return;
         }
 
-        StructureRotation rotation = rotationFromYaw(loc.getYaw());
-        int[] wb = BuildJob.worldBounds(building, ax, az, rotation);
+        StructureRotation rotation = Placement.rotationFromYaw(loc.getYaw());
+        int[] wb = Placement.worldBounds(building, ax, az, rotation);
         int spanX = wb[2] - wb[0] + 1;
         int spanZ = wb[3] - wb[1] + 1;
 
@@ -73,30 +73,11 @@ public final class BuildManager {
         player.sendMessage(Component.text(String.format(Locale.ROOT,
                 "%s (%s): %d × %d блоков перед тобой (%s, x %d…%d, z %d…%d), высота %d. Всё, что там стоит, будет "
                         + "заменено; почва выровняется по уровню под твоими ногами.",
-                building.title(), building.country().russian(), spanX, spanZ, directionLabel(rotation),
+                building.title(), building.country().russian(), spanX, spanZ, Placement.directionLabel(rotation),
                 wb[0], wb[2], wb[1], wb[3], b[4]), NamedTextColor.YELLOW));
         player.sendMessage(Component.text("[Строить]", NamedTextColor.GREEN)
                 .clickEvent(ClickEvent.runCommand("/gb confirm"))
                 .append(Component.text(" — или /gb confirm в течение минуты.", NamedTextColor.GRAY)));
-    }
-
-    private static StructureRotation rotationFromYaw(float yaw) {
-        int dir = Math.floorMod(Math.round(yaw / 90.0f), 4);
-        return switch (dir) {
-            case 0 -> StructureRotation.CLOCKWISE_180;      // facing south (+z)
-            case 1 -> StructureRotation.COUNTERCLOCKWISE_90; // facing west (-x)
-            case 3 -> StructureRotation.CLOCKWISE_90;        // facing east (+x)
-            default -> StructureRotation.NONE;               // facing north (-z)
-        };
-    }
-
-    private static String directionLabel(StructureRotation rotation) {
-        return switch (rotation) {
-            case NONE -> "на север";
-            case CLOCKWISE_90 -> "на восток";
-            case CLOCKWISE_180 -> "на юг";
-            case COUNTERCLOCKWISE_90 -> "на запад";
-        };
     }
 
     public void confirm(Player player) {
