@@ -16,6 +16,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.sign.Side;
 import org.bukkit.block.sign.SignSide;
+import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.LecternInventory;
@@ -33,15 +34,17 @@ import java.util.function.Consumer;
 /**
  * Builds one {@link Building} into the world without freezing the server:
  * loads the chunks asynchronously, reads the ground, draws the plan off the main thread, then places
- * a limited number of blocks per tick. Remembers what it replaced, so the build can be undone.
+ * a limited number of blocks per tick. Supports 90-degree rotations so the building always faces the player.
  */
 public final class BuildJob {
 
     private final JavaPlugin plugin;
     private final Building building;
     private final World world;
-    /** World position of the plan origin; oy is the ground level. */
-    private final int ox, oy, oz;
+    /** World position of the player's anchor (where plan's anchor() lands), and y = 0 level. */
+    private final int anchorWorldX, oy, anchorWorldZ;
+    private final int anchorLocalX, anchorLocalZ;
+    private final StructureRotation rotation;
     private final UUID owner;
     private final int writesPerTick;
     private final int checksPerTick;
@@ -57,22 +60,80 @@ public final class BuildJob {
     private int nextReport = 25;
     private boolean finished;
 
-    public BuildJob(JavaPlugin plugin, Building building, World world, int ox, int oy, int oz, UUID owner) {
+    public BuildJob(JavaPlugin plugin, Building building, World world,
+                    int anchorWorldX, int oy, int anchorWorldZ,
+                    StructureRotation rotation, UUID owner) {
         this.plugin = plugin;
         this.building = building;
         this.world = world;
-        this.ox = ox;
+        this.anchorWorldX = anchorWorldX;
         this.oy = oy;
-        this.oz = oz;
+        this.anchorWorldZ = anchorWorldZ;
+        int[] anchor = building.anchor();
+        this.anchorLocalX = anchor[0];
+        this.anchorLocalZ = anchor[1];
+        this.rotation = rotation;
         this.owner = owner;
         this.writesPerTick = Math.max(100, plugin.getConfig().getInt("blocks-per-tick", 4000));
         this.checksPerTick = Math.max(writesPerTick, plugin.getConfig().getInt("checks-per-tick", 30000));
-        int[] bounds = building.bounds();
-        for (int cx = (ox + bounds[0]) >> 4; cx <= (ox + bounds[3]) >> 4; cx++) {
-            for (int cz = (oz + bounds[2]) >> 4; cz <= (oz + bounds[5]) >> 4; cz++) {
+
+        int[] wb = worldBounds(building, anchorWorldX, anchorWorldZ, rotation);
+        for (int cx = wb[0] >> 4; cx <= wb[2] >> 4; cx++) {
+            for (int cz = wb[1] >> 4; cz <= wb[3] >> 4; cz++) {
                 chunks.add(new int[]{cx, cz});
             }
         }
+    }
+
+    /** Computes rotated world {minX, minZ, maxX, maxZ} for a building placed at the given player anchor. */
+    public static int[] worldBounds(Building building, int anchorWorldX, int anchorWorldZ, StructureRotation rotation) {
+        int[] b = building.bounds();
+        int[] a = building.anchor();
+        int[] xs = {b[0], b[3]};
+        int[] zs = {b[2], b[5]};
+        int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        for (int lx : xs) {
+            for (int lz : zs) {
+                int wx = toWorldX(lx, lz, a[0], a[1], anchorWorldX, rotation);
+                int wz = toWorldZ(lx, lz, a[0], a[1], anchorWorldZ, rotation);
+                minX = Math.min(minX, wx);
+                minZ = Math.min(minZ, wz);
+                maxX = Math.max(maxX, wx);
+                maxZ = Math.max(maxZ, wz);
+            }
+        }
+        return new int[]{minX, minZ, maxX, maxZ};
+    }
+
+    private static int toWorldX(int lx, int lz, int ax, int az, int anchorWorldX, StructureRotation rot) {
+        int dx = lx - ax;
+        int dz = lz - az;
+        return anchorWorldX + switch (rot) {
+            case NONE -> dx;
+            case CLOCKWISE_90 -> -dz;
+            case CLOCKWISE_180 -> -dx;
+            case COUNTERCLOCKWISE_90 -> dz;
+        };
+    }
+
+    private static int toWorldZ(int lx, int lz, int ax, int az, int anchorWorldZ, StructureRotation rot) {
+        int dx = lx - ax;
+        int dz = lz - az;
+        return anchorWorldZ + switch (rot) {
+            case NONE -> dz;
+            case CLOCKWISE_90 -> dx;
+            case CLOCKWISE_180 -> -dz;
+            case COUNTERCLOCKWISE_90 -> -dx;
+        };
+    }
+
+    private int worldX(int lx, int lz) {
+        return toWorldX(lx, lz, anchorLocalX, anchorLocalZ, anchorWorldX, rotation);
+    }
+
+    private int worldZ(int lx, int lz) {
+        return toWorldZ(lx, lz, anchorLocalX, anchorLocalZ, anchorWorldZ, rotation);
     }
 
     public Building building() {
@@ -125,7 +186,9 @@ public final class BuildJob {
         int lowest = Math.max(world.getMinHeight(), oy + b[1] - 1);
         for (int i = 0; i < sizeX; i++) {
             for (int j = 0; j < sizeZ; j++) {
-                ground[j * sizeX + i] = groundY(ox + b[0] + i, oz + b[2] + j, lowest);
+                int lx = b[0] + i;
+                int lz = b[2] + j;
+                ground[j * sizeX + i] = groundY(worldX(lx, lz), worldZ(lx, lz), lowest);
             }
         }
         return (x, z) -> {
@@ -153,7 +216,12 @@ public final class BuildJob {
         List<String> states = plan.palette();
         palette = new BlockData[states.size()];
         for (int i = 0; i < states.size(); i++) {
-            palette[i] = blockData(states.get(i));
+            BlockData data = blockData(states.get(i));
+            if (rotation != StructureRotation.NONE) {
+                data = data.clone();
+                data.rotate(rotation);
+            }
+            palette[i] = data;
         }
         tell("Строю...");
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
@@ -180,7 +248,9 @@ public final class BuildJob {
                 checks++;
                 int y = oy + plan.y(cursor);
                 if (y >= minY && y < maxY) {
-                    Block block = world.getBlockAt(ox + plan.x(cursor), y, oz + plan.z(cursor));
+                    int lx = plan.x(cursor);
+                    int lz = plan.z(cursor);
+                    Block block = world.getBlockAt(worldX(lx, lz), y, worldZ(lx, lz));
                     BlockData target = palette[raw - 1];
                     boolean same = target.getMaterial().isAir() ? block.getType().isAir() : block.getBlockData().equals(target);
                     if (!same) {
@@ -213,7 +283,9 @@ public final class BuildJob {
     /** Sign texts and lectern books: block entities can only be filled once the blocks are in the world. */
     private void decorate() {
         for (Plan.SignText text : plan.signs) {
-            if (world.getBlockAt(ox + text.x(), oy + text.y(), oz + text.z()).getState() instanceof Sign sign) {
+            int wx = worldX(text.x(), text.z());
+            int wz = worldZ(text.x(), text.z());
+            if (world.getBlockAt(wx, oy + text.y(), wz).getState() instanceof Sign sign) {
                 SignSide front = sign.getSide(Side.FRONT);
                 for (int i = 0; i < Math.min(4, text.lines().size()); i++) {
                     front.line(i, Component.text(text.lines().get(i), NamedTextColor.DARK_BLUE));
@@ -224,7 +296,9 @@ public final class BuildJob {
         }
         ItemStack book = book(building.book());
         for (int[] pos : plan.lecterns) {
-            if (world.getBlockAt(ox + pos[0], oy + pos[1], oz + pos[2]).getState() instanceof Lectern lectern
+            int wx = worldX(pos[0], pos[2]);
+            int wz = worldZ(pos[0], pos[2]);
+            if (world.getBlockAt(wx, oy + pos[1], wz).getState() instanceof Lectern lectern
                     && lectern.getInventory() instanceof LecternInventory inventory) {
                 inventory.setBook(book.clone());
             }
@@ -252,7 +326,9 @@ public final class BuildJob {
                 int writes = 0;
                 while (i >= 0 && writes < writesPerTick) {
                     int index = undoIndex[i];
-                    world.getBlockAt(ox + plan.x(index), oy + plan.y(index), oz + plan.z(index))
+                    int lx = plan.x(index);
+                    int lz = plan.z(index);
+                    world.getBlockAt(worldX(lx, lz), oy + plan.y(index), worldZ(lx, lz))
                             .setBlockData(undoData[i], false);
                     undoData[i] = null;
                     i--;
@@ -321,4 +397,3 @@ public final class BuildJob {
         plugin.getLogger().info(building.id() + ": " + message);
     }
 }
-

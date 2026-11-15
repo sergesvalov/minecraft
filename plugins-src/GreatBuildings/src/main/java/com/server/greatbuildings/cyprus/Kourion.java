@@ -171,7 +171,7 @@ public final class Kourion implements Building {
 
                 // Angle in degrees from West (180) through North (90) to East (0)
                 double angleDeg = Math.toDegrees(Math.atan2(-dz, dx));
-                boolean isStairway = isRadialStairway(angleDeg);
+                boolean isStairway = isRadialStairway(dist, angleDeg);
 
                 if (dist >= R_CAVEA_OUT) {
                     // Outer Roman perimeter wall + upper portico gallery
@@ -231,9 +231,9 @@ public final class Kourion implements Building {
         return seatHeight(R_DIAZOMA_IN) + 1 + (int) Math.round((dist - R_DIAZOMA_OUT) * 0.72);
     }
 
-    private static boolean isRadialStairway(double angleDeg) {
+    private static boolean isRadialStairway(double dist, double angleDeg) {
         for (int a = 30; a <= 150; a += 30) {
-            if (Math.abs(angleDeg - a) < 2.3) {
+            if (dist * Math.toRadians(Math.abs(angleDeg - a)) <= 1.05) {
                 return true;
             }
         }

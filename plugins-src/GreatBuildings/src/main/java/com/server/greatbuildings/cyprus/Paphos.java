@@ -303,8 +303,8 @@ public final class Paphos implements Building {
             }
         }
 
-        // Open-air central courtyard lightwell (x = 24..31, z = 19..23)
-        for (int x = 24; x <= 31; x++) {
+        // Open-air central courtyard lightwell (x = 26..31, z = 19..23)
+        for (int x = 26; x <= 31; x++) {
             for (int z = 19; z <= 23; z++) {
                 for (int y = 2; y <= 11; y++) {
                     p.set(x, y, z, AIR);
@@ -338,10 +338,9 @@ public final class Paphos implements Building {
             }
         }
 
-        // West dungeon entrances (iron bars, 1 block wide per cell)
+        // West dungeon entrances (2-block wide double doors so characters can enter all cells)
         for (int zDoor : new int[]{12, 17, 22}) {
-            p.set(westWallX, 2, zDoor, BARS);
-            p.set(westWallX, 3, zDoor, BARS);
+            p.doubleDoor(westWallX, 2, zDoor, DOOR, Face.WEST);
         }
 
         // East storage / guardroom double doors
@@ -384,26 +383,28 @@ public final class Paphos implements Building {
         p.set(39, 5, 21, lantern(true));
     }
 
-    /** Grand stone staircase connecting ground floor to the roof deck. */
+    /** Grand stone staircase (2 blocks wide) connecting ground floor to the roof deck. */
     private void staircase(Plan p) {
-        // Steps climbing north-to-south along the west side of the central hall (x = 23, z = 12..21)
-        int x = 23;
-        for (int i = 0; i <= 9; i++) {
-            int z = 12 + i;
-            int y = 2 + i;
-            p.set(x, y, z, stairs(STAIRS_STONE, Face.SOUTH, false));
-            for (int yy = 2; yy < y; yy++) {
-                p.set(x, yy, z, ashlar(x, yy, z));
+        // Steps climbing north-to-south along the west side of the central hall (x = 23..24, z = 12..21)
+        for (int x = 23; x <= 24; x++) {
+            for (int i = 0; i <= 9; i++) {
+                int z = 12 + i;
+                int y = 2 + i;
+                p.set(x, y, z, stairs(STAIRS_STONE, Face.SOUTH, false));
+                for (int yy = 2; yy < y; yy++) {
+                    p.set(x, yy, z, ashlar(x, yy, z));
+                }
+                for (int yy = y + 1; yy <= Math.min(TOP, y + 3); yy++) {
+                    p.set(x, yy, z, AIR);
+                }
             }
-            for (int yy = y + 1; yy <= Math.min(TOP, y + 3); yy++) {
-                p.set(x, yy, z, AIR);
-            }
+            // Stair opening through the roof deck at z = 21..22
+            p.set(x, 11, 21, AIR);
+            p.set(x, 11, 22, AIR);
         }
-        // Stair opening through the roof deck at z = 21..22
-        p.set(x, 11, 21, AIR);
-        p.set(x, 11, 22, AIR);
-        p.set(x + 1, 12, 21, WALL);
-        p.set(x + 1, 12, 22, WALL);
+        // Parapet guard along the east side of the stairwell opening
+        p.set(25, 12, 21, WALL);
+        p.set(25, 12, 22, WALL);
     }
 
     // ------------------------------------------------------------------ roof & battlements
@@ -418,24 +419,22 @@ public final class Paphos implements Building {
         // Paved roof platform (leaving central courtyard lightwell open)
         for (int x = CX1; x <= CX2; x++) {
             for (int z = CZ1; z <= CZ2; z++) {
-                boolean inCourtyard = (x >= 24 && x <= 31 && z >= 19 && z <= 23);
+                boolean inCourtyard = (x >= 26 && x <= 31 && z >= 19 && z <= 23);
                 if (!inCourtyard) {
                     p.set(x, deckY, z, paving(x, z));
                 }
             }
         }
 
-        // Parapet around the central courtyard lightwell (x = 23..32, z = 18..24)
-        for (int x = 23; x <= 32; x++) {
+        // Parapet around the central courtyard lightwell (x = 25..32, z = 18..24)
+        for (int x = 25; x <= 32; x++) {
             p.set(x, 12, 18, WALL);
             p.set(x, 12, 24, WALL);
         }
         for (int z = 18; z <= 24; z++) {
-            p.set(23, 12, z, WALL);
+            p.set(25, 12, z, WALL);
             p.set(32, 12, z, WALL);
         }
-        p.set(23, 12, 21, AIR);
-        p.set(23, 12, 22, AIR);
 
         // Perimeter parapet walls (y = 12..13)
         for (int x = CX1; x <= CX2; x++) {

@@ -531,15 +531,18 @@ public final class Bagrati implements Building {
             setRel(p, 8, 7, v, WALL);
         }
 
-        // Stone spiral stairs to the gallery in the south-west corner (u = 2..4, v = 6..8)
-        int[][] stairPath = {{2, 6}, {2, 7}, {3, 7}, {4, 7}, {4, 6}};
-        for (int i = 0; i < stairPath.length; i++) {
-            int su = stairPath[i][0];
-            int sv = stairPath[i][1];
-            int y = 2 + i;
-            setRel(p, su, y, sv, stairs(TRIM, Face.NORTH, false));
-            for (int yy = 2; yy < y; yy++) {
-                setRel(p, su, yy, sv, LIGHT);
+        // Stone stairs (2 blocks wide) to the gallery along the south aisle (u = 3..7, v = 6..7)
+        for (int v = 6; v <= 7; v++) {
+            for (int i = 0; i < 5; i++) {
+                int su = 3 + i;
+                int y = 2 + i;
+                setRel(p, su, y, v, stairs(TRIM, Face.EAST, false));
+                for (int yy = 2; yy < y; yy++) {
+                    setRel(p, su, yy, v, LIGHT);
+                }
+                for (int yy = y + 1; yy <= y + 3; yy++) {
+                    setRel(p, su, yy, v, AIR);
+                }
             }
         }
     }

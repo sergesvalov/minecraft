@@ -9,6 +9,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -26,7 +27,8 @@ public final class BuildManager {
 
     private static final long CONFIRM_TTL_MS = 60_000L;
 
-    private record Pending(Building building, World world, int ox, int oy, int oz, Location anchor, long expiresAt) {
+    private record Pending(Building building, World world, int anchorX, int oy, int anchorZ,
+                           StructureRotation rotation, Location anchor, long expiresAt) {
     }
 
     private final JavaPlugin plugin;
@@ -51,25 +53,50 @@ public final class BuildManager {
         }
         Location loc = player.getLocation();
         World world = player.getWorld();
-        int[] anchor = building.anchor();
         int[] b = building.bounds();
-        int ox = loc.getBlockX() - anchor[0];
-        int oz = loc.getBlockZ() - anchor[1];
+        int ax = loc.getBlockX();
+        int az = loc.getBlockZ();
         int oy = loc.getBlockY() - 1;
         if (oy + b[4] >= world.getMaxHeight()) {
             player.sendMessage(Component.text("Слишком высоко: здание не поместится под потолок мира.", NamedTextColor.RED));
             return;
         }
+
+        StructureRotation rotation = rotationFromYaw(loc.getYaw());
+        int[] wb = BuildJob.worldBounds(building, ax, az, rotation);
+        int spanX = wb[2] - wb[0] + 1;
+        int spanZ = wb[3] - wb[1] + 1;
+
         pendingByPlayer.put(player.getUniqueId(),
-                new Pending(building, world, ox, oy, oz, loc.toBlockLocation(), System.currentTimeMillis() + CONFIRM_TTL_MS));
+                new Pending(building, world, ax, oy, az, rotation, loc.toBlockLocation(),
+                        System.currentTimeMillis() + CONFIRM_TTL_MS));
         player.sendMessage(Component.text(String.format(Locale.ROOT,
-                "%s (%s): %d × %d блоков к северу от тебя (x %d…%d, z %d…%d), высота %d. Всё, что там стоит, будет "
+                "%s (%s): %d × %d блоков перед тобой (%s, x %d…%d, z %d…%d), высота %d. Всё, что там стоит, будет "
                         + "заменено; почва выровняется по уровню под твоими ногами.",
-                building.title(), building.country().russian(), b[3] - b[0] + 1, b[5] - b[2] + 1,
-                ox + b[0], ox + b[3], oz + b[2], oz + b[5], b[4]), NamedTextColor.YELLOW));
+                building.title(), building.country().russian(), spanX, spanZ, directionLabel(rotation),
+                wb[0], wb[2], wb[1], wb[3], b[4]), NamedTextColor.YELLOW));
         player.sendMessage(Component.text("[Строить]", NamedTextColor.GREEN)
                 .clickEvent(ClickEvent.runCommand("/gb confirm"))
                 .append(Component.text(" — или /gb confirm в течение минуты.", NamedTextColor.GRAY)));
+    }
+
+    private static StructureRotation rotationFromYaw(float yaw) {
+        int dir = Math.floorMod(Math.round(yaw / 90.0f), 4);
+        return switch (dir) {
+            case 0 -> StructureRotation.CLOCKWISE_180;      // facing south (+z)
+            case 1 -> StructureRotation.COUNTERCLOCKWISE_90; // facing west (-x)
+            case 3 -> StructureRotation.CLOCKWISE_90;        // facing east (+x)
+            default -> StructureRotation.NONE;               // facing north (-z)
+        };
+    }
+
+    private static String directionLabel(StructureRotation rotation) {
+        return switch (rotation) {
+            case NONE -> "на север";
+            case CLOCKWISE_90 -> "на восток";
+            case CLOCKWISE_180 -> "на юг";
+            case COUNTERCLOCKWISE_90 -> "на запад";
+        };
     }
 
     public void confirm(Player player) {
@@ -85,7 +112,8 @@ public final class BuildManager {
         }
         pendingByPlayer.remove(player.getUniqueId());
 
-        BuildJob job = new BuildJob(plugin, p.building(), p.world(), p.ox(), p.oy(), p.oz(), player.getUniqueId());
+        BuildJob job = new BuildJob(plugin, p.building(), p.world(),
+                p.anchorX(), p.oy(), p.anchorZ(), p.rotation(), player.getUniqueId());
         running = job;
         job.start(error -> {
             if (running == job) {
@@ -184,4 +212,3 @@ public final class BuildManager {
         return running != null && !running.finished();
     }
 }
-

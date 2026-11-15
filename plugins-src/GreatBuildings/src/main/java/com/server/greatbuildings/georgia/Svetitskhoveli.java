@@ -293,17 +293,19 @@ public final class Svetitskhoveli implements Building {
                 }
             }
         }
-        // Stairs up to the walkway on both sides of the south gate
+        // Stairs up to the walkway (2 blocks wide) on both sides of the south gate
         for (int k = 0; k <= 4; k++) {
             int y = 1 + k;
             int east = GATE_X + 6 + k;
             int west = GATE_X - 6 - k;
-            for (int yy = 1; yy < y; yy++) {
-                p.set(east, yy, EZ - 3, rubble(east, yy, EZ - 3));
-                p.set(west, yy, EZ - 3, rubble(west, yy, EZ - 3));
+            for (int z = EZ - 4; z <= EZ - 3; z++) {
+                for (int yy = 1; yy < y; yy++) {
+                    p.set(east, yy, z, rubble(east, yy, z));
+                    p.set(west, yy, z, rubble(west, yy, z));
+                }
+                p.set(east, y, z, stairs("cobblestone_stairs", Face.EAST, false));
+                p.set(west, y, z, stairs("cobblestone_stairs", Face.WEST, false));
             }
-            p.set(east, y, EZ - 3, stairs("cobblestone_stairs", Face.EAST, false));
-            p.set(west, y, EZ - 3, stairs("cobblestone_stairs", Face.WEST, false));
         }
 
         // 8 towers: 6 round (corners, north and east walls), 2 square gate towers (south and west)

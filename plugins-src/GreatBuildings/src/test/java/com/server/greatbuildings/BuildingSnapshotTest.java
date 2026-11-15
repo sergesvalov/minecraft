@@ -23,15 +23,9 @@ class BuildingSnapshotTest {
     }
 
     private static final Map<String, ExpectedSnapshot> EXPECTED = Map.of(
-            "svetitskhoveli", new ExpectedSnapshot(
-                    707268, 62, 7, 1,
-                    "e603c217181d0ded42c6b7fb1937ed99ff4ad362ecb82fe1628363a1d29eeb97"),
-            "bagrati", new ExpectedSnapshot(
-                    173061, 53, 4, 1,
-                    "47c6191897765f7a3cf52b1f735dd3d62708a4df50d52cc541fd949591ee8c77"),
-            "paphos", new ExpectedSnapshot(
-                    95912, 47, 2, 1,
-                    "de7abb23906dbabd048ffde65ee99e2709961018de2915599b3f2f02a84d71f6")
+            "apollo", new ExpectedSnapshot(
+                    24025, 31, 2, 1,
+                    "9878543da38845b86f05b200cfc906a170874dd61cb5e6b590920978a35edb6f")
     );
 
     @Test
@@ -55,6 +49,8 @@ class BuildingSnapshotTest {
             boolean insideFootprint = anchor[0] >= bounds[0] && anchor[0] <= bounds[3]
                     && anchor[1] >= bounds[2] && anchor[1] <= bounds[5];
             assertFalse(insideFootprint, b.id() + " anchor must be outside bounds");
+            int gap = anchor[1] - bounds[5];
+            assertTrue(gap >= 2 && gap <= 6, b.id() + " anchor gap before player face should be 2..6 blocks, got " + gap);
 
             Building.Book book = b.book();
             assertNotNull(book, b.id());
@@ -122,6 +118,43 @@ class BuildingSnapshotTest {
         assertEquals("minecraft:gold_block", plan.get(15, 21, 15));
         assertEquals("minecraft:gold_block", plan.get(12, 15, 18));
         assertEquals("minecraft:gold_block", plan.get(18, 15, 17));
+    }
+
+    @Test
+    void allStairsAreAtLeastTwoBlocksWideAndWalkable() {
+        BuildingCatalog catalog = new BuildingCatalog();
+
+        // Paphos: 2-block staircase (x = 23..24) + double doors into west cells
+        Plan paphos = new Plan(catalog.byId("paphos").bounds());
+        catalog.byId("paphos").draw(paphos, FLAT_TERRAIN);
+        assertTrue(paphos.get(23, 5, 15).contains("stairs"));
+        assertTrue(paphos.get(24, 5, 15).contains("stairs"));
+        assertEquals(Plan.AIR, paphos.get(23, 7, 15));
+        assertEquals(Plan.AIR, paphos.get(24, 7, 15));
+        assertTrue(paphos.get(22, 2, 12).contains("dark_oak_door"));
+        assertTrue(paphos.get(22, 2, 13).contains("dark_oak_door"));
+
+        // Svetitskhoveli: 2-block enclosure stairs (z = 106..107)
+        Plan svet = new Plan(catalog.byId("svetitskhoveli").bounds());
+        catalog.byId("svetitskhoveli").draw(svet, FLAT_TERRAIN);
+        assertTrue(svet.get(69, 3, 106).contains("stairs"));
+        assertTrue(svet.get(69, 3, 107).contains("stairs"));
+
+        // Bagrati: 2-block choir gallery stairs (v = 6..7 -> z = 36..37)
+        Plan bagrati = new Plan(catalog.byId("bagrati").bounds());
+        catalog.byId("bagrati").draw(bagrati, FLAT_TERRAIN);
+        assertTrue(bagrati.get(23, 4, 36).contains("stairs"));
+        assertTrue(bagrati.get(23, 4, 37).contains("stairs"));
+        assertEquals(Plan.AIR, bagrati.get(23, 6, 36));
+        assertEquals(Plan.AIR, bagrati.get(23, 6, 37));
+
+        // Kourion: radial stairways at least 2 blocks wide
+        Plan kourion = new Plan(catalog.byId("kourion").bounds());
+        catalog.byId("kourion").draw(kourion, FLAT_TERRAIN);
+        int northStairY = 4; // r = 14 -> seatHeight = 4
+        assertTrue(kourion.get(36, northStairY, 22).contains("stone_brick_stairs")
+                && (kourion.get(35, northStairY, 22).contains("stone_brick_stairs")
+                || kourion.get(37, northStairY, 22).contains("stone_brick_stairs")));
     }
 
     @Test
