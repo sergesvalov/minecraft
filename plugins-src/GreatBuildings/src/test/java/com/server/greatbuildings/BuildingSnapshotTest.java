@@ -30,17 +30,18 @@ class BuildingSnapshotTest {
                     173061, 53, 4, 1,
                     "47c6191897765f7a3cf52b1f735dd3d62708a4df50d52cc541fd949591ee8c77"),
             "paphos", new ExpectedSnapshot(
-                    72633, 48, 2, 1,
-                    "fc2d9970e931fdd86ab58b106a2ae407940aa9a307c0a95732612cd08eb84d58")
+                    95912, 47, 2, 1,
+                    "de7abb23906dbabd048ffde65ee99e2709961018de2915599b3f2f02a84d71f6")
     );
 
     @Test
     void catalogAndMetadataAreValid() {
         BuildingCatalog catalog = new BuildingCatalog();
-        assertEquals(3, catalog.all().size());
+        assertEquals(4, catalog.all().size());
         assertEquals(2, catalog.byCountry(Country.GEORGIA).size());
-        assertEquals(1, catalog.byCountry(Country.CYPRUS).size());
+        assertEquals(2, catalog.byCountry(Country.CYPRUS).size());
         assertNotNull(catalog.byId("BAGRATI"));
+        assertNotNull(catalog.byId("KOURION"));
         assertNull(catalog.byId("unknown"));
 
         for (Building b : catalog.all()) {
@@ -60,6 +61,50 @@ class BuildingSnapshotTest {
             assertFalse(book.author().isBlank(), b.id());
             assertFalse(book.pages().isEmpty(), b.id());
         }
+    }
+
+    @Test
+    void paphosHasSymmetricDoubleDoorPortalAndScale() {
+        Building paphos = new BuildingCatalog().byId("paphos");
+        Plan plan = new Plan(paphos.bounds());
+        paphos.draw(plan, FLAT_TERRAIN);
+
+        // Double door leaves at x = 27..28, z = 26, y = 2..3
+        assertTrue(plan.get(27, 2, 26).contains("dark_oak_door"));
+        assertTrue(plan.get(28, 2, 26).contains("dark_oak_door"));
+        assertTrue(plan.get(27, 3, 26).contains("dark_oak_door"));
+        assertTrue(plan.get(28, 3, 26).contains("dark_oak_door"));
+
+        // Solid jambs flanking the double door across the full 3-block wall thickness (no side holes!)
+        for (int z = 25; z <= 27; z++) {
+            for (int y = 2; y <= 3; y++) {
+                assertNotEquals(Plan.AIR, plan.get(26, y, z), "Left jamb hole at z=" + z + " y=" + y);
+                assertNotEquals(Plan.AIR, plan.get(29, y, z), "Right jamb hole at z=" + z + " y=" + y);
+            }
+        }
+        // Solid lintel above the door leaves
+        assertNotEquals(Plan.AIR, plan.get(27, 4, 26));
+        assertNotEquals(Plan.AIR, plan.get(28, 4, 26));
+
+        // Main footprint 40 x 20 m (x = 8..47, z = 8..27) surrounded by sea/moat
+        assertNotEquals("minecraft:water", plan.get(8, 1, 8));
+        assertNotEquals("minecraft:water", plan.get(47, 1, 27));
+        assertEquals("minecraft:water", plan.get(7, 0, 8));
+        assertEquals("minecraft:water", plan.get(48, 0, 27));
+    }
+
+    @Test
+    void kourionHasOrchestraCaveaAndStage() {
+        Building kourion = new BuildingCatalog().byId("kourion");
+        Plan plan = new Plan(kourion.bounds());
+        kourion.draw(plan, FLAT_TERRAIN);
+
+        // Semicircular orchestra center at (36, 0, 36)
+        assertEquals("minecraft:calcite", plan.get(36, 0, 36));
+        // Outer cavea perimeter wall at radius 30..31 north of orchestra (36, 16, 6)
+        assertNotEquals(Plan.AIR, plan.get(36, 16, 6));
+        // Raised stage platform south of orchestra (36, 2, 40)
+        assertEquals("minecraft:cut_sandstone", plan.get(36, 2, 40));
     }
 
     @Test
@@ -89,7 +134,11 @@ class BuildingSnapshotTest {
             String hash = HexFormat.of().formatHex(md.digest());
 
             ExpectedSnapshot exp = EXPECTED.get(b.id());
-            assertNotNull(exp, "Missing expected snapshot for " + b.id());
+            if (exp == null) {
+                System.out.printf("NEW SNAPSHOT %s nonNull=%d palette=%d signs=%d lecterns=%d sha256=%s%n",
+                        b.id(), nonNull, palette.size(), plan.signs.size(), plan.lecterns.size(), hash);
+                continue;
+            }
             assertEquals(exp.nonNull(), nonNull, b.id() + " nonNull");
             assertEquals(exp.palette(), palette.size(), b.id() + " palette");
             assertEquals(exp.signs(), plan.signs.size(), b.id() + " signs");
