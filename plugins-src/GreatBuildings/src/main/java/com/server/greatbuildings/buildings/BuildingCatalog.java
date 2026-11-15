@@ -1,5 +1,6 @@
 package com.server.greatbuildings.buildings;
 
+import com.server.greatbuildings.cyprus.ApolloKourion;
 import com.server.greatbuildings.cyprus.Kourion;
 import com.server.greatbuildings.cyprus.Paphos;
 import com.server.greatbuildings.georgia.Bagrati;
@@ -24,6 +25,7 @@ public final class BuildingCatalog {
         register(new Bagrati());
         register(new Paphos());
         register(new Kourion());
+        register(new ApolloKourion());
     }
 
     private void register(Building building) {

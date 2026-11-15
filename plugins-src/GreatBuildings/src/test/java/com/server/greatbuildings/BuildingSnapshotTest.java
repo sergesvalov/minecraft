@@ -37,11 +37,12 @@ class BuildingSnapshotTest {
     @Test
     void catalogAndMetadataAreValid() {
         BuildingCatalog catalog = new BuildingCatalog();
-        assertEquals(4, catalog.all().size());
+        assertEquals(5, catalog.all().size());
         assertEquals(2, catalog.byCountry(Country.GEORGIA).size());
-        assertEquals(2, catalog.byCountry(Country.CYPRUS).size());
+        assertEquals(3, catalog.byCountry(Country.CYPRUS).size());
         assertNotNull(catalog.byId("BAGRATI"));
         assertNotNull(catalog.byId("KOURION"));
+        assertNotNull(catalog.byId("APOLLO"));
         assertNull(catalog.byId("unknown"));
 
         for (Building b : catalog.all()) {
@@ -105,6 +106,22 @@ class BuildingSnapshotTest {
         assertNotEquals(Plan.AIR, plan.get(36, 16, 6));
         // Raised stage platform south of orchestra (36, 2, 40)
         assertEquals("minecraft:cut_sandstone", plan.get(36, 2, 40));
+    }
+
+    @Test
+    void apolloHasPedestalBronzeStatueAndGoldenAttributes() {
+        Building apollo = new BuildingCatalog().byId("apollo");
+        Plan plan = new Plan(apollo.bounds());
+        apollo.draw(plan, FLAT_TERRAIN);
+
+        // Marble pedestal at center (15, 3, 15)
+        assertEquals("minecraft:quartz_block", plan.get(15, 3, 15));
+        // Bronze torso at (15, 14, 15)
+        assertEquals("minecraft:waxed_copper_block", plan.get(15, 14, 15));
+        // Golden laurel crown at (15, 21, 15), bow at (12, 15, 18), lyre at (18, 15, 17)
+        assertEquals("minecraft:gold_block", plan.get(15, 21, 15));
+        assertEquals("minecraft:gold_block", plan.get(12, 15, 18));
+        assertEquals("minecraft:gold_block", plan.get(18, 15, 17));
     }
 
     @Test
