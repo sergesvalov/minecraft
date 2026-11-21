@@ -40,14 +40,27 @@
 - При жесткой перезагрузке сервера.
 - При повторных деплоях новой конфигурации через Jenkins.
 
-### Автоматические бэкапы
-Сервер настроен на ежедневное создание резервных копий (в 2:00 ночи). Бэкапы сохраняются в папке `backups` в виде `.tar` архивов, при этом хранятся только последние 3 бэкапа для экономии места.
+### Автоматические бэкапы и проверка консистентности
+Контейнер `mc-backup` (`itzg/mc-backup`) раз в сутки (в 2:00) ставит мир на паузу сохранения по RCON (`save-off` / `save-all flush`) и делает инкрементальный снимок в хранилище **Restic** (`/backups`) с удержанием `--keep-last 7 --keep-daily 7`.
+
+**Как проверить бэкап на консистентность:**
+Скрипт `scripts/verify-backup.sh` проверяет последний снапшот потоково (без распаковки на диск):
+- `restic check --read-data-subset=10%`, свежесть снапшота и отсутствие резкого падения объёма;
+- наличие `rcon-cli save-off` / `save-all` / `save-on` в логах `mc-backup`;
+- валидацию `world/level.dat`, всех регионов `*.mca` и чанков, SQLite (`PRAGMA integrity_check`), H2 `.mv.db`, `ops.json`, `GreatBuildings/buildings.txt` и `HalloumiTrader/taverns.txt`.
+
+Запуск вручную (например, полная проверка 100% блоков раз в месяц):
+```bash
+bash /opt/minecraft/scripts/verify-backup.sh --subset 100%
+```
+По крону на хосте (`0 4 * * *`) проверка запускается автоматически с `--subset 10%` и пишет отчёт в `/opt/minecraft/data/plugins/WardenLog/backup_verify.json` для `warden-monitor`.
 
 **Как восстановить сервер из бэкапа:**
-1. Остановите сервер: `docker-compose stop mc`
-2. Переименуйте текущую папку `data` в `data_old` и создайте новую пустую папку `data`.
-3. Зайдите в папку `backups` и распакуйте нужный вам архив прямо в новую папку `data` (с помощью 7-Zip или стандартных средств ОС).
-4. Снова запустите сервер: `docker-compose start mc`
+Запустите интерактивный скрипт на сервере (он поддерживает и `.tar`, и Restic-снапшоты):
+```bash
+bash /opt/minecraft/scripts/restore-backup.sh
+```
+Или вручную остановите `mc` и `mc-backup`, переименуйте `data` в `data_old` и восстановите нужный снапшот из `backups/` через `restic restore`.
 
 ## 🚀 Как запустить
 
@@ -81,6 +94,12 @@
 | `minecraft_server_online` | Gauge | Статус сервера (1 = работает, 0 = недоступен) | - |
 | `minecraft_player_count` | Gauge | Количество игроков онлайн | - |
 | `minecraft_server_ping_ms` | Gauge | Задержка (пинг) до сервера в миллисекундах | - |
+| `minecraft_backup_verify_ok` | Gauge | Результат проверки бэкапа (1 = ОК, 0 = ошибка, -1 = нет отчёта) | - |
+| `minecraft_backup_last_verify_timestamp` | Gauge | Unix-время последней проверки бэкапа | - |
+| `minecraft_backup_snapshot_age_seconds` | Gauge | Возраст последнего снапшота в секундах | - |
+| `minecraft_backup_snapshot_size_bytes` | Gauge | Размер последнего снапшота в байтах | - |
+| `minecraft_backup_corrupt_chunks` | Gauge | Число битых чанков в проверенном снапшоте | - |
+| `minecraft_backup_verify_errors` | Gauge | Количество ошибок последней проверки бэкапа | - |
 | `warden_tnt_placed_total` | Counter | Общее количество установленных блоков динамита | `player`, `world`, `x`, `y`, `z`, `time` |
 | `warden_tnt_exploded_total` | Counter | Общее количество взрывов динамита | `source`, `world`, `x`, `y`, `z`, `time` |
 | `warden_player_joins_total` | Counter | Общее количество входов игроков на сервер | `player`, `time` |

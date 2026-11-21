@@ -22,6 +22,8 @@ logging.basicConfig(
 
 LOG_FILE = '/app/logs/events.jsonl'
 TG_CONFIG_FILE = '/app/logs/tg_config.json'
+BACKUP_REPORT_FILE = '/app/logs/backup_verify.json'
+BACKUP_STALE_HOURS = 28.0
 MC_HOST = 'mc'
 MC_PORT = 25565
 PROMETHEUS_PORT = 8000
@@ -51,6 +53,14 @@ VALUABLE_BROKEN = Counter('warden_valuable_block_broken_total', 'Total valuable 
 GRIEF_ALERTS = Counter('warden_grief_alerts_total', 'Total grief alerts triggered', ['player', 'blocks_broken', 'time'])
 
 MC_TPS = Gauge('minecraft_server_tps', 'Server TPS from last 1 minute')
+
+BACKUP_VERIFY_OK = Gauge('minecraft_backup_verify_ok', 'Last backup consistency check result (1=ok, 0=failed, -1=unknown)')
+BACKUP_VERIFY_TS = Gauge('minecraft_backup_last_verify_timestamp', 'Unix timestamp of last backup verification')
+BACKUP_AGE_SECONDS = Gauge('minecraft_backup_snapshot_age_seconds', 'Age of latest backup snapshot in seconds')
+BACKUP_SIZE_BYTES = Gauge('minecraft_backup_snapshot_size_bytes', 'Size of latest backup snapshot in bytes')
+BACKUP_CORRUPT_CHUNKS = Gauge('minecraft_backup_corrupt_chunks', 'Corrupt chunks found in latest backup verification')
+BACKUP_VERIFY_ERRORS = Gauge('minecraft_backup_verify_errors', 'Error count from latest backup verification')
+BACKUP_VERIFY_OK.set(-1)
 
 server = JavaServer.lookup(f"{MC_HOST}:{MC_PORT}")
 
@@ -128,6 +138,70 @@ def tps_monitor():
         except Exception:
             pass  # Server might be down, liveness_monitor handles that
         time.sleep(30)
+
+def read_backup_report():
+    if not os.path.exists(BACKUP_REPORT_FILE):
+        return None
+    try:
+        with open(BACKUP_REPORT_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logging.warning(f"Failed to read {BACKUP_REPORT_FILE}: {e}")
+        return None
+
+def backup_monitor():
+    """Polls backup_verify.json, updates Prometheus gauges, and sends Telegram alerts on failures/staleness."""
+    logging.info("Started backup verification monitor")
+    last_seen_epoch = None
+    last_ok = None
+    stale_alerted = False
+    while True:
+        report = read_backup_report()
+        if report is not None:
+            ok = bool(report.get('ok', False))
+            verify_epoch = float(report.get('epoch') or 0)
+            snap_epoch = float(report.get('snapshot_epoch') or 0)
+            snap_bytes = int(report.get('snapshot_bytes') or 0)
+            corrupt_chunks = int(report.get('corrupt_chunks') or 0)
+            errors = report.get('errors') or []
+            snap_id = report.get('snapshot_id') or '?'
+
+            BACKUP_VERIFY_OK.set(1 if ok else 0)
+            BACKUP_VERIFY_TS.set(verify_epoch)
+            BACKUP_SIZE_BYTES.set(snap_bytes)
+            BACKUP_CORRUPT_CHUNKS.set(corrupt_chunks)
+            BACKUP_VERIFY_ERRORS.set(len(errors))
+
+            age_sec = max(0.0, time.time() - snap_epoch) if snap_epoch > 0 else -1.0
+            if age_sec >= 0:
+                BACKUP_AGE_SECONDS.set(age_sec)
+
+            if verify_epoch != last_seen_epoch:
+                if not ok:
+                    preview = '; '.join(str(e) for e in errors[:3]) or 'неизвестная ошибка'
+                    logging.error(f"❌ Backup verification FAILED (snapshot={snap_id}): {preview}")
+                    send_telegram_message(
+                        f"❌ ОШИБКА БЭКАПА (снапшот {snap_id}): {preview}"
+                    )
+                elif last_ok is False:
+                    logging.info(f"✅ Backup verification recovered (snapshot={snap_id})")
+                    send_telegram_message(
+                        f"✅ Проверка бэкапа восстановлена: снапшот {snap_id} полностью консистентен."
+                    )
+                last_seen_epoch = verify_epoch
+                last_ok = ok
+                if ok and 0 <= age_sec <= BACKUP_STALE_HOURS * 3600:
+                    stale_alerted = False
+
+            if age_sec > BACKUP_STALE_HOURS * 3600:
+                if not stale_alerted:
+                    age_h = age_sec / 3600.0
+                    logging.warning(f"⚠️ Latest backup snapshot {snap_id} is {age_h:.1f}h old")
+                    send_telegram_message(
+                        f"⚠️ ВНИМАНИЕ: Последний проверенный бэкап ({snap_id}) устарел — {age_h:.1f} ч назад!"
+                    )
+                    stale_alerted = True
+        time.sleep(60)
 
 def tail(file_path):
     logged_wait = False
@@ -377,6 +451,7 @@ DASHBOARD_HTML = '''<!DOCTYPE html>
         <div class="card"><div class="l">Игроки</div><div class="v">{players}</div></div>
         <div class="card"><div class="l">TPS</div><div class="v {tps_class}">{tps}</div></div>
         <div class="card"><div class="l">Пинг</div><div class="v">{ping} ms</div></div>
+        <div class="card"><div class="l">Бэкап</div><div class="v {backup_class}">{backup}</div></div>
     </div>
     <table>
         <thead><tr><th>Время</th><th>Событие</th><th>Игрок</th><th>Детали</th></tr></thead>
@@ -484,12 +559,31 @@ def render_dashboard():
     except Exception:
         pg = 0
 
+    report = read_backup_report()
+    if report is None:
+        backup_text = '—'
+        backup_cls = ''
+    elif not report.get('ok', False):
+        backup_text = f"❌ Ошибка ({len(report.get('errors') or [])})"
+        backup_cls = 'tps-bad'
+    else:
+        snap_epoch = float(report.get('snapshot_epoch') or 0)
+        age_h = max(0.0, (time.time() - snap_epoch) / 3600.0) if snap_epoch > 0 else float(report.get('snapshot_age_hours') or 0)
+        if age_h > BACKUP_STALE_HOURS:
+            backup_text = f"⚠️ {age_h:.0f}ч"
+            backup_cls = 'tps-warn'
+        else:
+            backup_text = f"✅ OK ({age_h:.0f}ч)"
+            backup_cls = 'tps-good'
+
     return DASHBOARD_HTML.format(
         status='🟢 Online' if s == 1 else '🔴 Offline',
         players=p,
         tps=f'{t:.1f}' if t > 0 else '—',
         tps_class='tps-good' if t >= 18 else ('tps-warn' if t >= 15 else 'tps-bad'),
         ping=pg,
+        backup=backup_text,
+        backup_class=backup_cls,
         rows='\n'.join(rows)
     )
 
@@ -581,6 +675,10 @@ if __name__ == '__main__':
     # Start the TPS monitor
     t2 = threading.Thread(target=tps_monitor, daemon=True)
     t2.start()
+
+    # Start the backup verification monitor
+    t3 = threading.Thread(target=backup_monitor, daemon=True)
+    t3.start()
     
     # Start the log tailer in a background thread
     def run_tailer():

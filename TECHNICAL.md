@@ -40,14 +40,27 @@ This ensures that data (worlds, plugins, settings) is fully preserved:
 - During a hard server reboot.
 - During repeated deployments of a new configuration via Jenkins.
 
-### Automatic Backups
-The server is configured to automatically create backups every day (at 2:00 AM). Backups are stored in the `backups` directory as `.tar` archives, and only the 3 most recent backups are kept to save space.
+### Automatic Backups & Consistency Verification
+The `mc-backup` (`itzg/mc-backup`) container runs daily (2:00 AM), pauses world saving via RCON (`save-off` / `save-all flush`), and writes incremental snapshots into the **Restic** repository (`/backups`) with retention `--keep-last 7 --keep-daily 7`.
+
+**How to verify backup consistency:**
+`scripts/verify-backup.sh` verifies the latest snapshot by streaming without extracting gigabytes to disk:
+- `restic check --read-data-subset=10%`, snapshot freshness, and abrupt size-drop checks;
+- confirmation of `rcon-cli save-off` / `save-all` / `save-on` in `mc-backup` logs;
+- streaming validation of `world/level.dat`, all `.mca` region headers and chunks, plugin SQLite (`PRAGMA integrity_check`), H2 `.mv.db` headers, `ops.json`, `GreatBuildings/buildings.txt`, and `HalloumiTrader/taverns.txt`.
+
+Manual full-data check:
+```bash
+bash /opt/minecraft/scripts/verify-backup.sh --subset 100%
+```
+Via host cron (`0 4 * * *`), the script runs daily with `--subset 10%` and writes `/opt/minecraft/data/plugins/WardenLog/backup_verify.json` for `warden-monitor`.
 
 **How to restore the server from a backup:**
-1. Stop the server: `docker-compose stop mc`
-2. Rename the current `data` folder to `data_old` and create a new empty `data` folder.
-3. Open the `backups` directory and extract the desired archive directly into the new `data` folder (using 7-Zip or built-in OS tools).
-4. Start the server again: `docker-compose start mc`
+Run the interactive restore script on the host (supports both `.tar` archives and Restic snapshots):
+```bash
+bash /opt/minecraft/scripts/restore-backup.sh
+```
+Or manually stop `mc` and `mc-backup`, rename `data` to `data_old`, and restore a snapshot from `backups/` via `restic restore`.
 
 ## 🚀 How to Run
 
@@ -81,6 +94,12 @@ This is useful for automated scripts or warnings before a server restart.
 | `minecraft_server_online` | Gauge | Server status (1 = online, 0 = offline) | - |
 | `minecraft_player_count` | Gauge | Number of players currently online | - |
 | `minecraft_server_ping_ms` | Gauge | Server ping latency in milliseconds | - |
+| `minecraft_backup_verify_ok` | Gauge | Last backup check result (1 = OK, 0 = failed, -1 = unknown) | - |
+| `minecraft_backup_last_verify_timestamp` | Gauge | Unix timestamp of last backup check | - |
+| `minecraft_backup_snapshot_age_seconds` | Gauge | Age of latest backup snapshot in seconds | - |
+| `minecraft_backup_snapshot_size_bytes` | Gauge | Size of latest backup snapshot in bytes | - |
+| `minecraft_backup_corrupt_chunks` | Gauge | Corrupt chunks found in latest backup check | - |
+| `minecraft_backup_verify_errors` | Gauge | Error count from latest backup check | - |
 | `warden_tnt_placed_total` | Counter | Total number of TNT blocks placed | `player`, `world`, `x`, `y`, `z`, `time` |
 | `warden_tnt_exploded_total` | Counter | Total number of TNT explosions | `source`, `world`, `x`, `y`, `z`, `time` |
 | `warden_player_joins_total` | Counter | Total number of times players joined | `player`, `time` |
