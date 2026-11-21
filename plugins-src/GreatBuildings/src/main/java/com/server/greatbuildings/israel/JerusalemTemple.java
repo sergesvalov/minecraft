@@ -48,11 +48,12 @@ public final class JerusalemTemple implements Building {
     private static final String MARBLE_STAIRS = "smooth_quartz_stairs";
     private static final String MARBLE_SLAB = "smooth_quartz_slab";
 
-    private static final String STONE_LIGHT = b("smooth_sandstone");
-    private static final String STONE_CUT = b("cut_sandstone");
-    private static final String STONE_WARM = b("sandstone");
-    private static final String STONE_WALL = b("sandstone_wall");
-    private static final String QUARTZ_WALL = b("diorite_wall");
+    private static final String STONE_LIGHT = b("mud_bricks");
+    private static final String STONE_CUT = b("packed_mud");
+    private static final String STONE_WARM = b("smooth_sandstone");
+    private static final String STONE_WALL = b("mud_brick_wall");
+    private static final String STONE_STAIRS = "mud_brick_stairs";
+    private static final String DOOR = "dark_oak_door";
 
     // Gold, bronze, curtains & unhewn altar stone
     private static final String GOLD = b("gold_block");
@@ -111,12 +112,12 @@ public final class JerusalemTemple implements Building {
 
     private static String limestone(int x, int y, int z) {
         int r = Shapes.hash(x, y, z) % 100;
-        return r < 55 ? MARBLE : r < 80 ? b("calcite") : r < 92 ? STONE_LIGHT : STONE_CUT;
+        return r < 70 ? STONE_LIGHT : r < 88 ? STONE_CUT : STONE_WARM;
     }
 
     private static String paving(int x, int z) {
         int r = Shapes.hash(x, 0, z) % 100;
-        return b(r < 55 ? "smooth_quartz" : r < 80 ? "calcite" : r < 92 ? "smooth_sandstone" : "polished_diorite");
+        return r < 60 ? STONE_LIGHT : r < 80 ? STONE_CUT : r < 92 ? STONE_WARM : b("calcite");
     }
 
     private static String unhewnStone(int x, int y, int z) {
@@ -146,7 +147,7 @@ public final class JerusalemTemple implements Building {
         }
         // Stair step along z = 78 separating Court of Israel and Court of Priests
         for (int x = 10; x <= 63; x++) {
-            p.set(x, 4, 78, stairs(MARBLE_STAIRS, Face.NORTH, false));
+            p.set(x, 4, 78, stairs(STONE_STAIRS, Face.NORTH, false));
         }
 
         // Elevated podium for the Main Sanctuary (z = 4..49, y = 1..6)
@@ -210,8 +211,8 @@ public final class JerusalemTemple implements Building {
         }
         p.fill(7, 7, 100, 10, 7, 135, MARBLE_BLOCK);
         p.fill(63, 7, 100, 66, 7, 135, MARBLE_BLOCK);
-        p.fill(10, 8, 100, 10, 8, 135, QUARTZ_WALL);
-        p.fill(63, 8, 100, 63, 8, 135, QUARTZ_WALL);
+        p.fill(10, 8, 100, 10, 8, 135, STONE_WALL);
+        p.fill(63, 8, 100, 63, 8, 135, STONE_WALL);
     }
 
     private static void cornerChamber(Plan p, int x1, int z1, int x2, int z2, Face doorSide) {
@@ -264,7 +265,7 @@ public final class JerusalemTemple implements Building {
                 for (int yy = 1; yy < y; yy++) {
                     p.set(x, yy, z, MARBLE);
                 }
-                p.set(x, y, z, stairs(MARBLE_STAIRS, Face.NORTH, false));
+                p.set(x, y, z, stairs(STONE_STAIRS, Face.NORTH, false));
             }
         }
 
@@ -331,15 +332,15 @@ public final class JerusalemTemple implements Building {
     // ------------------------------------------------------------------ 12 Temple steps
 
     private void templeSteps(Plan p) {
-        // 12-block wide grand staircase from Court of Priests (y = 4) to Sanctuary Porch (y = 7)
+        // 12-block wide grand staircase from Court of Priests (y = 4) to Sanctuary Porch (y = 6), flush at z = 50
         for (int x = CX - 6; x <= CX + 5; x++) {
-            for (int s = 0; s < 3; s++) {
-                int z = 52 - s;
+            for (int s = 0; s < 2; s++) {
+                int z = 51 - s;
                 int y = 5 + s;
                 for (int yy = 5; yy < y; yy++) {
                     p.set(x, yy, z, MARBLE);
                 }
-                p.set(x, y, z, stairs(MARBLE_STAIRS, Face.NORTH, false));
+                p.set(x, y, z, stairs(STONE_STAIRS, Face.NORTH, false));
             }
         }
     }
@@ -422,10 +423,49 @@ public final class JerusalemTemple implements Building {
             p.fill(27, floorY, 10, 30, floorY, 39, MARBLE_BLOCK);
             p.fill(43, floorY, 10, 46, floorY, 39, MARBLE_BLOCK);
         }
-        // Wide 2-block doorway from Ulam into west and east side chambers
-        for (int x : new int[]{28, 29, 44, 45}) {
-            for (int y = 7; y <= 10; y++) {
-                p.set(x, y, 40, AIR);
+        // Clear Ulam back wall (z = 41) and place framed 2x2 double doors (z = 40) into west and east side chambers
+        for (int doorX : new int[]{28, 44}) {
+            for (int x = doorX; x <= doorX + 1; x++) {
+                for (int y = 7; y <= 10; y++) {
+                    p.set(x, y, 41, AIR);
+                }
+                p.set(x, 7, 40, AIR);
+                p.set(x, 8, 40, AIR);
+            }
+            p.doubleDoor(doorX, 7, 40, DOOR, Face.NORTH);
+
+            // 2-block-wide interior staircases climbing through floor 1 -> floor 2 (y = 7..13) and floor 2 -> floor 3 (y = 14..19)
+            for (int x = doorX; x <= doorX + 1; x++) {
+                for (int i = 0; i <= 6; i++) {
+                    int z = 32 - i;
+                    int y = 7 + i;
+                    for (int yy = 7; yy < y; yy++) {
+                        p.set(x, yy, z, limestone(x, yy, z));
+                    }
+                    p.set(x, y, z, stairs(STONE_STAIRS, Face.NORTH, false));
+                    for (int yy = y + 1; yy <= Math.min(18, y + 3); yy++) {
+                        p.set(x, yy, z, AIR);
+                    }
+                }
+                for (int i = 0; i <= 5; i++) {
+                    int z = 22 - i;
+                    int y = 14 + i;
+                    for (int yy = 14; yy < y; yy++) {
+                        p.set(x, yy, z, limestone(x, yy, z));
+                    }
+                    p.set(x, y, z, stairs(STONE_STAIRS, Face.NORTH, false));
+                    for (int yy = y + 1; yy <= Math.min(24, y + 3); yy++) {
+                        p.set(x, yy, z, AIR);
+                    }
+                }
+            }
+        }
+        // Hanging lanterns illuminating all three floors of the side chambers
+        for (int lx : new int[]{29, 44}) {
+            for (int lz : new int[]{13, 25, 36}) {
+                for (int ly : new int[]{12, 18, 24}) {
+                    p.set(lx, ly, lz, lantern(true));
+                }
             }
         }
     }

@@ -83,7 +83,7 @@ Dimensions from historical and archaeological surveys of the Department of Antiq
 
 From the sources:
 
-- **Fortress and masonry.** Squat, heavy rectangular keep built of warm Cypriot limestone blocks (`smooth_sandstone`, `cut_sandstone`) with walls up to 3 metres thick.
+- **Fortress and masonry.** Squat, heavy rectangular keep built of warm Cypriot limestone (`mud_bricks`, `packed_mud`, `smooth_sandstone`) with walls up to 3 metres thick.
 - **Moat and bridge.** The landward approach is protected by a seawater moat (`water`), crossed by an arched stone bridge.
 - **Entrance and 1592 inscription.** Single arched portal with heavy dark oak double doors. Set above the gate is the authentic white marble slab (`calcite`) commemorating the 1592 Ottoman reconstruction by Ahmet Pasha.
 - **Ground floor.** Central barrel-vaulted hall dividing two wings. West wing houses Ottoman prison dungeons with heavy iron bars (`iron_bars`), chains, and bunks. East wing contains the British salt warehouse (smooth quartz blocks and barrels) and armory/guardroom.
@@ -100,7 +100,7 @@ Name plaques in Greek (`Κάστρο της Πάφου`) and Russian (`Пафо�
 Greco-Roman theatre on the coastal cliff of Kourion (near Limassol, Cyprus), originally built in the 2nd century BC and expanded in the 2nd century AD.
 
 - **Orchestra and cavea.** Semicircular 17 m limestone orchestra with a marble centre mosaic, surrounded by tiered limestone seating (`cavea`) rising to 17 m with wide radial staircases (2+ blocks wide) and upper gallery.
-- **Stage and parodoi.** Two-tier stage building (`skene`) with double doors, colonnade, and wide arched side entrances (`parodoi`).
+- **Stage and parodoi.** Two-tier stage building (`skene`) wings with colonnade and wide arched open side entrances (`parodoi`, 4×4 blocks).
 - **Surroundings.** Paved southern approach plaza, Mediterranean cypresses, bilingual Greek (`Αρχαίο Θέατρο Κουρίου`) and Russian (`Амфитеатр Куриона`) plaques, and a lectern with a history book.
 
 #### Statue of Apollo Hylates (`apollo`)
@@ -117,9 +117,9 @@ Monumental statue and sacred courtyard of Apollo Hylates ("Apollo of the Woodlan
 
 Herod's Temple in Jerusalem at **1:1** scale in its full splendour, built with walkable interiors and 2+ block wide stairs and passages throughout.
 
-- **Court of Women (`62 × 62 m`).** Surrounded by limestone walls and colonnades with four corner chambers (Nazarites, Wood, Lepers, Oil) and 4-block wide doorways.
+- **Court of Women (`62 × 62 m`).** Surrounded by mud-brick limestone (`mud_bricks`, `packed_mud`) walls and white marble colonnades with four corner chambers (Nazarites, Wood, Lepers, Oil) and 4-block wide doorways.
 - **Nicanor Gate and Court of Priests.** 12-block wide semicircular-inspired steps leading through the Corinthian bronze Nicanor Gate into the Court of Israel and Court of Priests, featuring the **14 × 14 m** unhewn stone Altar of Burnt Offering with a 4-block ramp and the bronze Laver (`Kiyor`).
-- **Sanctuary (`Ulam`, `Hekhal`, `Holy of Holies`).** 12 marble steps rise to the **48 × 48 m** monumental Ulam facade. Inside the 20 m Hekhal stand the Golden Menorah, Table of Showbread, and Incense Altar. A 2-block wide passage through the double veil (`Parokhet`) leads into the **10 × 10 × 10 m** Holy of Holies with the Foundation Stone (`Even ha-Shetiyah`), flanked by 3-story side chambers.
+- **Sanctuary (`Ulam`, `Hekhal`, `Holy of Holies`).** Steps rise to the **48 × 48 m** monumental Ulam facade. Inside the 20 m Hekhal stand the Golden Menorah, Table of Showbread, and Incense Altar. A 2-block wide passage through the double veil (`Parokhet`) leads into the **10 × 10 × 10 m** Holy of Holies with the Foundation Stone (`Even ha-Shetiyah`), flanked by 3-story side chambers connected by double doors and 2-block-wide interior staircases.
 - **Surroundings.** Paved entrance plaza, cypresses, bilingual Hebrew (`בית המקדש`) and Russian (`Иерусалимский Храм`) plaques, and a lectern with a history book.
 
 ## Commands

@@ -42,15 +42,15 @@ public final class Paphos implements Building {
     private static final String AIR = Plan.AIR;
     private static final String WATER = b("water");
 
-    // Warm Cypriot limestone palette
-    private static final String LIGHT = b("smooth_sandstone");
-    private static final String LIGHT2 = b("cut_sandstone");
-    private static final String WARM = b("sandstone");
-    private static final String DARK = b("terracotta");
+    // Warm Cypriot limestone masonry using mud bricks
+    private static final String LIGHT = b("mud_bricks");
+    private static final String LIGHT2 = b("packed_mud");
+    private static final String WARM = b("smooth_sandstone");
+    private static final String DARK = b("packed_mud");
     private static final String CARVED = b("chiseled_sandstone");
-    private static final String WALL = b("sandstone_wall");
-    private static final String STAIRS_STONE = "smooth_sandstone_stairs";
-    private static final String SLAB_STONE = "smooth_sandstone_slab";
+    private static final String WALL = b("mud_brick_wall");
+    private static final String STAIRS_STONE = "mud_brick_stairs";
+    private static final String SLAB_STONE = "mud_brick_slab";
 
     // Marble inscription slab
     private static final String MARBLE = b("calcite");
@@ -100,8 +100,8 @@ public final class Paphos implements Building {
         bridge(p, t);
         castleCore(p, t);
         groundFloorInterior(p);
-        staircase(p);
         roofDeckAndCannons(p);
+        staircase(p);
         upperKeep(p);
         promenadeAndHarbor(p);
     }
@@ -115,7 +115,7 @@ public final class Paphos implements Building {
     /** Cypriot weathered limestone masonry. */
     private static String ashlar(int x, int y, int z) {
         int r = hash(x, y, z) % 100;
-        return r < 58 ? LIGHT : r < 80 ? LIGHT2 : r < 92 ? WARM : DARK;
+        return r < 72 ? LIGHT : r < 90 ? LIGHT2 : WARM;
     }
 
     private static String paving(int x, int z) {
@@ -300,9 +300,9 @@ public final class Paphos implements Building {
             }
         }
 
-        // Open-air central courtyard lightwell (x = 26..31, z = 19..23)
-        for (int x = 26; x <= 31; x++) {
-            for (int z = 19; z <= 23; z++) {
+        // Open-air central courtyard lightwell (x = 28..30, z = 21..23) leaving room for keep access and staircase
+        for (int x = 28; x <= 30; x++) {
+            for (int z = 21; z <= 23; z++) {
                 for (int y = 2; y <= 11; y++) {
                     p.set(x, y, z, AIR);
                 }
@@ -382,26 +382,27 @@ public final class Paphos implements Building {
 
     /** Grand stone staircase (2 blocks wide) connecting ground floor to the roof deck. */
     private void staircase(Plan p) {
-        // Steps climbing north-to-south along the west side of the central hall (x = 23..24, z = 12..21)
-        for (int x = 23; x <= 24; x++) {
+        // Steps climbing north-to-south in the center of the hall (x = 25..26, z = 14..23), leaving all wing doors clear
+        for (int x = 25; x <= 26; x++) {
             for (int i = 0; i <= 9; i++) {
-                int z = 12 + i;
+                int z = 14 + i;
                 int y = 2 + i;
                 p.set(x, y, z, stairs(STAIRS_STONE, Face.SOUTH, false));
                 for (int yy = 2; yy < y; yy++) {
                     p.set(x, yy, z, ashlar(x, yy, z));
                 }
-                for (int yy = y + 1; yy <= Math.min(TOP, y + 3); yy++) {
+                int clearTop = z <= 19 ? 10 : Math.min(TOP, y + 3);
+                for (int yy = y + 1; yy <= clearTop; yy++) {
                     p.set(x, yy, z, AIR);
                 }
             }
-            // Stair opening through the roof deck at z = 21..22
-            p.set(x, 11, 21, AIR);
-            p.set(x, 11, 22, AIR);
         }
-        // Parapet guard along the east side of the stairwell opening
-        p.set(25, 12, 21, WALL);
-        p.set(25, 12, 22, WALL);
+        // Guardrails around the stairwell opening on the roof deck (z = 24 open for exit)
+        for (int z = 19; z <= 23; z++) {
+            p.set(24, 12, z, WALL);
+        }
+        p.set(25, 12, 19, WALL);
+        p.set(26, 12, 19, WALL);
     }
 
     // ------------------------------------------------------------------ roof & battlements
@@ -413,24 +414,25 @@ public final class Paphos implements Building {
     private void roofDeckAndCannons(Plan p) {
         int deckY = 11;
 
-        // Paved roof platform (leaving central courtyard lightwell open)
+        // Paved roof platform (leaving central courtyard lightwell and stairwell opening clear)
         for (int x = CX1; x <= CX2; x++) {
             for (int z = CZ1; z <= CZ2; z++) {
-                boolean inCourtyard = (x >= 26 && x <= 31 && z >= 19 && z <= 23);
-                if (!inCourtyard) {
+                boolean inCourtyard = (x >= 28 && x <= 30 && z >= 21 && z <= 23);
+                boolean inStairwell = (x >= 25 && x <= 26 && z >= 20 && z <= 22);
+                if (!inCourtyard && !inStairwell) {
                     p.set(x, deckY, z, paving(x, z));
                 }
             }
         }
 
-        // Parapet around the central courtyard lightwell (x = 25..32, z = 18..24)
-        for (int x = 25; x <= 32; x++) {
-            p.set(x, 12, 18, WALL);
+        // Parapet around the central courtyard lightwell (x = 27..31, z = 20..24)
+        for (int x = 27; x <= 31; x++) {
+            p.set(x, 12, 20, WALL);
             p.set(x, 12, 24, WALL);
         }
-        for (int z = 18; z <= 24; z++) {
-            p.set(25, 12, z, WALL);
-            p.set(32, 12, z, WALL);
+        for (int z = 20; z <= 24; z++) {
+            p.set(27, 12, z, WALL);
+            p.set(31, 12, z, WALL);
         }
 
         // Perimeter parapet walls (y = 12..13)
@@ -489,13 +491,13 @@ public final class Paphos implements Building {
     // ------------------------------------------------------------------ upper keep
 
     /**
-     * Upper secondary tower / keep on the north roof (x = 20..35, z = 9..18, y = 11..16; 16 × 10 m):
+     * Upper secondary tower / keep on the north roof (x = 20..35, z = 10..17, y = 11..16):
      * houses the Ottoman garrison commander's quarters and small mosque,
-     * with an upper lookout terrace and flagpole.
+     * with a paved landing outside the south door and an upper lookout terrace and flagpole.
      */
     private void upperKeep(Plan p) {
         int kx1 = 20, kx2 = 35; // 16 blocks wide (centered on GATE_X..GATE_X+1 = 27..28)
-        int kz1 = 9, kz2 = 18;  // 10 blocks deep
+        int kz1 = 10, kz2 = 17; // 8 blocks deep, clear of north cannons (z = 8..9) and opening onto z = 18..19
         int floorY = 11;
         int roofY = 16;
 

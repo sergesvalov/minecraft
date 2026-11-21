@@ -745,9 +745,19 @@ public final class Bagrati implements Building {
             }
         }
 
+        // Symmetric stone portal frame at v = 14 around the south double door (u = 24..25, y = 2..3)
+        for (int y = 2; y <= 6; y++) {
+            setRel(p, DOME_U - 1, y, v1, ashlar(CU + DOME_U - 1, y, CV + v1));
+            setRel(p, DOME_U + 2, y, v1, ashlar(CU + DOME_U + 2, y, CV + v1));
+        }
+        for (int y = 4; y <= 6; y++) {
+            setRel(p, DOME_U, y, v1, ashlar(CU + DOME_U, y, CV + v1));
+            setRel(p, DOME_U + 1, y, v1, ashlar(CU + DOME_U + 1, y, CV + v1));
+        }
+
         // Front stone steps leading up from the south plaza
         for (int u = u1; u <= u2; u++) {
-            p.set(CU + u, 1, CV + v2 + 1, stairs(TRIM, Face.SOUTH, false));
+            p.set(CU + u, 1, CV + v2 + 1, stairs(TRIM, Face.NORTH, false));
         }
 
         // Columns / piers of the portico at the corners and center (u = 20, 24, 28; v = 19)
@@ -839,7 +849,7 @@ public final class Bagrati implements Building {
 
         // Entrance steps from the west
         for (int v = -3; v <= 3; v++) {
-            setRel(p, u1 - 1, 1, v, stairs(TRIM, Face.WEST, false));
+            setRel(p, u1 - 1, 1, v, stairs(TRIM, Face.EAST, false));
         }
 
         // Lectern with history book at the west entrance

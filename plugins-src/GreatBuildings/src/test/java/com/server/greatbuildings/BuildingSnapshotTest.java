@@ -3,6 +3,7 @@ package com.server.greatbuildings;
 import com.server.greatbuildings.buildings.BuildingCatalog;
 import com.server.greatbuildings.model.Building;
 import com.server.greatbuildings.model.Country;
+import com.server.greatbuildings.model.Face;
 import com.server.greatbuildings.model.Plan;
 import com.server.greatbuildings.model.Terrain;
 import org.junit.jupiter.api.Test;
@@ -28,16 +29,19 @@ class BuildingSnapshotTest {
                     "e138ba36c2037777bfe34050753520857d925eb3921eeada5d33f202bbaff1ee"),
             "bagrati", new ExpectedSnapshot(
                     173061, 53, 4, 1,
-                    "a25f31a3ee03b586f95d24b88aba5b7b65764bbfa594e0d1df947bf4a2539d3c"),
+                    "1b0ce20ccd0db4a53b8a352eb2a74057152a319b2aa6ad9f78c684c27cbf3b0d"),
             "paphos", new ExpectedSnapshot(
                     95912, 51, 2, 1,
-                    "08cfe72d6d18224b35e46ebcae3b0f55abbd39a3d5f5bfeaf546eae2b6a65299"),
+                    "e0514709672da6bb4ae81dfa29682564a87cdb0cfb2ea272322a5d83e2ced3fc"),
             "kourion", new ExpectedSnapshot(
                     88987, 26, 2, 1,
                     "26a06fbac06e11b33a3c10918bfccfd13e1d836c08893d1a4f4f9361458f64b0"),
             "apollo", new ExpectedSnapshot(
                     24025, 31, 2, 1,
-                    "9878543da38845b86f05b200cfc906a170874dd61cb5e6b590920978a35edb6f")
+                    "9878543da38845b86f05b200cfc906a170874dd61cb5e6b590920978a35edb6f"),
+            "temple", new ExpectedSnapshot(
+                    650536, 38, 2, 1,
+                    "99c72e8d12186c71626f0b3809ba1b386597af126682b9244dcc929c2f90825b")
     );
 
     @Test
@@ -138,13 +142,14 @@ class BuildingSnapshotTest {
     void allStairsAreAtLeastTwoBlocksWideAndWalkable() {
         BuildingCatalog catalog = new BuildingCatalog();
 
-        // Paphos: 2-block staircase (x = 23..24) + double doors into west cells
+        // Paphos: 2-block staircase (x = 25..26, z = 14..23) + mud-brick limestone + unobstructed doors
         Plan paphos = new Plan(catalog.byId("paphos").bounds());
         catalog.byId("paphos").draw(paphos, FLAT_TERRAIN);
-        assertTrue(paphos.get(23, 5, 15).contains("stairs"));
-        assertTrue(paphos.get(24, 5, 15).contains("stairs"));
-        assertEquals(Plan.AIR, paphos.get(23, 7, 15));
-        assertEquals(Plan.AIR, paphos.get(24, 7, 15));
+        assertTrue(paphos.get(25, 5, 17).contains("stairs"));
+        assertTrue(paphos.get(26, 5, 17).contains("stairs"));
+        assertEquals(Plan.AIR, paphos.get(25, 7, 17));
+        assertEquals(Plan.AIR, paphos.get(26, 7, 17));
+        assertTrue(paphos.palette().contains("minecraft:mud_bricks"));
         assertTrue(paphos.get(22, 2, 12).contains("dark_oak_door"));
         assertTrue(paphos.get(22, 2, 13).contains("dark_oak_door"));
 
@@ -188,6 +193,127 @@ class BuildingSnapshotTest {
         assertEquals(Plan.AIR, plan.get(37, 8, 19));
         // Foundation Stone in Holy of Holies
         assertEquals("minecraft:andesite", plan.get(36, 8, 13));
+        assertTrue(plan.palette().contains("minecraft:mud_bricks"));
+    }
+
+    @Test
+    void allDoorsAndPassagesAreWalkable() {
+        BuildingCatalog catalog = new BuildingCatalog();
+
+        // Svetitskhoveli: 3 main double doors
+        Plan svet = new Plan(catalog.byId("svetitskhoveli").bounds());
+        catalog.byId("svetitskhoveli").draw(svet, FLAT_TERRAIN);
+        assertWalkableDoubleDoor(svet, 39, 2, 55, Face.EAST);
+        assertWalkableDoubleDoor(svet, 72, 2, 67, Face.NORTH);
+        assertWalkableDoubleDoor(svet, 72, 2, 43, Face.SOUTH);
+
+        // Bagrati: 3 west doors + south portal door with full jambs/lintel and outward-descending steps
+        Plan bagrati = new Plan(catalog.byId("bagrati").bounds());
+        catalog.byId("bagrati").draw(bagrati, FLAT_TERRAIN);
+        assertWalkableDoubleDoor(bagrati, 18, 2, 26, Face.EAST);
+        assertWalkableDoubleDoor(bagrati, 18, 2, 30, Face.EAST);
+        assertWalkableDoubleDoor(bagrati, 18, 2, 33, Face.EAST);
+        assertWalkableDoubleDoor(bagrati, 42, 2, 44, Face.NORTH);
+        for (int y = 2; y <= 6; y++) {
+            assertNotEquals(Plan.AIR, bagrati.get(41, y, 44), "Left jamb missing at y=" + y);
+            assertNotEquals(Plan.AIR, bagrati.get(44, y, 44), "Right jamb missing at y=" + y);
+        }
+        assertNotEquals(Plan.AIR, bagrati.get(42, 4, 44));
+        assertNotEquals(Plan.AIR, bagrati.get(43, 4, 44));
+        assertTrue(bagrati.get(42, 1, 50).contains("facing=north"));
+        assertTrue(bagrati.get(12, 1, 30).contains("facing=east"));
+
+        // Paphos: main gate, 3 west cells, 2 east rooms, upper keep door, and full staircase to roof
+        Plan paphos = new Plan(catalog.byId("paphos").bounds());
+        catalog.byId("paphos").draw(paphos, FLAT_TERRAIN);
+        assertWalkableDoubleDoor(paphos, 27, 2, 26, Face.NORTH);
+        for (int z : new int[]{12, 17, 22}) {
+            assertWalkableDoubleDoor(paphos, 22, 2, z, Face.WEST);
+        }
+        for (int z : new int[]{13, 21}) {
+            assertWalkableDoubleDoor(paphos, 33, 2, z, Face.EAST);
+        }
+        assertWalkableDoubleDoor(paphos, 27, 12, 17, Face.NORTH);
+        for (int x = 25; x <= 26; x++) {
+            for (int i = 0; i <= 9; i++) {
+                int z = 14 + i;
+                int y = 2 + i;
+                assertTrue(paphos.get(x, y, z).contains("stairs"), "Missing stair at " + x + "," + y + "," + z);
+                assertEquals(Plan.AIR, paphos.get(x, y + 1, z), "Blocked headroom+1 at " + x + "," + y + "," + z);
+                assertEquals(Plan.AIR, paphos.get(x, y + 2, z), "Blocked headroom+2 at " + x + "," + y + "," + z);
+            }
+            assertNotEquals(Plan.AIR, paphos.get(x, 11, 24));
+            assertEquals(Plan.AIR, paphos.get(x, 12, 24));
+            assertEquals(Plan.AIR, paphos.get(x, 13, 24));
+        }
+
+        // Jerusalem Temple: side chamber double doors, flush steps at z=50, and 2-block multi-floor stairs
+        Plan temple = new Plan(catalog.byId("temple").bounds());
+        catalog.byId("temple").draw(temple, FLAT_TERRAIN);
+        assertWalkableDoubleDoor(temple, 28, 7, 40, Face.NORTH);
+        assertWalkableDoubleDoor(temple, 44, 7, 40, Face.NORTH);
+        assertEquals(Plan.AIR, temple.get(36, 7, 50));
+        for (int doorX : new int[]{28, 44}) {
+            for (int x = doorX; x <= doorX + 1; x++) {
+                for (int i = 0; i <= 6; i++) {
+                    int z = 32 - i;
+                    int y = 7 + i;
+                    assertTrue(temple.get(x, y, z).contains("stairs"));
+                    assertEquals(Plan.AIR, temple.get(x, y + 1, z));
+                    assertEquals(Plan.AIR, temple.get(x, y + 2, z));
+                }
+                for (int i = 0; i <= 5; i++) {
+                    int z = 22 - i;
+                    int y = 14 + i;
+                    assertTrue(temple.get(x, y, z).contains("stairs"));
+                    assertEquals(Plan.AIR, temple.get(x, y + 1, z));
+                    assertEquals(Plan.AIR, temple.get(x, y + 2, z));
+                }
+            }
+        }
+    }
+
+    private static void assertWalkableDoubleDoor(Plan plan, int x, int y, int z, Face intoRoom) {
+        boolean alongX = intoRoom == Face.NORTH || intoRoom == Face.SOUTH;
+        int x2 = alongX ? x + 1 : x;
+        int z2 = alongX ? z : z + 1;
+
+        String leftLower = plan.get(x, y, z);
+        String rightLower = plan.get(x2, y, z2);
+        String leftUpper = plan.get(x, y + 1, z);
+        String rightUpper = plan.get(x2, y + 1, z2);
+        assertNotNull(leftLower);
+        assertNotNull(rightLower);
+        assertTrue(leftLower.contains("_door") && leftUpper.contains("_door"),
+                "Missing first door leaf at " + x + "," + y + "," + z);
+        assertTrue(rightLower.contains("_door") && rightUpper.contains("_door"),
+                "Missing second door leaf at " + x2 + "," + y + "," + z2);
+        assertTrue((leftLower.contains("hinge=left") && rightLower.contains("hinge=right"))
+                        || (leftLower.contains("hinge=right") && rightLower.contains("hinge=left")),
+                "Door hinges must be opposite at " + x + "," + y + "," + z);
+
+        int[][] leafCoords = {{x, z}, {x2, z2}};
+        for (int[] lc : leafCoords) {
+            int lx = lc[0], lz = lc[1];
+            int outX = lx - intoRoom.dx, outZ = lz - intoRoom.dz;
+            int inX = lx + intoRoom.dx, inZ = lz + intoRoom.dz;
+
+            assertSolidFloor(plan, lx, y - 1, lz, "under door leaf");
+            assertSolidFloor(plan, outX, y - 1, outZ, "outside door");
+            assertSolidFloor(plan, inX, y - 1, inZ, "inside door");
+
+            assertEquals(Plan.AIR, plan.get(outX, y, outZ), "Blocked outside lower at " + outX + "," + y + "," + outZ);
+            assertEquals(Plan.AIR, plan.get(outX, y + 1, outZ), "Blocked outside upper at " + outX + "," + (y + 1) + "," + outZ);
+            assertEquals(Plan.AIR, plan.get(inX, y, inZ), "Blocked inside lower at " + inX + "," + y + "," + inZ);
+            assertEquals(Plan.AIR, plan.get(inX, y + 1, inZ), "Blocked inside upper at " + inX + "," + (y + 1) + "," + inZ);
+        }
+    }
+
+    private static void assertSolidFloor(Plan plan, int x, int y, int z, String where) {
+        String s = plan.get(x, y, z);
+        assertNotNull(s, "Null floor " + where + " at " + x + "," + y + "," + z);
+        assertNotEquals(Plan.AIR, s, "Air floor " + where + " at " + x + "," + y + "," + z);
+        assertNotEquals("minecraft:water", s, "Water floor " + where + " at " + x + "," + y + "," + z);
     }
 
     @Test
