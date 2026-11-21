@@ -298,6 +298,17 @@ public final class Svetitskhoveli implements Building {
                 p.set(west, y, z, stairs("cobblestone_stairs", Face.WEST, false));
             }
         }
+        // 2x2 top landings connecting the stairs cleanly to the curtain-wall walkway
+        for (int dx : new int[]{11, 12}) {
+            int east = GATE_X + dx;
+            int west = GATE_X - dx;
+            for (int z = EZ - 4; z <= EZ - 3; z++) {
+                for (int yy = 1; yy <= 5; yy++) {
+                    p.set(east, yy, z, rubble(east, yy, z));
+                    p.set(west, yy, z, rubble(west, yy, z));
+                }
+            }
+        }
 
         // 8 towers: 6 round (corners, north and east walls), 2 square gate towers (south and west)
         roundTower(p, t, 0, 0, 4.5);
@@ -377,15 +388,18 @@ public final class Svetitskhoveli implements Building {
                     if (passage) {
                         Face side = passageAlongZ ? (across < 0 ? Face.WEST : Face.EAST)
                                 : (across < 0 ? Face.NORTH : Face.SOUTH);
-                        if (y <= 4) {
+                        if (y <= 3) {
                             s = AIR;
-                        } else if (y == 5) {
+                        } else if (y == 4) {
                             s = a == 2 ? stairs(TRIM, side, true) : AIR;
-                        } else if (y == 6 && a <= 1) {
-                            s = a == 1 ? stairs(TRIM, side, true) : AIR;
                         }
                     }
                     p.set(x, y, z, s);
+                }
+                if (isWalkway(x, z)) {
+                    for (int y = 6; y <= 8; y++) {
+                        p.set(x, y, z, AIR);
+                    }
                 }
                 boolean perimeter = Math.abs(dx) == 4 || Math.abs(dz) == 4;
                 p.set(x, top + 1, z, perimeter && (dx + dz) % 2 == 0 ? (faced ? LIGHT2 : BRICK) : AIR);
@@ -799,9 +813,9 @@ public final class Svetitskhoveli implements Building {
         }
         set(p, 41, 2, 0, candles(4));
 
-        // Low stone altar screen with the royal doors in the middle
+        // Low stone altar screen with 3-block wide royal doors in the middle
         for (int v = -4; v <= 4; v++) {
-            if (v != 0) {
+            if (Math.abs(v) > 1) {
                 set(p, 44, 2, v, CARVED);
                 set(p, 44, 3, v, slab(ROOF_SLAB));
             }

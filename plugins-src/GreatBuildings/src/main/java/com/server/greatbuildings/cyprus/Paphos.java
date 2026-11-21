@@ -209,6 +209,11 @@ public final class Paphos implements Building {
             }
         }
 
+        // 4-wide steps from the southern promenade up onto the bridge
+        for (int x = GATE_X - 1; x <= GATE_X + 2; x++) {
+            p.set(x, 1, z2 + 1, stairs(STAIRS_STONE, Face.NORTH, false));
+        }
+
         // Bridge lanterns on corner posts
         for (int x : new int[]{x1, x2}) {
             for (int z : new int[]{z1, z2}) {

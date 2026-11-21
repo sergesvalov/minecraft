@@ -10,9 +10,12 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -142,38 +145,80 @@ class BuildingSnapshotTest {
     void allStairsAreAtLeastTwoBlocksWideAndWalkable() {
         BuildingCatalog catalog = new BuildingCatalog();
 
-        // Paphos: 2-block staircase (x = 25..26, z = 14..23) + mud-brick limestone + unobstructed doors
+        // Paphos: 2-block staircase (x = 25..26, z = 14..23), 4-wide bridge steps, mud-brick limestone + unobstructed doors
         Plan paphos = new Plan(catalog.byId("paphos").bounds());
         catalog.byId("paphos").draw(paphos, FLAT_TERRAIN);
         assertTrue(paphos.get(25, 5, 17).contains("stairs"));
         assertTrue(paphos.get(26, 5, 17).contains("stairs"));
         assertEquals(Plan.AIR, paphos.get(25, 7, 17));
         assertEquals(Plan.AIR, paphos.get(26, 7, 17));
+        for (int x = 26; x <= 29; x++) {
+            String step = paphos.get(x, 1, 36);
+            assertTrue(step.contains("stairs") && step.contains("facing=north"),
+                    "Missing bridge stair at x=" + x);
+            assertEquals(Plan.AIR, paphos.get(x, 2, 36));
+        }
         assertTrue(paphos.palette().contains("minecraft:mud_bricks"));
         assertTrue(paphos.get(22, 2, 12).contains("dark_oak_door"));
         assertTrue(paphos.get(22, 2, 13).contains("dark_oak_door"));
 
-        // Svetitskhoveli: 2-block enclosure stairs (z = 106..107)
+        // Svetitskhoveli: 2-block enclosure stairs (z = 106..107) and 2x2 top landings
         Plan svet = new Plan(catalog.byId("svetitskhoveli").bounds());
         catalog.byId("svetitskhoveli").draw(svet, FLAT_TERRAIN);
         assertTrue(svet.get(69, 3, 106).contains("stairs"));
         assertTrue(svet.get(69, 3, 107).contains("stairs"));
+        for (int lx : new int[]{49, 50, 72, 73}) {
+            for (int lz : new int[]{106, 107}) {
+                assertSolidFloor(svet, lx, 5, lz, "svet walkway landing");
+                assertEquals(Plan.AIR, svet.get(lx, 6, lz));
+                assertEquals(Plan.AIR, svet.get(lx, 7, lz));
+            }
+        }
 
-        // Bagrati: 2-block choir gallery stairs (v = 6..7 -> z = 36..37)
+        // Bagrati: 2-block choir gallery stairs ascending west (u = 8..4 -> x = 26..22, v = 6..7 -> z = 36..37)
+        // and sanctuary steps facing east (u = 27 -> x = 45)
         Plan bagrati = new Plan(catalog.byId("bagrati").bounds());
         catalog.byId("bagrati").draw(bagrati, FLAT_TERRAIN);
-        assertTrue(bagrati.get(23, 4, 36).contains("stairs"));
-        assertTrue(bagrati.get(23, 4, 37).contains("stairs"));
-        assertEquals(Plan.AIR, bagrati.get(23, 6, 36));
-        assertEquals(Plan.AIR, bagrati.get(23, 6, 37));
+        for (int i = 0; i < 5; i++) {
+            int sx = 26 - i;
+            int sy = 2 + i;
+            for (int sz : new int[]{36, 37}) {
+                String stair = bagrati.get(sx, sy, sz);
+                assertTrue(stair.contains("stairs") && stair.contains("facing=west"),
+                        "Missing choir stair at " + sx + "," + sy + "," + sz + ": " + stair);
+                assertEquals(Plan.AIR, bagrati.get(sx, sy + 1, sz));
+                assertEquals(Plan.AIR, bagrati.get(sx, sy + 2, sz));
+            }
+        }
+        for (int z = 25; z <= 35; z++) {
+            String sancStep = bagrati.get(45, 2, z);
+            assertTrue(sancStep.contains("stairs") && sancStep.contains("facing=east"),
+                    "Sanctuary stair at z=" + z + " must face east: " + sancStep);
+        }
 
-        // Kourion: radial stairways at least 2 blocks wide
+        // Kourion: radial stairways >= 2 wide facing outward, open diazoma, smooth r=22->23 rise, 2-step stage stairs
         Plan kourion = new Plan(catalog.byId("kourion").bounds());
         catalog.byId("kourion").draw(kourion, FLAT_TERRAIN);
         int northStairY = 4; // r = 14 -> seatHeight = 4
-        assertTrue(kourion.get(36, northStairY, 22).contains("stone_brick_stairs")
+        String northStair = kourion.get(36, northStairY, 22);
+        assertTrue(northStair.contains("stone_brick_stairs") && northStair.contains("facing=north")
                 && (kourion.get(35, northStairY, 22).contains("stone_brick_stairs")
-                || kourion.get(37, northStairY, 22).contains("stone_brick_stairs")));
+                || kourion.get(37, northStairY, 22).contains("stone_brick_stairs")),
+                "Kourion north stair must face away from center and be >=2 wide: " + northStair);
+        int diazomaY = topSolidY(kourion, 36, 16);
+        int firstUpperY = topSolidY(kourion, 36, 13);
+        assertEquals(Plan.AIR, kourion.get(36, diazomaY + 1, 16), "Diazoma radial stair crossing must stay open");
+        assertEquals(1, firstUpperY - diazomaY, "Smooth 1-block rise from diazoma r=20..22 to upper tier r=23");
+        assertTrue(kourion.get(36, firstUpperY, 13).contains("facing=north"));
+        for (int x = 34; x <= 38; x++) {
+            assertTrue(kourion.get(x, 1, 37).contains("stairs") && kourion.get(x, 1, 37).contains("facing=south"));
+            assertTrue(kourion.get(x, 2, 38).contains("stairs") && kourion.get(x, 2, 38).contains("facing=south"));
+            assertEquals(Plan.AIR, kourion.get(x, 3, 38));
+            assertTrue(kourion.get(x, 1, 44).contains("stairs") && kourion.get(x, 1, 44).contains("facing=north"));
+            assertEquals(Plan.AIR, kourion.get(x, 2, 44));
+            assertTrue(kourion.get(x, 2, 43).contains("stairs") && kourion.get(x, 2, 43).contains("facing=north"));
+            assertEquals(Plan.AIR, kourion.get(x, 3, 43));
+        }
     }
 
     @Test
@@ -200,20 +245,44 @@ class BuildingSnapshotTest {
     void allDoorsAndPassagesAreWalkable() {
         BuildingCatalog catalog = new BuildingCatalog();
 
-        // Svetitskhoveli: 3 main double doors
+        // Svetitskhoveli: 3 main double doors, walkway passages through gate towers, and 3-wide royal doors
         Plan svet = new Plan(catalog.byId("svetitskhoveli").bounds());
         catalog.byId("svetitskhoveli").draw(svet, FLAT_TERRAIN);
         assertWalkableDoubleDoor(svet, 39, 2, 55, Face.EAST);
         assertWalkableDoubleDoor(svet, 72, 2, 67, Face.NORTH);
         assertWalkableDoubleDoor(svet, 72, 2, 43, Face.SOUTH);
+        for (int x = 57; x <= 65; x++) {
+            for (int z = 108; z <= 109; z++) {
+                assertSolidFloor(svet, x, 5, z, "south gate tower walkway");
+                assertEquals(Plan.AIR, svet.get(x, 6, z));
+                assertEquals(Plan.AIR, svet.get(x, 7, z));
+                assertEquals(Plan.AIR, svet.get(x, 8, z));
+            }
+        }
+        for (int z = 51; z <= 59; z++) {
+            for (int x = 1; x <= 2; x++) {
+                assertSolidFloor(svet, x, 5, z, "west gate tower walkway");
+                assertEquals(Plan.AIR, svet.get(x, 6, z));
+                assertEquals(Plan.AIR, svet.get(x, 7, z));
+                assertEquals(Plan.AIR, svet.get(x, 8, z));
+            }
+        }
+        for (int z = 54; z <= 56; z++) {
+            for (int y = 2; y <= 4; y++) {
+                assertEquals(Plan.AIR, svet.get(78, y, z), "Royal doors opening blocked at z=" + z + " y=" + y);
+            }
+        }
 
-        // Bagrati: 3 west doors + south portal door with full jambs/lintel and outward-descending steps
+        // Bagrati: 3 west doors, south portal door with full jambs/lintel, and clear portico plaques
         Plan bagrati = new Plan(catalog.byId("bagrati").bounds());
         catalog.byId("bagrati").draw(bagrati, FLAT_TERRAIN);
         assertWalkableDoubleDoor(bagrati, 18, 2, 26, Face.EAST);
         assertWalkableDoubleDoor(bagrati, 18, 2, 30, Face.EAST);
         assertWalkableDoubleDoor(bagrati, 18, 2, 33, Face.EAST);
         assertWalkableDoubleDoor(bagrati, 42, 2, 44, Face.NORTH);
+        assertTrue(bagrati.signs.stream().noneMatch(s -> s.x() == 13 && s.y() == 3));
+        assertTrue(bagrati.signs.stream().anyMatch(s -> s.x() == 12 && s.y() == 3 && s.z() == 25));
+        assertTrue(bagrati.signs.stream().anyMatch(s -> s.x() == 12 && s.y() == 3 && s.z() == 35));
         for (int y = 2; y <= 6; y++) {
             assertNotEquals(Plan.AIR, bagrati.get(41, y, 44), "Left jamb missing at y=" + y);
             assertNotEquals(Plan.AIR, bagrati.get(44, y, 44), "Right jamb missing at y=" + y);
@@ -316,9 +385,66 @@ class BuildingSnapshotTest {
         assertNotEquals("minecraft:water", s, "Water floor " + where + " at " + x + "," + y + "," + z);
     }
 
+    private static int topSolidY(Plan plan, int x, int z) {
+        for (int y = plan.maxY(); y >= plan.minY(); y--) {
+            String s = plan.get(x, y, z);
+            if (s != null && !s.equals(Plan.AIR)) {
+                return y;
+            }
+        }
+        return plan.minY() - 1;
+    }
+
+    @Test
+    void everyDoorInEveryBuildingIsWalkableDoubleDoor() {
+        BuildingCatalog catalog = new BuildingCatalog();
+        for (Building b : catalog.all()) {
+            Plan plan = new Plan(b.bounds());
+            b.draw(plan, FLAT_TERRAIN);
+            Set<String> paired = new HashSet<>();
+
+            for (int x = plan.minX(); x <= plan.maxX(); x++) {
+                for (int z = plan.minZ(); z <= plan.maxZ(); z++) {
+                    for (int y = plan.minY(); y <= plan.maxY(); y++) {
+                        String s = plan.get(x, y, z);
+                        if (s == null || !s.contains("_door[")) {
+                            continue;
+                        }
+                        if (s.contains("half=upper")) {
+                            String below = plan.get(x, y - 1, z);
+                            assertTrue(below != null && below.contains("_door[") && below.contains("half=lower"),
+                                    b.id() + " upper door without lower half at " + x + "," + y + "," + z);
+                            continue;
+                        }
+                        if (!paired.add(x + "," + y + "," + z)) {
+                            continue;
+                        }
+                        Face facing = parseDoorFacing(s, b.id(), x, y, z);
+                        assertWalkableDoubleDoor(plan, x, y, z, facing);
+                        boolean alongX = facing == Face.NORTH || facing == Face.SOUTH;
+                        int x2 = alongX ? x + 1 : x;
+                        int z2 = alongX ? z : z + 1;
+                        paired.add(x2 + "," + y + "," + z2);
+                    }
+                }
+            }
+        }
+    }
+
+    private static Face parseDoorFacing(String state, String buildingId, int x, int y, int z) {
+        for (Face f : Face.values()) {
+            if (state.contains("facing=" + f.id())) {
+                return f;
+            }
+        }
+        fail(buildingId + " door missing facing at " + x + "," + y + "," + z + ": " + state);
+        return Face.NORTH;
+    }
+
     @Test
     void refactoredBuildingsMatchExactBaselineSnapshots() throws Exception {
         BuildingCatalog catalog = new BuildingCatalog();
+        List<String> mismatches = new ArrayList<>();
         for (Building b : catalog.all()) {
             Plan plan = new Plan(b.bounds());
             b.draw(plan, FLAT_TERRAIN);
@@ -343,16 +469,17 @@ class BuildingSnapshotTest {
             String hash = HexFormat.of().formatHex(md.digest());
 
             ExpectedSnapshot exp = EXPECTED.get(b.id());
-            if (exp == null) {
+            if (exp == null
+                    || exp.nonNull() != nonNull
+                    || exp.palette() != palette.size()
+                    || exp.signs() != plan.signs.size()
+                    || exp.lecterns() != plan.lecterns.size()
+                    || !exp.sha256().equals(hash)) {
                 System.out.printf("NEW SNAPSHOT %s nonNull=%d palette=%d signs=%d lecterns=%d sha256=%s%n",
                         b.id(), nonNull, palette.size(), plan.signs.size(), plan.lecterns.size(), hash);
-                continue;
+                mismatches.add(b.id());
             }
-            assertEquals(exp.nonNull(), nonNull, b.id() + " nonNull");
-            assertEquals(exp.palette(), palette.size(), b.id() + " palette");
-            assertEquals(exp.signs(), plan.signs.size(), b.id() + " signs");
-            assertEquals(exp.lecterns(), plan.lecterns.size(), b.id() + " lecterns");
-            assertEquals(exp.sha256(), hash, b.id() + " sha256");
         }
+        assertTrue(mismatches.isEmpty(), "Snapshot mismatches: " + mismatches);
     }
 }

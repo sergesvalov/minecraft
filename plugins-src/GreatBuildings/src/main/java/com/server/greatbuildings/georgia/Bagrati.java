@@ -417,9 +417,9 @@ public final class Bagrati implements Building {
                 }
             }
         }
-        // Sanctuary steps facing west
+        // Sanctuary steps ascending east into the apse
         for (int v = -5; v <= 5; v++) {
-            setRel(p, 27, 2, v, stairs(TRIM, Face.WEST, false));
+            setRel(p, 27, 2, v, stairs(TRIM, Face.EAST, false));
         }
 
         // Low carved stone iconostasis / chancel barrier
@@ -522,12 +522,12 @@ public final class Bagrati implements Building {
             setRel(p, 8, 7, v, WALL);
         }
 
-        // Stone stairs (2 blocks wide) to the gallery along the south aisle (u = 3..7, v = 6..7)
+        // Stone stairs (2 blocks wide) to the gallery along the south aisle (u = 8..4, v = 6..7)
         for (int v = 6; v <= 7; v++) {
             for (int i = 0; i < 5; i++) {
-                int su = 3 + i;
+                int su = 8 - i;
                 int y = 2 + i;
-                setRel(p, su, y, v, stairs(TRIM, Face.EAST, false));
+                setRel(p, su, y, v, stairs(TRIM, Face.WEST, false));
                 for (int yy = 2; yy < y; yy++) {
                     setRel(p, su, yy, v, LIGHT);
                 }
@@ -858,9 +858,9 @@ public final class Bagrati implements Building {
         // Lantern hanging in the portico
         setRel(p, -3, 6, 0, lantern(true));
 
-        // Plaque on the west portico
-        p.wallSign(CU + u1, 3, CV - 2, "dark_oak", Face.WEST, PLAQUE_KA);
-        p.wallSign(CU + u1, 3, CV + 2, "dark_oak", Face.WEST, PLAQUE_RU);
+        // Plaques on the west portico piers
+        p.wallSign(CU + u1 - 1, 3, CV - 5, "dark_oak", Face.WEST, PLAQUE_KA);
+        p.wallSign(CU + u1 - 1, 3, CV + 5, "dark_oak", Face.WEST, PLAQUE_RU);
     }
 
     private static final List<String> PLAQUE_KA = List.of("ბაგრატის", "ტაძარი", "ქუთაისი", "1003");

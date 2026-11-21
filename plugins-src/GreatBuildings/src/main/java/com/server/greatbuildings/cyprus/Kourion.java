@@ -186,7 +186,7 @@ public final class Kourion implements Building {
                         p.set(x, y, z, limestone(x, y, z));
                     }
                     p.set(x, diazomaY, z, paving(x, z));
-                    if (dist < R_DIAZOMA_IN + 0.9) {
+                    if (dist < R_DIAZOMA_IN + 0.9 && !isStairway) {
                         p.set(x, diazomaY + 1, z, WALL);
                     }
                 } else {
@@ -196,9 +196,9 @@ public final class Kourion implements Building {
                         p.set(x, yy, z, limestone(x, yy, z));
                     }
                     if (isStairway) {
-                        p.set(x, y, z, stairs(STAIRS_BRICK, facingTowardCenter(dx, dz), false));
+                        p.set(x, y, z, stairs(STAIRS_BRICK, facingAwayFromCenter(dx, dz), false));
                     } else {
-                        p.set(x, y, z, stairs(STAIRS_STONE, facingTowardCenter(dx, dz), false));
+                        p.set(x, y, z, stairs(STAIRS_STONE, facingAwayFromCenter(dx, dz), false));
                     }
                 }
             }
@@ -220,7 +220,7 @@ public final class Kourion implements Building {
         if (dist <= R_DIAZOMA_IN) {
             return 1 + (int) Math.round((dist - R_ORCH) * 0.68);
         }
-        return seatHeight(R_DIAZOMA_IN) + 1 + (int) Math.round((dist - R_DIAZOMA_OUT) * 0.72);
+        return seatHeight(R_DIAZOMA_IN) + 1 + (int) Math.floor((dist - R_DIAZOMA_OUT) * 0.68);
     }
 
     private static boolean isRadialStairway(double dist, double angleDeg) {
@@ -232,11 +232,11 @@ public final class Kourion implements Building {
         return false;
     }
 
-    private static Face facingTowardCenter(int dx, int dz) {
+    private static Face facingAwayFromCenter(int dx, int dz) {
         if (Math.abs(dx) > Math.abs(dz)) {
-            return dx > 0 ? Face.WEST : Face.EAST;
+            return dx > 0 ? Face.EAST : Face.WEST;
         }
-        return dz < 0 ? Face.SOUTH : Face.NORTH;
+        return dz < 0 ? Face.NORTH : Face.SOUTH;
     }
 
     // ------------------------------------------------------------------ stage, scaenae frons & parodoi
@@ -264,8 +264,9 @@ public final class Kourion implements Building {
         // Stairs from the orchestra and from the south plaza onto the stage
         for (int x = CX - 2; x <= CX + 2; x++) {
             p.set(x, 1, stageZ1 - 1, stairs(STAIRS_STONE, Face.SOUTH, false));
-            p.set(x, 2, stageZ1, LIGHT2);
+            p.set(x, 2, stageZ1, stairs(STAIRS_STONE, Face.SOUTH, false));
             p.set(x, 1, stageZ2 + 1, stairs(STAIRS_STONE, Face.NORTH, false));
+            p.set(x, 2, stageZ2, stairs(STAIRS_STONE, Face.NORTH, false));
             p.set(x, 2, stageZ2 + 1, AIR);
         }
 
