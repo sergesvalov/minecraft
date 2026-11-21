@@ -386,13 +386,13 @@ class BuildingSnapshotTest {
     }
 
     private static int topSolidY(Plan plan, int x, int z) {
-        for (int y = plan.maxY(); y >= plan.minY(); y--) {
+        for (int y = plan.maxY; y >= plan.minY; y--) {
             String s = plan.get(x, y, z);
             if (s != null && !s.equals(Plan.AIR)) {
                 return y;
             }
         }
-        return plan.minY() - 1;
+        return plan.minY - 1;
     }
 
     @Test
@@ -403,9 +403,9 @@ class BuildingSnapshotTest {
             b.draw(plan, FLAT_TERRAIN);
             Set<String> paired = new HashSet<>();
 
-            for (int x = plan.minX(); x <= plan.maxX(); x++) {
-                for (int z = plan.minZ(); z <= plan.maxZ(); z++) {
-                    for (int y = plan.minY(); y <= plan.maxY(); y++) {
+            for (int x = plan.minX; x <= plan.maxX; x++) {
+                for (int z = plan.minZ; z <= plan.maxZ; z++) {
+                    for (int y = plan.minY; y <= plan.maxY; y++) {
                         String s = plan.get(x, y, z);
                         if (s == null || !s.contains("_door[")) {
                             continue;
