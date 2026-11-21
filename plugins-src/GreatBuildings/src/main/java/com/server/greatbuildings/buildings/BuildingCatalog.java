@@ -12,6 +12,7 @@ import com.server.greatbuildings.model.Country;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -31,7 +32,7 @@ public final class BuildingCatalog {
     }
 
     private void register(Building building) {
-        Building previous = byId.put(building.id().toLowerCase(), building);
+        Building previous = byId.put(building.id().toLowerCase(Locale.ROOT), building);
         if (previous != null) {
             throw new IllegalStateException("Duplicate building id: " + building.id());
         }
@@ -41,7 +42,7 @@ public final class BuildingCatalog {
         if (id == null) {
             return null;
         }
-        return byId.get(id.toLowerCase());
+        return byId.get(id.toLowerCase(Locale.ROOT));
     }
 
     public Collection<Building> all() {

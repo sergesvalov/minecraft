@@ -13,10 +13,8 @@ import static com.server.greatbuildings.model.States.b;
 import static com.server.greatbuildings.model.States.candles;
 import static com.server.greatbuildings.model.States.lantern;
 import static com.server.greatbuildings.model.States.leaves;
-import static com.server.greatbuildings.model.States.logY;
 import static com.server.greatbuildings.model.States.slab;
 import static com.server.greatbuildings.model.States.stairs;
-import static com.server.greatbuildings.model.States.wallSign;
 
 /**
  * Monumental bronze statue of Apollo Hylates ("Apollo of the Woodlands"), patron deity of
@@ -35,12 +33,9 @@ public final class ApolloKourion implements Building {
     private static final String AIR = Plan.AIR;
 
     // Sanctuary limestone & marble
-    private static final String LIGHT = b("smooth_sandstone");
     private static final String LIGHT2 = b("cut_sandstone");
-    private static final String WARM = b("sandstone");
     private static final String CARVED = b("chiseled_sandstone");
     private static final String WALL = b("sandstone_wall");
-    private static final String STAIRS_STONE = "smooth_sandstone_stairs";
     private static final String SLAB_STONE = "smooth_sandstone_slab";
 
     private static final String MARBLE = b("calcite");
@@ -48,7 +43,6 @@ public final class ApolloKourion implements Building {
     private static final String QUARTZ_CHISELED = b("chiseled_quartz_block");
     private static final String PILLAR = b("quartz_pillar") + "[axis=y]";
     private static final String QUARTZ_STAIRS = "quartz_stairs";
-    private static final String QUARTZ_SLAB = "quartz_slab";
 
     // Classical polished bronze & gold attributes
     private static final String BRONZE = b("waxed_copper_block");

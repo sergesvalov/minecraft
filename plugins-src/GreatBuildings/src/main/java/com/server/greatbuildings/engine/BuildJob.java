@@ -11,21 +11,13 @@ import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.Lectern;
-import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.sign.Side;
-import org.bukkit.block.sign.SignSide;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.LecternInventory;
-import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -52,10 +44,9 @@ public final class BuildJob {
     private Plan plan;
     private BlockData[] palette;
     private int cursor;
-    private int[] undoIndex = new int[1 << 14];
-    private BlockData[] undoData = new BlockData[1 << 14];
-    private int undoCount;
+    private final UndoLog undoLog = new UndoLog();
     private final List<int[]> chunks = new ArrayList<>();
+    private boolean chunksTicketed;
     private BukkitTask task;
     private int nextReport = 25;
     private boolean finished;
@@ -114,9 +105,7 @@ public final class BuildJob {
                         fail(done, "не удалось загрузить чанки: " + error.getMessage());
                         return;
                     }
-                    for (int[] c : chunks) {
-                        world.addPluginChunkTicket(c[0], c[1], plugin);
-                    }
+                    acquireChunks();
                     Terrain terrain = readTerrain();
                     tell("Чертёж готовится...");
                     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -184,7 +173,8 @@ public final class BuildJob {
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (step()) {
                 task.cancel();
-                decorate();
+                BlockDecorator.decorate(plan, world, building,
+                        anchorLocalX, anchorLocalZ, anchorWorldX, oy, anchorWorldZ, rotation);
                 releaseChunks();
                 finished = true;
                 done.accept(null);
@@ -211,7 +201,7 @@ public final class BuildJob {
                     BlockData target = palette[raw - 1];
                     boolean same = target.getMaterial().isAir() ? block.getType().isAir() : block.getBlockData().equals(target);
                     if (!same) {
-                        remember(cursor, block.getBlockData());
+                        undoLog.record(cursor, block.getBlockData());
                         block.setBlockData(target, false);
                         writes++;
                     }
@@ -227,73 +217,30 @@ public final class BuildJob {
         return cursor >= volume;
     }
 
-    private void remember(int index, BlockData previous) {
-        if (undoCount == undoIndex.length) {
-            undoIndex = Arrays.copyOf(undoIndex, undoCount * 2);
-            undoData = Arrays.copyOf(undoData, undoCount * 2);
-        }
-        undoIndex[undoCount] = index;
-        undoData[undoCount] = previous;
-        undoCount++;
-    }
-
-    /** Sign texts and lectern books: block entities can only be filled once the blocks are in the world. */
-    private void decorate() {
-        for (Plan.SignText text : plan.signs) {
-            int wx = worldX(text.x(), text.z());
-            int wz = worldZ(text.x(), text.z());
-            if (world.getBlockAt(wx, oy + text.y(), wz).getState() instanceof Sign sign) {
-                SignSide front = sign.getSide(Side.FRONT);
-                for (int i = 0; i < Math.min(4, text.lines().size()); i++) {
-                    front.line(i, Component.text(text.lines().get(i), NamedTextColor.DARK_BLUE));
-                }
-                sign.setWaxed(true);
-                sign.update(true, false);
-            }
-        }
-        ItemStack book = book(building.book());
-        for (int[] pos : plan.lecterns) {
-            int wx = worldX(pos[0], pos[2]);
-            int wz = worldZ(pos[0], pos[2]);
-            if (world.getBlockAt(wx, oy + pos[1], wz).getState() instanceof Lectern lectern
-                    && lectern.getInventory() instanceof LecternInventory inventory) {
-                inventory.setBook(book.clone());
-            }
-        }
-    }
-
-    static ItemStack book(Building.Book content) {
-        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
-        book.editMeta(BookMeta.class, meta -> {
-            meta.setTitle(content.title());
-            meta.setAuthor(content.author());
-            meta.addPages(content.pages().stream().map(page -> (Component) Component.text(page)).toArray(Component[]::new));
-        });
-        return book;
-    }
-
     /** Puts back everything this build replaced, newest first. {@code done} runs on the main thread. */
     public void undo(Runnable done) {
+        finished = false;
+        acquireChunks();
         tell("Разбираю " + building.title() + "...");
         task = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
-            int i = undoCount - 1;
+            int i = undoLog.size() - 1;
 
             @Override
             public void run() {
                 int writes = 0;
                 while (i >= 0 && writes < writesPerTick) {
-                    int index = undoIndex[i];
+                    int index = undoLog.indexAt(i);
                     int lx = plan.x(index);
                     int lz = plan.z(index);
                     world.getBlockAt(worldX(lx, lz), oy + plan.y(index), worldZ(lx, lz))
-                            .setBlockData(undoData[i], false);
-                    undoData[i] = null;
+                            .setBlockData(undoLog.takeData(i), false);
                     i--;
                     writes++;
                 }
                 if (i < 0) {
                     task.cancel();
-                    undoCount = 0;
+                    undoLog.clear();
+                    releaseChunks();
                     finished = true;
                     done.run();
                 }
@@ -302,7 +249,7 @@ public final class BuildJob {
     }
 
     public int changedBlocks() {
-        return undoCount;
+        return undoLog.size();
     }
 
     public void cancel() {
@@ -313,10 +260,24 @@ public final class BuildJob {
         finished = true;
     }
 
+    private void acquireChunks() {
+        if (chunksTicketed) {
+            return;
+        }
+        for (int[] c : chunks) {
+            world.addPluginChunkTicket(c[0], c[1], plugin);
+        }
+        chunksTicketed = true;
+    }
+
     private void releaseChunks() {
+        if (!chunksTicketed) {
+            return;
+        }
         for (int[] c : chunks) {
             world.removePluginChunkTicket(c[0], c[1], plugin);
         }
+        chunksTicketed = false;
     }
 
     private void fail(Consumer<String> done, String message) {

@@ -15,7 +15,6 @@ import static com.server.greatbuildings.model.States.leaves;
 import static com.server.greatbuildings.model.States.logY;
 import static com.server.greatbuildings.model.States.slab;
 import static com.server.greatbuildings.model.States.stairs;
-import static com.server.greatbuildings.model.States.wallSign;
 
 /**
  * Paphos Castle (Κάστρο της Πάφου) in Kato Paphos, Cyprus, on the Mediterranean harbor mole.
@@ -46,7 +45,6 @@ public final class Paphos implements Building {
     private static final String LIGHT = b("mud_bricks");
     private static final String LIGHT2 = b("packed_mud");
     private static final String WARM = b("smooth_sandstone");
-    private static final String DARK = b("packed_mud");
     private static final String CARVED = b("chiseled_sandstone");
     private static final String WALL = b("mud_brick_wall");
     private static final String STAIRS_STONE = "mud_brick_stairs";

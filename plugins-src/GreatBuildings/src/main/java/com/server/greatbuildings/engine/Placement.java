@@ -4,9 +4,14 @@ import com.server.greatbuildings.model.Building;
 import org.bukkit.block.structure.StructureRotation;
 
 /**
- * Pure coordinate transformation utilities for orienting a {@link Building} plan in front of a player.
+ * Pure coordinate transformation and compass utilities for orienting a {@link Building} plan in front of a player.
  */
 public final class Placement {
+
+    private static final String[] DIRECTIONS = {
+            "на севере", "на северо-востоке", "на востоке", "на юго-востоке",
+            "на юге", "на юго-западе", "на западе", "на северо-западе"
+    };
 
     private Placement() {
     }
@@ -29,6 +34,12 @@ public final class Placement {
             case CLOCKWISE_180 -> "на юг";
             case COUNTERCLOCKWISE_90 -> "на запад";
         };
+    }
+
+    public static String compassDirection(double dx, double dz) {
+        double angle = Math.toDegrees(Math.atan2(dx, -dz));
+        int index = (int) Math.round(((angle % 360) + 360) % 360 / 45.0) % 8;
+        return DIRECTIONS[index];
     }
 
     /** Computes rotated world {minX, minZ, maxX, maxZ} for a building placed at the given player anchor. */
@@ -74,4 +85,3 @@ public final class Placement {
         };
     }
 }
-

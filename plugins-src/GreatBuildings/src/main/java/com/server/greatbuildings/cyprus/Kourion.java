@@ -12,10 +12,8 @@ import java.util.List;
 import static com.server.greatbuildings.model.States.b;
 import static com.server.greatbuildings.model.States.lantern;
 import static com.server.greatbuildings.model.States.leaves;
-import static com.server.greatbuildings.model.States.logY;
 import static com.server.greatbuildings.model.States.slab;
 import static com.server.greatbuildings.model.States.stairs;
-import static com.server.greatbuildings.model.States.wallSign;
 
 /**
  * Greco-Roman Theatre of Kourion (Curium), Cyprus, overlooking Episkopi Bay.

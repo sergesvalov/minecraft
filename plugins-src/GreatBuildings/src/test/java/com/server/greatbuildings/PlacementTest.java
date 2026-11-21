@@ -21,6 +21,18 @@ class PlacementTest {
     }
 
     @Test
+    void compassDirectionMapsAllEightSectors() {
+        assertEquals("на севере", Placement.compassDirection(0, -100));
+        assertEquals("на северо-востоке", Placement.compassDirection(100, -100));
+        assertEquals("на востоке", Placement.compassDirection(100, 0));
+        assertEquals("на юго-востоке", Placement.compassDirection(100, 100));
+        assertEquals("на юге", Placement.compassDirection(0, 100));
+        assertEquals("на юго-западе", Placement.compassDirection(-100, 100));
+        assertEquals("на западе", Placement.compassDirection(-100, 0));
+        assertEquals("на северо-западе", Placement.compassDirection(-100, -100));
+    }
+
+    @Test
     void rotatesBuildingInFrontOfPlayerForAllFourFacings() {
         Building apollo = new BuildingCatalog().byId("apollo");
         int px = 100;
@@ -43,4 +55,3 @@ class PlacementTest {
         assertTrue(west[2] < px);
     }
 }
-

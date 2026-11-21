@@ -2,6 +2,7 @@ package com.server.greatbuildings.command;
 
 import com.server.greatbuildings.buildings.BuildingCatalog;
 import com.server.greatbuildings.engine.BuildManager;
+import com.server.greatbuildings.engine.Placement;
 import com.server.greatbuildings.model.Building;
 import com.server.greatbuildings.model.Country;
 import com.server.greatbuildings.storage.BuildingRegistry;
@@ -25,10 +26,6 @@ import java.util.Locale;
 public final class GbCommand implements TabExecutor {
 
     private static final String BUILD_PERMISSION = "greatbuildings.build";
-    private static final String[] DIRECTIONS = {
-            "на севере", "на северо-востоке", "на востоке", "на юго-востоке",
-            "на юге", "на юго-западе", "на западе", "на северо-западе"
-    };
 
     private final BuildingCatalog catalog;
     private final BuildingRegistry registry;
@@ -106,13 +103,15 @@ public final class GbCommand implements TabExecutor {
         if (args.length < 2) {
             return null;
         }
-        if (args.length >= 3 && Country.fromString(args[1]) != null) {
+        if (args.length >= 3) {
             Country country = Country.fromString(args[1]);
-            Building building = catalog.byId(args[2]);
-            if (building != null && building.country() == country) {
-                return building;
+            if (country != null) {
+                Building building = catalog.byId(args[2]);
+                if (building != null && building.country() == country) {
+                    return building;
+                }
+                return null;
             }
-            return null;
         }
         return catalog.byId(args[1]);
     }
@@ -183,10 +182,8 @@ public final class GbCommand implements TabExecutor {
             double dx = entry.x() + 0.5 - player.getLocation().getX();
             double dz = entry.z() + 0.5 - player.getLocation().getZ();
             double distance = Math.sqrt(dx * dx + dz * dz);
-            double angle = Math.toDegrees(Math.atan2(dx, -dz));
-            int index = (int) Math.round(((angle % 360) + 360) % 360 / 45.0) % 8;
             line.append(distance < 50 ? ", ты рядом"
-                    : String.format(Locale.ROOT, ", %.0f блоков %s", distance, DIRECTIONS[index]));
+                    : String.format(Locale.ROOT, ", %.0f блоков %s", distance, Placement.compassDirection(dx, dz)));
         } else if (!(sender instanceof Player)) {
             line.append(" (").append(entry.world()).append(')');
         }
