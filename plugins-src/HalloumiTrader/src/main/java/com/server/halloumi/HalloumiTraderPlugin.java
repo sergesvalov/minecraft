@@ -12,9 +12,6 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -29,10 +26,8 @@ import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExecutor {
+public class HalloumiTraderPlugin extends JavaPlugin implements Listener {
 
     private static final int SPAWN_ATTEMPTS = 15;
     private static final long HINT_COOLDOWN_MS = 60_000;
@@ -90,8 +85,9 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
         residents.start();
         var command = getCommand("halloumi");
         if (command != null) {
-            command.setExecutor(this);
-            command.setTabCompleter(this);
+            HalloumiCommand handler = new HalloumiCommand(this);
+            command.setExecutor(handler);
+            command.setTabCompleter(handler);
         }
         startSpawnTask();
         registerPopulator();
@@ -139,6 +135,17 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
         return innkeeperKey;
     }
 
+    TavernManager taverns() {
+        return taverns;
+    }
+
+    void reloadPlugin() {
+        reloadConfig();
+        menu = Dish.load(getConfig(), getLogger());
+        startSpawnTask();
+        registerPopulator();
+    }
+
     // ---------------------------------------------------------------- tavern generation
 
     private void registerPopulator() {
@@ -183,7 +190,7 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
      * /halloumi tavern [palette] (or inn): the tavern with its yard right in front of (north of) the player:
      * the yard gate 3 blocks away, the front door in line with the player.
      */
-    private void buildTavernAt(Player player, TavernPalette forced) {
+    void buildTavernAt(Player player, TavernPalette forced) {
         World world = player.getWorld();
         Location loc = player.getLocation();
         int ox = loc.getBlockX() - TavernBuilder.DOOR_X;
@@ -256,7 +263,7 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
      * @param force skip the chance roll and the max-active limit (used by /halloumi random)
      * @return the player the trader came to, or null if nothing was spawned
      */
-    private Player trySpawnNearRandomPlayer(boolean force) {
+    Player trySpawnNearRandomPlayer(boolean force) {
         FileConfiguration cfg = getConfig();
         if (!force) {
             if (countActiveTraders() >= cfg.getInt("random-spawn.max-active", 1)) {
@@ -409,7 +416,7 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
         return entry.append(Component.text(amount + " шт. — " + price + " изумр.", NamedTextColor.DARK_GREEN)).appendNewline();
     }
 
-    private ItemStack createHalloumi(int amount) {
+    ItemStack createHalloumi(int amount) {
         FileConfiguration cfg = getConfig();
         ItemStack item = new ItemStack(Material.BREAD, amount);
         item.editMeta(meta -> {
@@ -434,7 +441,7 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
     }
 
     /** Random-visit traders only: tavern guests and innkeepers don't count. */
-    private int countActiveTraders() {
+    int countActiveTraders() {
         int count = 0;
         for (World world : Bukkit.getWorlds()) {
             for (WanderingTrader trader : world.getEntitiesByClass(WanderingTrader.class)) {
@@ -485,147 +492,17 @@ public class HalloumiTraderPlugin extends JavaPlugin implements Listener, TabExe
             if (distance < 64) {
                 text = "Таверна совсем рядом — принюхайся!";
             } else {
-                double angle = Math.toDegrees(Math.atan2(dx, -dz)); // 0 = north (-z), 90 = east (+x)
-                int index = (int) Math.round(((angle % 360) + 360) % 360 / 45.0) % 8;
                 long rounded = Math.max(100, Math.round(distance / 100.0) * 100);
-                text = "Ближайшая таверна " + DIRECTIONS[index] + ", примерно в " + rounded + " блоках отсюда.";
+                text = "Ближайшая таверна " + compassDirection(dx, dz) + ", примерно в " + rounded + " блоках отсюда.";
             }
         }
         player.sendMessage(Component.text("<" + name + "> ", NamedTextColor.GOLD)
                 .append(Component.text(text, NamedTextColor.YELLOW)));
     }
 
-    // ---------------------------------------------------------------- commands
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        String sub = args.length > 0 ? args[0].toLowerCase(Locale.ROOT) : "";
-        if (sub.equals("tavern") || sub.equals("inn")) {
-            if (!sender.hasPermission("halloumi." + sub)) {
-                sender.sendMessage(Component.text("Строить таверны может только суперадмин.", NamedTextColor.RED));
-                return true;
-            }
-            if (!(sender instanceof Player player)) {
-                sender.sendMessage("Only a player can use /halloumi " + sub);
-                return true;
-            }
-            TavernPalette palette = null;
-            if (args.length > 1) {
-                try {
-                    palette = TavernPalette.valueOf(args[1].toUpperCase(Locale.ROOT));
-                } catch (IllegalArgumentException e) {
-                    sender.sendMessage(Component.text("Стили: " + paletteNames(), NamedTextColor.RED));
-                    return true;
-                }
-            }
-            buildTavernAt(player, palette);
-            return true;
-        }
-
-        if (!sender.hasPermission("halloumi.admin")) {
-            sender.sendMessage(Component.text("Нет прав.", NamedTextColor.RED));
-            return true;
-        }
-        switch (sub) {
-            case "spawn" -> {
-                if (!(sender instanceof Player player)) {
-                    sender.sendMessage("Only a player can use /halloumi spawn");
-                    return true;
-                }
-                Vector direction = player.getLocation().getDirection().setY(0);
-                if (direction.lengthSquared() < 1.0E-6) {
-                    direction = new Vector(1, 0, 0);
-                }
-                Location location = player.getLocation().add(direction.normalize().multiply(2));
-                spawnTrader(location);
-                sender.sendMessage(Component.text("Торговец халуми вызван.", NamedTextColor.GREEN));
-            }
-            case "random" -> {
-                Player target = trySpawnNearRandomPlayer(true);
-                if (target == null) {
-                    sender.sendMessage(Component.text(
-                            "Не получилось: нет игроков в обычном мире или не нашлось места.", NamedTextColor.RED));
-                } else {
-                    sender.sendMessage(Component.text("Торговец появился рядом с " + target.getName() + ".", NamedTextColor.GREEN));
-                }
-            }
-            case "give" -> {
-                if (!(sender instanceof Player player)) {
-                    sender.sendMessage("Only a player can use /halloumi give");
-                    return true;
-                }
-                int amount = 4;
-                if (args.length > 1) {
-                    try {
-                        amount = Math.max(1, Math.min(64, Integer.parseInt(args[1])));
-                    } catch (NumberFormatException e) {
-                        sender.sendMessage(Component.text("Количество должно быть числом.", NamedTextColor.RED));
-                        return true;
-                    }
-                }
-                Map<Integer, ItemStack> leftover = player.getInventory().addItem(createHalloumi(amount));
-                leftover.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
-                sender.sendMessage(Component.text("Выдано халуми: " + amount, NamedTextColor.GREEN));
-            }
-            case "count" -> sender.sendMessage(Component.text(
-                    "Странствующих торговцев халуми в загруженных чанках: " + countActiveTraders()
-                            + ", известных таверн: " + taverns.all().size(), NamedTextColor.YELLOW));
-            case "taverns" -> {
-                List<Tavern> all = taverns.all();
-                sender.sendMessage(Component.text("Известных таверн: " + all.size(), NamedTextColor.YELLOW));
-                if (sender instanceof Player player) {
-                    all.stream()
-                            .filter(t -> t.world().equals(player.getWorld().getName()))
-                            .sorted((a, b) -> Double.compare(
-                                    TavernManager.distanceSq(a, player.getLocation()),
-                                    TavernManager.distanceSq(b, player.getLocation())))
-                            .limit(5)
-                            .forEach(t -> sender.sendMessage(Component.text(String.format(Locale.ROOT,
-                                    "  %d %d %d — %.0f блоков%s", t.x() + TavernBuilder.DOOR_X, t.y() + 1,
-                                    t.z() + TavernBuilder.SIZE_Z,
-                                    Math.sqrt(TavernManager.distanceSq(t, player.getLocation())),
-                                    t.state() == Tavern.State.PENDING ? " (ещё не построена)" : ""),
-                                    NamedTextColor.GRAY)));
-                }
-            }
-            case "reload" -> {
-                reloadConfig();
-                menu = Dish.load(getConfig(), getLogger());
-                startSpawnTask();
-                registerPopulator();
-                sender.sendMessage(Component.text("Конфиг HalloumiTrader перезагружен.", NamedTextColor.GREEN));
-            }
-            default -> {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static String paletteNames() {
-        return String.join(", ", Arrays.stream(TavernPalette.values())
-                .map(p -> p.name().toLowerCase(Locale.ROOT)).toList());
-    }
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) {
-            Set<String> options = new HashSet<>();
-            if (sender.hasPermission("halloumi.admin")) {
-                options.addAll(List.of("spawn", "random", "give", "count", "taverns", "reload"));
-            }
-            for (String build : List.of("tavern", "inn")) {
-                if (sender.hasPermission("halloumi." + build)) {
-                    options.add(build);
-                }
-            }
-            return options.stream().filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).sorted().toList();
-        }
-        String build = args.length == 2 ? args[0].toLowerCase(Locale.ROOT) : "";
-        if ((build.equals("tavern") || build.equals("inn")) && sender.hasPermission("halloumi." + build)) {
-            return Arrays.stream(TavernPalette.values()).map(p -> p.name().toLowerCase(Locale.ROOT))
-                    .filter(s -> s.startsWith(args[1].toLowerCase(Locale.ROOT))).toList();
-        }
-        return List.of();
+    static String compassDirection(double dx, double dz) {
+        double angle = Math.toDegrees(Math.atan2(dx, -dz)); // 0 = north (-z), 90 = east (+x)
+        int index = (int) Math.round(((angle % 360) + 360) % 360 / 45.0) % 8;
+        return DIRECTIONS[index];
     }
 }

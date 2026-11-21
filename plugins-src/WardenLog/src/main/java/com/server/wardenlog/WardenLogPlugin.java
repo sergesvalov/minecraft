@@ -14,8 +14,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -26,73 +26,34 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.Set;
 
+/**
+ * Paper listener logging grief, explosions, dangerous mobs, lag machines, and login/command events to events.jsonl.
+ */
 public class WardenLogPlugin extends JavaPlugin implements Listener {
 
-    private File logFile;
-    private final ConcurrentLinkedQueue<String> logQueue = new ConcurrentLinkedQueue<>();
-    private final Map<Long, Integer> chunkPistonCounts = new HashMap<>();
-    private final Map<Long, Long> chunkPistonCooldowns = new HashMap<>();
-    private final Map<String, List<Long>> breakTracker = new HashMap<>();
-    private final Map<String, Long> griefCooldowns = new HashMap<>();
+    private static final Set<Material> VALUABLE_BLOCKS = EnumSet.of(
+            Material.CHEST, Material.TRAPPED_CHEST, Material.ENDER_CHEST,
+            Material.BARREL, Material.HOPPER, Material.DROPPER, Material.DISPENSER,
+            Material.DIAMOND_BLOCK, Material.EMERALD_BLOCK, Material.NETHERITE_BLOCK,
+            Material.GOLD_BLOCK, Material.IRON_BLOCK,
+            Material.SPAWNER, Material.BEACON, Material.ENCHANTING_TABLE,
+            Material.ANVIL, Material.BREWING_STAND, Material.CONDUIT,
+            Material.LODESTONE, Material.RESPAWN_ANCHOR, Material.JUKEBOX,
+            Material.FURNACE, Material.BLAST_FURNACE, Material.SMOKER
+    );
 
-    private int entityLimit;
-    private int griefBlocks;
-    private int lagMachinePistons;
-    private int logRetentionDays;
+    private static final Set<EntityType> DANGEROUS_MOBS = EnumSet.of(
+            EntityType.WITHER, EntityType.ENDER_DRAGON, EntityType.WARDEN,
+            EntityType.RAVAGER, EntityType.EVOKER
+    );
 
-    private static final String ARCHIVE_PREFIX = "events-";
-    private static final String ARCHIVE_SUFFIX = ".jsonl";
-
-    private static final Set<Material> VALUABLE_BLOCKS = new HashSet<>();
     static {
-        // Containers
-        VALUABLE_BLOCKS.add(Material.CHEST);
-        VALUABLE_BLOCKS.add(Material.TRAPPED_CHEST);
-        VALUABLE_BLOCKS.add(Material.ENDER_CHEST);
-        VALUABLE_BLOCKS.add(Material.BARREL);
-        VALUABLE_BLOCKS.add(Material.HOPPER);
-        VALUABLE_BLOCKS.add(Material.DROPPER);
-        VALUABLE_BLOCKS.add(Material.DISPENSER);
-        // Valuable blocks
-        VALUABLE_BLOCKS.add(Material.DIAMOND_BLOCK);
-        VALUABLE_BLOCKS.add(Material.EMERALD_BLOCK);
-        VALUABLE_BLOCKS.add(Material.NETHERITE_BLOCK);
-        VALUABLE_BLOCKS.add(Material.GOLD_BLOCK);
-        VALUABLE_BLOCKS.add(Material.IRON_BLOCK);
-        // Special blocks
-        VALUABLE_BLOCKS.add(Material.SPAWNER);
-        VALUABLE_BLOCKS.add(Material.BEACON);
-        VALUABLE_BLOCKS.add(Material.ENCHANTING_TABLE);
-        VALUABLE_BLOCKS.add(Material.ANVIL);
-        VALUABLE_BLOCKS.add(Material.BREWING_STAND);
-        VALUABLE_BLOCKS.add(Material.CONDUIT);
-        VALUABLE_BLOCKS.add(Material.LODESTONE);
-        VALUABLE_BLOCKS.add(Material.RESPAWN_ANCHOR);
-        VALUABLE_BLOCKS.add(Material.JUKEBOX);
-        // Functional blocks
-        VALUABLE_BLOCKS.add(Material.FURNACE);
-        VALUABLE_BLOCKS.add(Material.BLAST_FURNACE);
-        VALUABLE_BLOCKS.add(Material.SMOKER);
-        // All shulker boxes
         for (Material m : Material.values()) {
             if (m.name().endsWith("SHULKER_BOX")) {
                 VALUABLE_BLOCKS.add(m);
@@ -100,19 +61,25 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    private final RateTracker rateTracker = new RateTracker();
+    private EventLogWriter logWriter;
+
+    private int entityLimit;
+    private int griefBlocks;
+    private int lagMachinePistons;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         entityLimit = getConfig().getInt("limits.entities_per_chunk", 150);
         griefBlocks = getConfig().getInt("limits.grief_blocks", 45);
         lagMachinePistons = getConfig().getInt("limits.lag_machine_pistons", 500);
-        logRetentionDays = Math.max(1, getConfig().getInt("log_retention_days", 14));
+        int logRetentionDays = Math.max(1, getConfig().getInt("log_retention_days", 14));
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
-        logFile = new File(getDataFolder(), "events.jsonl");
-        
+        File logFile = new File(getDataFolder(), "events.jsonl");
         try {
             if (!logFile.exists()) {
                 logFile.createNewFile();
@@ -121,9 +88,10 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
             getLogger().warning("Failed to create events.jsonl: " + e.getMessage());
         }
 
-        getServer().getPluginManager().registerEvents(this, this);
+        logWriter = new EventLogWriter(logFile, logRetentionDays, ZoneId.systemDefault(),
+                msg -> getLogger().warning(msg));
 
-        // Register AuthMe listener only if AuthMe is installed
+        getServer().getPluginManager().registerEvents(this, this);
         if (getServer().getPluginManager().getPlugin("AuthMe") != null) {
             getServer().getPluginManager().registerEvents(new AuthMeListener(this), this);
             getLogger().info("AuthMe detected — failed login tracking enabled.");
@@ -133,115 +101,48 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
         getLogger().info("WardenLog enabled! Logging events to " + logFile.getName());
 
-        // Background task for batched logging (every 5 seconds)
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, this::flushLogQueue, 100L, 100L);
-
-        // Background task for entity counts (once per minute)
-        Bukkit.getScheduler().runTaskTimer(this, () -> {
-            for (World world : Bukkit.getWorlds()) {
-                for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
-                    int entityCount = chunk.getEntities().length;
-                    if (entityCount > entityLimit) {
-                        String json = String.format(
-                            "{\"timestamp\":\"%s\", \"event\":\"high_entity_count\", \"count\":%d, \"x\":%d, \"z\":%d, \"world\":\"%s\"}",
-                            Instant.now().toString(),
-                            entityCount,
-                            chunk.getX() * 16,
-                            chunk.getZ() * 16,
-                            escapeString(world.getName())
-                        );
-                        logEvent(json);
-                    }
-                }
-            }
-        }, 1200L, 1200L); // 1200 ticks = 60 seconds
-
-        // Background task to clear piston counters (every 5 seconds)
-        Bukkit.getScheduler().runTaskTimer(this, chunkPistonCounts::clear, 100L, 100L);
-
-        // Background task to clean up old break tracking entries and cooldowns (every 15 seconds)
-        Bukkit.getScheduler().runTaskTimer(this, () -> {
-            long now = System.currentTimeMillis();
-            breakTracker.values().forEach(list -> list.removeIf(t -> now - t > 10000));
-            breakTracker.values().removeIf(List::isEmpty);
-            
-            chunkPistonCooldowns.entrySet().removeIf(entry -> now > entry.getValue());
-            griefCooldowns.entrySet().removeIf(entry -> now > entry.getValue());
-        }, 300L, 300L);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, logWriter::flush, 100L, 100L);
+        Bukkit.getScheduler().runTaskTimer(this, this::scanLoadedChunksForEntities, 1200L, 1200L);
+        Bukkit.getScheduler().runTaskTimer(this, rateTracker::clearPistons, 100L, 100L);
+        Bukkit.getScheduler().runTaskTimer(this, () -> rateTracker.prune(System.currentTimeMillis()), 300L, 300L);
     }
 
     @Override
     public void onDisable() {
-        flushLogQueue();
+        if (logWriter != null) {
+            logWriter.flush();
+        }
         getLogger().info("WardenLog disabled.");
     }
 
-    /** Writes queued events to events.jsonl, rotating the file first if it is from a previous day. */
-    private synchronized void flushLogQueue() {
-        if (logQueue.isEmpty()) return;
-        rotateLogIfNeeded();
-        try (FileWriter fw = new FileWriter(logFile, true);
-             BufferedWriter bw = new BufferedWriter(fw);
-             PrintWriter out = new PrintWriter(bw)) {
-            String line;
-            while ((line = logQueue.poll()) != null) {
-                out.println(line);
-            }
-        } catch (IOException e) {
-            getLogger().severe("Failed to write to WardenLog events.jsonl: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Renames events.jsonl to events-YYYY-MM-DD.jsonl (the day it was last written) once a new day starts,
-     * and deletes archives older than log_retention_days. Without this the file grew forever on the SD card.
-     */
-    private void rotateLogIfNeeded() {
-        if (!logFile.exists() || logFile.length() == 0) return;
-        ZoneId zone = ZoneId.systemDefault();
-        LocalDate today = LocalDate.now(zone);
-        LocalDate fileDate = Instant.ofEpochMilli(logFile.lastModified()).atZone(zone).toLocalDate();
-        if (!fileDate.isBefore(today)) return;
-
-        File dir = logFile.getParentFile();
-        File archive = new File(dir, ARCHIVE_PREFIX + fileDate + ARCHIVE_SUFFIX);
-        if (archive.exists()) {
-            archive = new File(dir, ARCHIVE_PREFIX + fileDate + "-" + System.currentTimeMillis() + ARCHIVE_SUFFIX);
-        }
-        if (!logFile.renameTo(archive)) {
-            getLogger().warning("Failed to rotate events.jsonl to " + archive.getName());
-            return;
-        }
-
-        File[] archives = dir.listFiles((d, name) -> name.startsWith(ARCHIVE_PREFIX) && name.endsWith(ARCHIVE_SUFFIX));
-        if (archives == null) return;
-        LocalDate cutoff = today.minusDays(logRetentionDays);
-        for (File old : archives) {
-            String name = old.getName();
-            if (name.length() < ARCHIVE_PREFIX.length() + 10) continue;
-            try {
-                LocalDate date = LocalDate.parse(name.substring(ARCHIVE_PREFIX.length(), ARCHIVE_PREFIX.length() + 10));
-                if (date.isBefore(cutoff) && !old.delete()) {
-                    getLogger().warning("Failed to delete old log " + name);
+    private void scanLoadedChunksForEntities() {
+        for (World world : Bukkit.getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                int entityCount = chunk.getEntities().length;
+                if (entityCount > entityLimit) {
+                    logEvent(EventJson.of("high_entity_count")
+                            .field("count", entityCount)
+                            .field("x", chunk.getX() * 16)
+                            .field("z", chunk.getZ() * 16)
+                            .field("world", world.getName())
+                            .build());
                 }
-            } catch (DateTimeParseException ignored) {
-                // not one of our archives
             }
         }
     }
 
-    // Existing TNT listeners...
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         Block block = event.getBlock();
         if (block.getType() == Material.TNT) {
-            Player player = event.getPlayer();
             Location loc = block.getLocation();
-            String json = String.format(
-                "{\"timestamp\":\"%s\", \"event\":\"place_tnt\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                Instant.now().toString(), escapeString(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
-            );
-            logEvent(json);
+            logEvent(EventJson.of("place_tnt")
+                    .field("player", event.getPlayer().getName())
+                    .field("x", loc.getBlockX())
+                    .field("y", loc.getBlockY())
+                    .field("z", loc.getBlockZ())
+                    .field("world", loc.getWorld().getName())
+                    .build());
         }
     }
 
@@ -250,158 +151,148 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         String playerName = player.getName();
-        long now = System.currentTimeMillis();
+        Location loc = block.getLocation();
 
-        // Track valuable block destruction
         if (VALUABLE_BLOCKS.contains(block.getType())) {
-            Location loc = block.getLocation();
-            String json = String.format(
-                "{\"timestamp\":\"%s\", \"event\":\"break_valuable\", \"player\":\"%s\", \"block\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                Instant.now().toString(), escapeString(playerName), block.getType().name(),
-                loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
-            );
-            logEvent(json);
+            logEvent(EventJson.of("break_valuable")
+                    .field("player", playerName)
+                    .field("block", block.getType().name())
+                    .field("x", loc.getBlockX())
+                    .field("y", loc.getBlockY())
+                    .field("z", loc.getBlockZ())
+                    .field("world", loc.getWorld().getName())
+                    .build());
         }
 
-        // Grief detection: >45 blocks in 10 seconds
-        List<Long> breaks = breakTracker.computeIfAbsent(playerName, k -> new ArrayList<>());
-        breaks.add(now);
-        breaks.removeIf(t -> now - t > 10000);
-
-        if (breaks.size() > griefBlocks) {
-            Long cooldown = griefCooldowns.get(playerName);
-            if (cooldown == null || now > cooldown) {
-                Location loc = block.getLocation();
-                String json = String.format(
-                    "{\"timestamp\":\"%s\", \"event\":\"grief_alert\", \"player\":\"%s\", \"blocks_broken\":%d, \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                    Instant.now().toString(), escapeString(playerName), breaks.size(),
-                    loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
-                );
-                logEvent(json);
-                griefCooldowns.put(playerName, now + 60000L); // 1 minute cooldown
-            }
+        int burst = rateTracker.recordBreak(playerName, System.currentTimeMillis(), griefBlocks);
+        if (burst > 0) {
+            logEvent(EventJson.of("grief_alert")
+                    .field("player", playerName)
+                    .field("blocks_broken", burst)
+                    .field("x", loc.getBlockX())
+                    .field("y", loc.getBlockY())
+                    .field("z", loc.getBlockZ())
+                    .field("world", loc.getWorld().getName())
+                    .build());
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent event) {
         if (event.blockList().isEmpty()) {
-            return; // Ignore explosions that don't break any blocks
+            return;
         }
-
         Entity entity = event.getEntity();
-        if (entity instanceof TNTPrimed) {
-            TNTPrimed tnt = (TNTPrimed) entity;
+        if (entity instanceof TNTPrimed tnt) {
             Location loc = tnt.getLocation();
-            
             int tntDestroyed = 0;
             for (Block b : event.blockList()) {
                 if (b.getType() == Material.TNT) {
                     tntDestroyed++;
                 }
             }
-
             if (tntDestroyed > 2) {
-                String json = String.format(
-                    "{\"timestamp\":\"%s\", \"event\":\"lag_machine\", \"reason\":\"Цепная реакция TNT (%d шт)\", \"x\":%d, \"z\":%d, \"world\":\"%s\"}",
-                    Instant.now().toString(), tntDestroyed, loc.getBlockX(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
-                );
-                logEvent(json);
+                logEvent(EventJson.of("lag_machine")
+                        .field("reason", "Цепная реакция TNT (" + tntDestroyed + " шт)")
+                        .field("x", loc.getBlockX())
+                        .field("z", loc.getBlockZ())
+                        .field("world", loc.getWorld().getName())
+                        .build());
             }
-
             String source = tnt.getSource() != null ? tnt.getSource().getName() : "Unknown";
-            String json = String.format(
-                "{\"timestamp\":\"%s\", \"event\":\"explode_tnt\", \"source\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                Instant.now().toString(), escapeString(source), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
-            );
-            logEvent(json);
+            logEvent(EventJson.of("explode_tnt")
+                    .field("source", source)
+                    .field("x", loc.getBlockX())
+                    .field("y", loc.getBlockY())
+                    .field("z", loc.getBlockZ())
+                    .field("world", loc.getWorld().getName())
+                    .build());
         } else if (entity != null && entity.getType() == EntityType.END_CRYSTAL) {
             Location loc = entity.getLocation();
-            String json = String.format(
-                "{\"timestamp\":\"%s\", \"event\":\"explode_crystal\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}",
-                Instant.now().toString(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())
-            );
-            logEvent(json);
+            logEvent(EventJson.of("explode_crystal")
+                    .field("x", loc.getBlockX())
+                    .field("y", loc.getBlockY())
+                    .field("z", loc.getBlockZ())
+                    .field("world", loc.getWorld().getName())
+                    .build());
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"player_join\", \"player\":\"%s\"}", Instant.now().toString(), escapeString(event.getPlayer().getName())));
+        logEvent(EventJson.of("player_join").field("player", event.getPlayer().getName()).build());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"player_quit\", \"player\":\"%s\"}", Instant.now().toString(), escapeString(event.getPlayer().getName())));
+        logEvent(EventJson.of("player_quit").field("player", event.getPlayer().getName()).build());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMobSpawn(EntitySpawnEvent event) {
         EntityType type = event.getEntity().getType();
-        if (type == EntityType.WITHER || type == EntityType.ENDER_DRAGON || 
-            type == EntityType.WARDEN || type == EntityType.RAVAGER || type == EntityType.EVOKER) {
-            Location loc = event.getLocation();
-            String player = "Unknown";
-            double closestDist = Double.MAX_VALUE;
-            for (Player p : loc.getWorld().getPlayers()) {
-                double dist = p.getLocation().distanceSquared(loc);
-                if (dist < 2500 && dist < closestDist) { 
-                    closestDist = dist;
-                    player = p.getName();
-                }
-            }
-            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"dangerous_mob_spawn\", \"mob\":\"%s\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), type.name(), escapeString(player), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
+        if (!DANGEROUS_MOBS.contains(type)) {
+            return;
         }
+        Location loc = event.getLocation();
+        String nearest = "Unknown";
+        double closestDist = 2500.0;
+        for (Player p : loc.getWorld().getPlayers()) {
+            double dist = p.getLocation().distanceSquared(loc);
+            if (dist < closestDist) {
+                closestDist = dist;
+                nearest = p.getName();
+            }
+        }
+        logEvent(EventJson.of("dangerous_mob_spawn")
+                .field("mob", type.name())
+                .field("player", nearest)
+                .field("x", loc.getBlockX())
+                .field("y", loc.getBlockY())
+                .field("z", loc.getBlockZ())
+                .field("world", loc.getWorld().getName())
+                .build());
     }
-
-    // New Listeners
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onLavaPlace(PlayerBucketEmptyEvent event) {
         if (event.getBucket() == Material.LAVA_BUCKET) {
-            Player player = event.getPlayer();
             Location loc = event.getBlockClicked().getRelative(event.getBlockFace()).getLocation();
-            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"place_lava\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), escapeString(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
+            logEvent(EventJson.of("place_lava")
+                    .field("player", event.getPlayer().getName())
+                    .field("x", loc.getBlockX())
+                    .field("y", loc.getBlockY())
+                    .field("z", loc.getBlockZ())
+                    .field("world", loc.getWorld().getName())
+                    .build());
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onCrystalPlace(PlayerInteractEvent event) {
-        if (event.getAction().name().contains("RIGHT_CLICK_BLOCK") && event.getItem() != null && event.getItem().getType() == Material.END_CRYSTAL) {
-            Player player = event.getPlayer();
+        if (event.getAction().name().contains("RIGHT_CLICK_BLOCK")
+                && event.getItem() != null
+                && event.getItem().getType() == Material.END_CRYSTAL
+                && event.getClickedBlock() != null) {
             Location loc = event.getClickedBlock().getLocation();
-            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"place_crystal\", \"player\":\"%s\", \"x\":%d, \"y\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), escapeString(player.getName()), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
+            logEvent(EventJson.of("place_crystal")
+                    .field("player", event.getPlayer().getName())
+                    .field("x", loc.getBlockX())
+                    .field("y", loc.getBlockY())
+                    .field("z", loc.getBlockZ())
+                    .field("world", loc.getWorld().getName())
+                    .build());
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onCommand(PlayerCommandPreprocessEvent event) {
-        String rawCmd = event.getMessage().toLowerCase();
-        
-        // Strip namespaces like /minecraft: or /bukkit:
-        String cmdStr = rawCmd;
-        if (cmdStr.startsWith("/")) {
-            int spaceIdx = cmdStr.indexOf(' ');
-            String baseCmd = spaceIdx != -1 ? cmdStr.substring(1, spaceIdx) : cmdStr.substring(1);
-            String args = spaceIdx != -1 ? cmdStr.substring(spaceIdx) : "";
-            
-            int colonIdx = baseCmd.indexOf(':');
-            if (colonIdx != -1) {
-                baseCmd = baseCmd.substring(colonIdx + 1);
-            }
-            cmdStr = "/" + baseCmd + args;
-        }
-
-        if (cmdStr.startsWith("/op ") || cmdStr.equals("/op") || 
-            cmdStr.startsWith("/deop ") || cmdStr.equals("/deop") || 
-            cmdStr.startsWith("/ban ") || cmdStr.equals("/ban") || 
-            cmdStr.startsWith("/kick ") || cmdStr.equals("/kick") || 
-            cmdStr.equals("/stop") || 
-            cmdStr.startsWith("//set ") || cmdStr.equals("//set") || 
-            cmdStr.startsWith("//replace ") || cmdStr.equals("//replace")) {
-            
-            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"suspicious_command\", \"player\":\"%s\", \"command\":\"%s\"}", 
-                     Instant.now().toString(), escapeString(event.getPlayer().getName()), escapeString(rawCmd)));
+        String rawCmd = event.getMessage();
+        if (CommandFilter.isSuspicious(rawCmd)) {
+            logEvent(EventJson.of("suspicious_command")
+                    .field("player", event.getPlayer().getName())
+                    .field("command", rawCmd.toLowerCase())
+                    .build());
         }
     }
 
@@ -410,39 +301,35 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
         Player victim = event.getEntity();
         Player killer = victim.getKiller();
         if (killer != null && killer != victim) {
-            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"player_kill\", \"killer\":\"%s\", \"victim\":\"%s\"}", Instant.now().toString(), escapeString(killer.getName()), escapeString(victim.getName())));
+            logEvent(EventJson.of("player_kill")
+                    .field("killer", killer.getName())
+                    .field("victim", victim.getName())
+                    .build());
         }
     }
-
-
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         long chunkKey = event.getBlock().getChunk().getChunkKey();
-        long now = System.currentTimeMillis();
-        
-        if (chunkPistonCooldowns.getOrDefault(chunkKey, 0L) > now) {
-            return; // In cooldown, ignore
-        }
-
-        int count = chunkPistonCounts.getOrDefault(chunkKey, 0) + 1;
-        chunkPistonCounts.put(chunkKey, count);
-
-        if (count > lagMachinePistons) { // Limit based on config
+        if (rateTracker.recordPiston(chunkKey, System.currentTimeMillis(), lagMachinePistons)) {
             Location loc = event.getBlock().getLocation();
-            logEvent(String.format("{\"timestamp\":\"%s\", \"event\":\"lag_machine\", \"x\":%d, \"z\":%d, \"world\":\"%s\"}", Instant.now().toString(), loc.getBlockX(), loc.getBlockZ(), escapeString(loc.getWorld().getName())));
-            chunkPistonCooldowns.put(chunkKey, now + 300000L); // 5 minutes cooldown
+            logEvent(EventJson.of("lag_machine")
+                    .field("x", loc.getBlockX())
+                    .field("z", loc.getBlockZ())
+                    .field("world", loc.getWorld().getName())
+                    .build());
         }
     }
 
     /** Public so that optional listener classes (e.g. AuthMeListener) can write events. */
     public void logEvent(String jsonLine) {
-        logQueue.offer(jsonLine);
+        if (logWriter != null) {
+            logWriter.offer(jsonLine);
+        }
     }
 
     /** Public so that optional listener classes can safely escape strings. */
     public String escapeString(String str) {
-        if (str == null) return "null";
-        return str.replace("\\", "\\\\").replace("\"", "\\\"");
+        return EventJson.escape(str);
     }
 }

@@ -104,12 +104,13 @@ services:
     container_name: warden-monitor
     environment:
       TZ: "Europe/Athens"
+      RCON_PASSWORD: "${RCON_PASSWORD:-admin}"
     ports:
       - "8000:8000"
       - "8002:8001"
     volumes:
       - ./data/plugins/WardenLog:/app/logs
-      - ./warden-monitor/monitor.py:/app/monitor.py:ro
+      - ./warden-monitor:/app:ro
     depends_on:
       - mc
     restart: unless-stopped

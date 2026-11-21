@@ -70,7 +70,7 @@ Lightweight Paper plugin for logging TNT, grief, and suspicious events.
             sudo chown -R \$(whoami) /opt/minecraft/scripts
             # Remove old scripts to prevent "Text file busy" error during scp if they are running
             # Use rm -rf because Docker might have accidentally created it as a directory if it was missing during startup
-            rm -rf /opt/minecraft/scripts/*.sh
+            rm -rf /opt/minecraft/scripts/*.sh /opt/minecraft/scripts/*.py
             mkdir -p /opt/minecraft/warden-monitor
             mkdir -p /opt/minecraft/data/plugins/WardenLog
             sudo chown -R \$(whoami) /opt/minecraft/data/plugins/WardenLog
@@ -91,7 +91,7 @@ Lightweight Paper plugin for logging TNT, grief, and suspicious events.
             scp -o StrictHostKeyChecking=no resourcepack/dist/halloumitrader.json ${env.SERVER_USER}@${env.PROD_SERVER_IP}:/opt/minecraft/data/plugins/Geyser-Spigot/custom_mappings/
             
             # Make scripts executable
-            ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'chmod +x /opt/minecraft/scripts/*.sh'
+            ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'chmod +x /opt/minecraft/scripts/*.sh /opt/minecraft/scripts/verify_backup.py'
             
             # Force rebuild monitor image to pick up new dependencies before deployment
             ssh -o StrictHostKeyChecking=no ${env.SERVER_USER}@${env.PROD_SERVER_IP} 'cd /opt/minecraft && docker compose build warden-monitor'

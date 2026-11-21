@@ -40,14 +40,27 @@
 - Κατά τη διάρκεια μιας σκληρής επανεκκίνησης του διακομιστή.
 - Κατά τη διάρκεια επαναλαμβανόμενων αναπτύξεων μιας νέας διαμόρφωσης μέσω του Jenkins.
 
-### Αυτόματα Αντίγραφα Ασφαλείας (Backups)
-Ο διακομιστής έχει ρυθμιστεί να δημιουργεί αυτόματα αντίγραφα ασφαλείας κάθε μέρα (στις 2:00 π.μ.). Τα αντίγραφα αποθηκεύονται στον φάκελο `backups` ως αρχεία `.tar`, και διατηρούνται μόνο τα 3 πιο πρόσφατα για εξοικονόμηση χώρου.
+### Αυτόματα Αντίγραφα Ασφαλείας & Έλεγχος Ακεραιότητας
+Το container `mc-backup` (`itzg/mc-backup`) εκτελείται καθημερινά (στις 02:00 π.μ.), παγώνει την αποθήκευση του κόσμου μέσω RCON (`save-off` / `save-all flush`) και αποθηκεύει επαυξητικά snapshots στο αποθετήριο **Restic** (`/backups`) με πολιτική `--keep-last 7 --keep-daily 7`.
+
+**Έλεγχος ακεραιότητας (consistency check):**
+Το `scripts/verify-backup.sh` ελέγχει το τελευταίο snapshot μέσω streaming (χωρίς αποσυμπίεση GB στον δίσκο):
+- `restic check --read-data-subset=10%`, έλεγχος παλαιότητας (`<= 26h`) και απότομης μείωσης μεγέθους·
+- επαλήθευση `rcon-cli save-off` / `save-all` / `save-on` στα logs του `mc-backup`·
+- έλεγχος `world/level.dat`, όλων των `.mca` region/chunk αρχείων, βάσεων SQLite (`PRAGMA integrity_check`), H2 `.mv.db`, `ops.json`, `GreatBuildings/buildings.txt` και `HalloumiTrader/taverns.txt`.
+
+Χειροκίνητος πλήρης έλεγχος:
+```bash
+bash /opt/minecraft/scripts/verify-backup.sh --subset 100%
+```
+Μέσω cron (`0 4 * * *`) εκτελείται καθημερινά με `--subset 10%` και γράφει αναφορά στο `/opt/minecraft/data/plugins/WardenLog/backup_verify.json` για το `warden-monitor`.
 
 **Πώς να επαναφέρετε τον διακομιστή από ένα αντίγραφο ασφαλείας:**
-1. Σταματήστε τον διακομιστή: `docker-compose stop mc`
-2. Μετονομάστε τον τρέχοντα φάκελο `data` σε `data_old` και δημιουργήστε έναν νέο κενό φάκελο `data`.
-3. Ανοίξτε τον φάκελο `backups` και αποσυμπιέστε το επιθυμητό αρχείο απευθείας στον νέο φάκελο `data` (χρησιμοποιώντας το 7-Zip ή τα ενσωματωμένα εργαλεία του λειτουργικού συστήματος).
-4. Ξεκινήστε ξανά τον διακομιστή: `docker-compose start mc`
+Εκτελέστε το διαδραστικό σενάριο στον host (υποστηρίζει τόσο `.tar` όσο και Restic snapshots):
+```bash
+bash /opt/minecraft/scripts/restore-backup.sh
+```
+Ή σταματήστε χειροκίνητα τα `mc` και `mc-backup`, μετονομάστε το `data` σε `data_old` και επαναφέρετε το επιθυμητό snapshot από το `backups/` μέσω `restic restore`.
 
 ## 🚀 Πώς να ξεκινήσετε
 
@@ -81,6 +94,12 @@
 | `minecraft_server_online` | Gauge | Κατάσταση διακομιστή (1 = online, 0 = offline) | - |
 | `minecraft_player_count` | Gauge | Αριθμός συνδεδεμένων παικτών | - |
 | `minecraft_server_ping_ms` | Gauge | Καθυστέρηση (ping) διακομιστή σε χιλιοστά του δευτερολέπτου | - |
+| `minecraft_backup_verify_ok` | Gauge | Αποτέλεσμα τελευταίου ελέγχου backup (1 = OK, 0 = σφάλμα, -1 = άγνωστο) | - |
+| `minecraft_backup_last_verify_timestamp` | Gauge | Unix timestamp τελευταίου ελέγχου backup | - |
+| `minecraft_backup_snapshot_age_seconds` | Gauge | Ηλικία τελευταίου snapshot σε δευτερόλεπτα | - |
+| `minecraft_backup_snapshot_size_bytes` | Gauge | Μέγεθος τελευταίου snapshot σε bytes | - |
+| `minecraft_backup_corrupt_chunks` | Gauge | Κατεστραμμένα chunks στον τελευταίο έλεγχο backup | - |
+| `minecraft_backup_verify_errors` | Gauge | Πλήθος σφαλμάτων στον τελευταίο έλεγχο backup | - |
 | `warden_tnt_placed_total` | Counter | Συνολικός αριθμός μπλοκ TNT που τοποθετήθηκαν | `player`, `world`, `x`, `y`, `z`, `time` |
 | `warden_tnt_exploded_total` | Counter | Συνολικός αριθμός εκρήξεων TNT | `source`, `world`, `x`, `y`, `z`, `time` |
 | `warden_player_joins_total` | Counter | Συνολικός αριθμός συνδέσεων παικτών | `player`, `time` |

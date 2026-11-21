@@ -12,10 +12,7 @@ import java.util.List;
 import static com.server.greatbuildings.model.States.b;
 import static com.server.greatbuildings.model.States.lantern;
 import static com.server.greatbuildings.model.States.leaves;
-import static com.server.greatbuildings.model.States.logY;
-import static com.server.greatbuildings.model.States.slab;
 import static com.server.greatbuildings.model.States.stairs;
-import static com.server.greatbuildings.model.States.wallSign;
 
 /**
  * The Second Jerusalem Temple (Herod's Temple) in its full splendour (1st century BC – 1st century AD),
@@ -45,8 +42,6 @@ public final class JerusalemTemple implements Building {
     private static final String MARBLE_BLOCK = b("quartz_block");
     private static final String MARBLE_CARVED = b("chiseled_quartz_block");
     private static final String PILLAR = b("quartz_pillar") + "[axis=y]";
-    private static final String MARBLE_STAIRS = "smooth_quartz_stairs";
-    private static final String MARBLE_SLAB = "smooth_quartz_slab";
 
     private static final String STONE_LIGHT = b("mud_bricks");
     private static final String STONE_CUT = b("packed_mud");
