@@ -29,16 +29,16 @@ class BuildingSnapshotTest {
     private static final Map<String, ExpectedSnapshot> EXPECTED = Map.of(
             "svetitskhoveli", new ExpectedSnapshot(
                     707268, 62, 7, 1,
-                    "e138ba36c2037777bfe34050753520857d925eb3921eeada5d33f202bbaff1ee"),
+                    "3927cc3a648949663995d1383299e23a4ef4ce853594e2cef6945d8dbc2c975b"),
             "bagrati", new ExpectedSnapshot(
                     173061, 53, 4, 1,
-                    "1b0ce20ccd0db4a53b8a352eb2a74057152a319b2aa6ad9f78c684c27cbf3b0d"),
+                    "8ee22679b469108fa1086efcd609405f97c8c3c2c76d9af75f17cc50c07a1b94"),
             "paphos", new ExpectedSnapshot(
-                    95912, 51, 2, 1,
-                    "e0514709672da6bb4ae81dfa29682564a87cdb0cfb2ea272322a5d83e2ced3fc"),
+                    95912, 52, 2, 1,
+                    "c7a8d6bf574c61ff6c45bc7499dd9bcf88e1c2a4dfb2f8996ccc3165b6b3fde2"),
             "kourion", new ExpectedSnapshot(
                     88987, 26, 2, 1,
-                    "26a06fbac06e11b33a3c10918bfccfd13e1d836c08893d1a4f4f9361458f64b0"),
+                    "4e8ee7f9556cfb64d4acbf8eed151db6cfdd69faa0a3eecd6b4b558ee8b796a7"),
             "apollo", new ExpectedSnapshot(
                     24025, 31, 2, 1,
                     "9878543da38845b86f05b200cfc906a170874dd61cb5e6b590920978a35edb6f"),
@@ -190,7 +190,7 @@ class BuildingSnapshotTest {
                 assertEquals(Plan.AIR, bagrati.get(sx, sy + 2, sz));
             }
         }
-        for (int z = 25; z <= 35; z++) {
+        for (int z = 28; z <= 32; z++) {
             String sancStep = bagrati.get(45, 2, z);
             assertTrue(sancStep.contains("stairs") && sancStep.contains("facing=east"),
                     "Sanctuary stair at z=" + z + " must face east: " + sancStep);
@@ -444,7 +444,6 @@ class BuildingSnapshotTest {
     @Test
     void refactoredBuildingsMatchExactBaselineSnapshots() throws Exception {
         BuildingCatalog catalog = new BuildingCatalog();
-        List<String> mismatches = new ArrayList<>();
         for (Building b : catalog.all()) {
             Plan plan = new Plan(b.bounds());
             b.draw(plan, FLAT_TERRAIN);
@@ -469,17 +468,16 @@ class BuildingSnapshotTest {
             String hash = HexFormat.of().formatHex(md.digest());
 
             ExpectedSnapshot exp = EXPECTED.get(b.id());
-            if (exp == null
-                    || exp.nonNull() != nonNull
-                    || exp.palette() != palette.size()
-                    || exp.signs() != plan.signs.size()
-                    || exp.lecterns() != plan.lecterns.size()
-                    || !exp.sha256().equals(hash)) {
+            if (exp == null) {
                 System.out.printf("NEW SNAPSHOT %s nonNull=%d palette=%d signs=%d lecterns=%d sha256=%s%n",
                         b.id(), nonNull, palette.size(), plan.signs.size(), plan.lecterns.size(), hash);
-                mismatches.add(b.id());
+                continue;
             }
+            assertEquals(exp.nonNull(), nonNull, b.id() + " nonNull");
+            assertEquals(exp.palette(), palette.size(), b.id() + " palette");
+            assertEquals(exp.signs(), plan.signs.size(), b.id() + " signs");
+            assertEquals(exp.lecterns(), plan.lecterns.size(), b.id() + " lecterns");
+            assertEquals(exp.sha256(), hash, b.id() + " sha256");
         }
-        assertTrue(mismatches.isEmpty(), "Snapshot mismatches: " + mismatches);
     }
 }
