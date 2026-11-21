@@ -101,7 +101,7 @@ public class WardenLogPlugin extends JavaPlugin implements Listener {
 
         getLogger().info("WardenLog enabled! Logging events to " + logFile.getName());
 
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, logWriter::flush, 100L, 100L);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> logWriter.flush(), 100L, 100L);
         Bukkit.getScheduler().runTaskTimer(this, this::scanLoadedChunksForEntities, 1200L, 1200L);
         Bukkit.getScheduler().runTaskTimer(this, rateTracker::clearPistons, 100L, 100L);
         Bukkit.getScheduler().runTaskTimer(this, () -> rateTracker.prune(System.currentTimeMillis()), 300L, 300L);
