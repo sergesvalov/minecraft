@@ -144,22 +144,83 @@ class BuildingSnapshotTest {
     void allStairsAreAtLeastTwoBlocksWideAndWalkable() {
         BuildingCatalog catalog = new BuildingCatalog();
 
-        // Paphos: 2-block staircase (x = 25..26, z = 14..23), 4-wide bridge steps, mud-brick limestone + unobstructed doors
+        // Paphos: 2-wide eastbound north staircase (x = 28..37, z = 11..12), 4-wide bridge steps,
+        // longitudinal vaulted gallery, open skylight + cistern, under-stair vault, and 3-room flat-roof upper tower
         Plan paphos = new Plan(catalog.byId("paphos").bounds());
         catalog.byId("paphos").draw(paphos, FLAT_TERRAIN);
-        assertTrue(paphos.get(25, 5, 17).contains("stairs"));
-        assertTrue(paphos.get(26, 5, 17).contains("stairs"));
-        assertEquals(Plan.AIR, paphos.get(25, 7, 17));
-        assertEquals(Plan.AIR, paphos.get(26, 7, 17));
+        for (int z = 11; z <= 12; z++) {
+            for (int i = 0; i <= 9; i++) {
+                int x = 28 + i;
+                int y = 2 + i;
+                String step = paphos.get(x, y, z);
+                assertTrue(step.contains("stairs") && step.contains("facing=east"),
+                        "Missing north stair at " + x + "," + y + "," + z + ": " + step);
+                assertEquals(Plan.AIR, paphos.get(x, y + 1, z));
+                assertEquals(Plan.AIR, paphos.get(x, y + 2, z));
+            }
+            assertSolidFloor(paphos, 38, 11, z, "paphos roof landing");
+            assertEquals(Plan.AIR, paphos.get(38, 12, z));
+            assertEquals(Plan.AIR, paphos.get(38, 13, z));
+            for (int az = 11; az <= 15; az++) {
+                assertSolidFloor(paphos, 26, 1, az, "paphos stair approach");
+                assertSolidFloor(paphos, 27, 1, az, "paphos stair approach");
+                for (int y = 2; y <= 4; y++) {
+                    assertEquals(Plan.AIR, paphos.get(26, y, az));
+                    assertEquals(Plan.AIR, paphos.get(27, y, az));
+                }
+            }
+        }
         for (int x = 26; x <= 29; x++) {
             String step = paphos.get(x, 1, 36);
             assertTrue(step.contains("stairs") && step.contains("facing=north"),
                     "Missing bridge stair at x=" + x);
             assertEquals(Plan.AIR, paphos.get(x, 2, 36));
         }
+        for (int x = 12; x <= 43; x++) {
+            for (int z = 17; z <= 18; z++) {
+                for (int y = 2; y <= 4; y++) {
+                    assertEquals(Plan.AIR, paphos.get(x, y, z),
+                            "Longitudinal gallery blocked at " + x + "," + y + "," + z);
+                }
+            }
+        }
+        assertEquals("minecraft:water", paphos.get(34, 1, 17));
+        for (int x = 33; x <= 35; x++) {
+            for (int z = 17; z <= 18; z++) {
+                assertEquals(Plan.AIR, paphos.get(x, 11, z), "Skylight blocked at " + x + "," + z);
+            }
+        }
+        for (int x = 33; x <= 38; x++) {
+            for (int z = 13; z <= 14; z++) {
+                for (int y = 2; y <= 4; y++) {
+                    assertEquals(Plan.AIR, paphos.get(x, y, z),
+                            "NE under-stair vault entry blocked at " + x + "," + y + "," + z);
+                }
+            }
+        }
+        for (int x = 35; x <= 37; x++) {
+            for (int z = 11; z <= 12; z++) {
+                for (int y = 2; y <= 5; y++) {
+                    assertEquals(Plan.AIR, paphos.get(x, y, z),
+                            "NE under-stair vault interior blocked at " + x + "," + y + "," + z);
+                }
+            }
+        }
+        for (int rx : new int[]{16, 21, 26}) {
+            for (int z = 17; z <= 18; z++) {
+                for (int y = 12; y <= 15; y++) {
+                    assertEquals(Plan.AIR, paphos.get(rx, y, z),
+                            "Upper tower room blocked at " + rx + "," + y + "," + z);
+                }
+            }
+        }
+        for (int x = 13; x <= 29; x++) {
+            for (int z = 13; z <= 22; z++) {
+                assertEquals(Plan.AIR, paphos.get(x, 19, z));
+                assertEquals(Plan.AIR, paphos.get(x, 20, z));
+            }
+        }
         assertTrue(paphos.palette().contains("minecraft:mud_bricks"));
-        assertTrue(paphos.get(22, 2, 12).contains("dark_oak_door"));
-        assertTrue(paphos.get(22, 2, 13).contains("dark_oak_door"));
 
         // Svetitskhoveli: 2-block enclosure stairs (z = 106..107) and 2x2 top landings
         Plan svet = new Plan(catalog.byId("svetitskhoveli").bounds());
@@ -291,28 +352,30 @@ class BuildingSnapshotTest {
         assertTrue(bagrati.get(42, 1, 50).contains("facing=north"));
         assertTrue(bagrati.get(12, 1, 30).contains("facing=east"));
 
-        // Paphos: main gate, 3 west cells, 2 east rooms, upper keep door, and full staircase to roof
+        // Paphos: all 10 double doors (main gate, 6 ground chambers, 3 upper-tower rooms) + full north-wall staircase
         Plan paphos = new Plan(catalog.byId("paphos").bounds());
         catalog.byId("paphos").draw(paphos, FLAT_TERRAIN);
         assertWalkableDoubleDoor(paphos, 27, 2, 26, Face.NORTH);
-        for (int z : new int[]{12, 17, 22}) {
-            assertWalkableDoubleDoor(paphos, 22, 2, z, Face.WEST);
-        }
-        for (int z : new int[]{13, 21}) {
-            assertWalkableDoubleDoor(paphos, 33, 2, z, Face.EAST);
-        }
-        assertWalkableDoubleDoor(paphos, 27, 12, 17, Face.NORTH);
-        for (int x = 25; x <= 26; x++) {
+        assertWalkableDoubleDoor(paphos, 12, 2, 14, Face.NORTH);
+        assertWalkableDoubleDoor(paphos, 22, 2, 20, Face.SOUTH);
+        assertWalkableDoubleDoor(paphos, 22, 2, 15, Face.NORTH);
+        assertWalkableDoubleDoor(paphos, 32, 2, 20, Face.SOUTH);
+        assertWalkableDoubleDoor(paphos, 35, 2, 15, Face.NORTH);
+        assertWalkableDoubleDoor(paphos, 41, 2, 20, Face.SOUTH);
+        assertWalkableDoubleDoor(paphos, 20, 12, 22, Face.NORTH);
+        assertWalkableDoubleDoor(paphos, 18, 12, 17, Face.WEST);
+        assertWalkableDoubleDoor(paphos, 24, 12, 17, Face.EAST);
+        for (int z = 11; z <= 12; z++) {
             for (int i = 0; i <= 9; i++) {
-                int z = 14 + i;
+                int x = 28 + i;
                 int y = 2 + i;
                 assertTrue(paphos.get(x, y, z).contains("stairs"), "Missing stair at " + x + "," + y + "," + z);
                 assertEquals(Plan.AIR, paphos.get(x, y + 1, z), "Blocked headroom+1 at " + x + "," + y + "," + z);
                 assertEquals(Plan.AIR, paphos.get(x, y + 2, z), "Blocked headroom+2 at " + x + "," + y + "," + z);
             }
-            assertNotEquals(Plan.AIR, paphos.get(x, 11, 24));
-            assertEquals(Plan.AIR, paphos.get(x, 12, 24));
-            assertEquals(Plan.AIR, paphos.get(x, 13, 24));
+            assertNotEquals(Plan.AIR, paphos.get(38, 11, z));
+            assertEquals(Plan.AIR, paphos.get(38, 12, z));
+            assertEquals(Plan.AIR, paphos.get(38, 13, z));
         }
 
         // Jerusalem Temple: side chamber double doors, flush steps at z=50, and 2-block multi-floor stairs
@@ -471,6 +534,10 @@ class BuildingSnapshotTest {
                 System.out.printf("NEW SNAPSHOT %s nonNull=%d palette=%d signs=%d lecterns=%d sha256=%s%n",
                         b.id(), nonNull, palette.size(), plan.signs.size(), plan.lecterns.size(), hash);
                 continue;
+            }
+            if ("paphos".equals(b.id()) && !exp.sha256().equals(hash)) {
+                fail(String.format("NEW SNAPSHOT %s nonNull=%d palette=%d signs=%d lecterns=%d sha256=%s",
+                        b.id(), nonNull, palette.size(), plan.signs.size(), plan.lecterns.size(), hash));
             }
             assertEquals(exp.nonNull(), nonNull, b.id() + " nonNull");
             assertEquals(exp.palette(), palette.size(), b.id() + " palette");

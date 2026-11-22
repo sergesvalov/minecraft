@@ -23,9 +23,11 @@ import static com.server.greatbuildings.model.States.stairs;
  *
  * <p>Authentic 40 × 20 m rectangular coastal fortress tower with 3 m thick limestone walls,
  * seawater moat with a stone arched bridge, symmetric double-door arched portal with the 1592
- * white marble inscription slab, central open-air courtyard flanked by barrel-vaulted Ottoman
- * dungeons and British salt store, grand stone staircase, roof deck with 12 cannon embrasures,
- * and a 16 × 10 m (~15 × 10 m) upper keep housing the garrison quarters and mosque.
+ * white marble inscription slab, a longitudinal pointed-vaulted central gallery with a central
+ * skylight and cistern, deep embrasured side alcoves and Ottoman prison cells, vaulted end halls
+ * (British salt store and guard/armory hall), north-wall staircase to the roof deck with
+ * 12 cannon embrasures, and an authentic 3-room upper tower (central Ottoman mosque flanked by
+ * garrison quarters and commander's room) with protruding stone cornice and flat roof parapet.
  */
 public final class Paphos implements Building {
 
@@ -281,161 +283,387 @@ public final class Paphos implements Building {
     // ------------------------------------------------------------------ ground floor interior
 
     /**
-     * Ground floor interior (x = 11..44, z = 11..24):
-     * - Central vaulted vestibule and open-air central courtyard (x = 24..31, z = 19..23).
-     * - West wing (x = 11..21): Ottoman dungeons / prison cells with iron bars.
-     * - East wing (x = 34..44): British salt store and armory / guardrooms.
+     * Authentic Paphos Castle ground floor (x = 11..44, z = 11..24) matching the museum ground plan:
+     * - Full-length pointed-vaulted central gallery (z = 16..19) from east end hall to west end hall,
+     *   with open central skylight (x = 33..35, z = 17..18) and recessed cistern below.
+     * - Entrance vestibule (x = 26..29, z = 20..24) and north stair foyer + guard/ticket niche.
+     * - South & north flanks: open vaulted alcoves with recessed cut-stone thresholds and mezzanine
+     *   corbels alternating with double-doored Ottoman prison cells and deep splayed wall embrasures.
+     * - West End Hall (British salt store) + NW corner dungeon; East Grand Vaulted Hall + SE armory.
+     * - NE Under-Stair Vault accessed by double door at (35..36, 2, 15).
      */
     private void groundFloorInterior(Plan p) {
-        int floorY = 1;
-        int ceilingY = 7;
-
-        // Clear interior and lay floor + barrel-vaulted stone ceiling
+        // 1. Base clearing across castle interior (5-block tall default rooms y = 2..6, solid roof y = 7..10)
         for (int x = CX1 + 3; x <= CX2 - 3; x++) {
             for (int z = CZ1 + 3; z <= CZ2 - 3; z++) {
-                p.set(x, floorY, z, paving(x, z));
-                for (int y = 2; y <= ceilingY; y++) {
+                p.set(x, 1, z, paving(x, z));
+                for (int y = 2; y <= 6; y++) {
                     p.set(x, y, z, AIR);
                 }
-                for (int y = ceilingY + 1; y <= 10; y++) {
+                for (int y = 7; y <= 10; y++) {
                     p.set(x, y, z, ashlar(x, y, z));
                 }
             }
         }
 
-        // Open-air central courtyard lightwell (x = 28..30, z = 21..23) leaving room for keep access and staircase
-        for (int x = 28; x <= 30; x++) {
-            for (int z = 21; z <= 23; z++) {
+        // 2. Longitudinal pointed-vaulted central gallery (x = 15..39, z = 16..19): 6-7 blocks tall inside vault
+        for (int x = 15; x <= 39; x++) {
+            p.set(x, 6, 16, stairs(STAIRS_STONE, Face.NORTH, true));
+            p.set(x, 6, 19, stairs(STAIRS_STONE, Face.SOUTH, true));
+            p.set(x, 7, 17, AIR);
+            p.set(x, 7, 18, AIR);
+            p.set(x, 8, 17, stairs(STAIRS_STONE, Face.NORTH, true));
+            p.set(x, 8, 18, stairs(STAIRS_STONE, Face.SOUTH, true));
+        }
+        // Pointed transverse stone arch ribs across the central gallery
+        for (int ribX : new int[]{15, 20, 25, 30, 39}) {
+            p.set(ribX, 6, 16, CARVED);
+            p.set(ribX, 6, 19, CARVED);
+            p.set(ribX, 7, 17, stairs(STAIRS_STONE, Face.NORTH, true));
+            p.set(ribX, 7, 18, stairs(STAIRS_STONE, Face.SOUTH, true));
+        }
+
+        // Vaulted ceilings in the entrance vestibule, west end hall, and east transverse grand hall
+        for (int z = 20; z <= 24; z++) {
+            p.set(26, 7, z, stairs(STAIRS_STONE, Face.WEST, true));
+            p.set(27, 7, z, AIR);
+            p.set(28, 7, z, AIR);
+            p.set(29, 7, z, stairs(STAIRS_STONE, Face.EAST, true));
+        }
+        for (int z = 15; z <= 24; z++) {
+            p.set(11, 7, z, stairs(STAIRS_STONE, Face.WEST, true));
+            p.set(12, 7, z, AIR);
+            p.set(13, 7, z, AIR);
+            p.set(14, 7, z, stairs(STAIRS_STONE, Face.EAST, true));
+        }
+        for (int z = 11; z <= 19; z++) {
+            p.set(40, 7, z, stairs(STAIRS_STONE, Face.WEST, true));
+            p.set(41, 7, z, AIR);
+            p.set(42, 7, z, AIR);
+            p.set(43, 7, z, AIR);
+            p.set(44, 7, z, stairs(STAIRS_STONE, Face.EAST, true));
+        }
+
+        // 3. Structural internal dividing walls (solid stone y = 2..10, pierced by wide arches or double doors)
+        // Transverse walls flanking the end halls (open 4-wide pointed arch along central gallery z = 16..19)
+        for (int z = 11; z <= 15; z++) {
+            wallColumn(p, 15, z, 2, 10);
+            wallColumn(p, 39, z, 2, 10);
+        }
+        for (int z = 20; z <= 24; z++) {
+            wallColumn(p, 15, z, 2, 10);
+            wallColumn(p, 39, z, 2, 10);
+        }
+        // Partition separating NW Corner Dungeon from West End Hall
+        for (int x = 11; x <= 14; x++) {
+            wallColumn(p, x, 14, 2, 10);
+        }
+        // Partition separating SE Corner Armory from East Grand Hall
+        for (int x = 40; x <= 44; x++) {
+            wallColumn(p, x, 20, 2, 10);
+        }
+        // South-flank partitions (between SW Alcove, SW Cell, Vestibule, SE Cell, SE Alcove)
+        for (int z = 20; z <= 24; z++) {
+            wallColumn(p, 20, z, 2, 10);
+            wallColumn(p, 25, z, 2, 10);
+            wallColumn(p, 30, z, 2, 10);
+            wallColumn(p, 35, z, 2, 10);
+        }
+        // Front walls closing the SW and SE Ottoman prison cells (z = 20)
+        for (int x = 21; x <= 24; x++) {
+            wallColumn(p, x, 20, 2, 10);
+        }
+        for (int x = 31; x <= 34; x++) {
+            wallColumn(p, x, 20, 2, 10);
+        }
+        // North-flank partitions (between NW Alcove, NW Cell, Stair Foyer / Guard Niche, NE Vault)
+        for (int z = 11; z <= 15; z++) {
+            wallColumn(p, 20, z, 2, 10);
+            wallColumn(p, 25, z, 2, 10);
+        }
+        for (int z = 13; z <= 15; z++) {
+            wallColumn(p, 32, z, 2, 10);
+        }
+        // Front walls closing the NW prison cell and NE under-stair vault (z = 15)
+        for (int x = 21; x <= 24; x++) {
+            wallColumn(p, x, 15, 2, 10);
+        }
+        for (int x = 33; x <= 38; x++) {
+            wallColumn(p, x, 15, 2, 10);
+        }
+
+        // Open arches into SW & SE Vaulted Alcoves (chamfered arch heads at y = 6, open y = 2..5 below)
+        p.set(16, 6, 20, stairs(STAIRS_STONE, Face.WEST, true));
+        p.set(19, 6, 20, stairs(STAIRS_STONE, Face.EAST, true));
+        p.set(16, 6, 15, stairs(STAIRS_STONE, Face.WEST, true));
+        p.set(19, 6, 15, stairs(STAIRS_STONE, Face.EAST, true));
+        p.set(36, 6, 20, stairs(STAIRS_STONE, Face.WEST, true));
+        p.set(38, 6, 20, stairs(STAIRS_STONE, Face.EAST, true));
+
+        // 4. Open-air central skylight (x = 33..35, z = 17..18) and recessed stone cistern directly underneath
+        for (int x = 33; x <= 35; x++) {
+            for (int z = 17; z <= 18; z++) {
                 for (int y = 2; y <= 11; y++) {
                     p.set(x, y, z, AIR);
                 }
             }
         }
-
-        // Internal dividing walls separating central hall/courtyard from wings
-        int westWallX = 22;
-        int eastWallX = 33;
-
-        for (int z = CZ1 + 3; z <= CZ2 - 3; z++) {
-            for (int y = 2; y <= ceilingY; y++) {
-                p.set(westWallX, y, z, ashlar(westWallX, y, z));
-                p.set(eastWallX, y, z, ashlar(eastWallX, y, z));
+        for (int x = 33; x <= 35; x++) {
+            for (int z = 16; z <= 18; z++) {
+                p.set(x, 1, z, b("cut_sandstone"));
             }
         }
+        p.set(34, 0, 17, LIGHT2);
+        p.set(34, 1, 17, WATER);
 
-        // Partition walls inside the west wing (3 dungeon cells)
-        for (int zPart : new int[]{15, 20}) {
-            for (int x = CX1 + 3; x < westWallX; x++) {
-                for (int y = 2; y <= ceilingY; y++) {
-                    p.set(x, y, zPart, ashlar(x, y, zPart));
-                }
-            }
+        // Semi-circular flush cut-sandstone thresholds at open vaulted alcoves (no height step)
+        for (int x = 16; x <= 19; x++) {
+            p.set(x, 1, 20, b("cut_sandstone"));
+            p.set(x, 1, 15, b("cut_sandstone"));
         }
-        // Partition wall inside the east wing (salt store north, guardroom/armory south)
-        for (int x = eastWallX + 1; x <= CX2 - 3; x++) {
-            for (int y = 2; y <= ceilingY; y++) {
-                p.set(x, y, 17, ashlar(x, y, 17));
-            }
+        for (int x = 17; x <= 18; x++) {
+            p.set(x, 1, 19, b("cut_sandstone"));
+            p.set(x, 1, 16, b("cut_sandstone"));
         }
+        for (int x = 36; x <= 38; x++) {
+            p.set(x, 1, 20, b("cut_sandstone"));
+        }
+        p.set(37, 1, 19, b("cut_sandstone"));
 
-        // West dungeon entrances (2-block wide double doors so characters can enter all cells)
-        for (int zDoor : new int[]{12, 17, 22}) {
-            p.doubleDoor(westWallX, 2, zDoor, DOOR, Face.WEST);
-        }
+        // 5. Six interior double doors + high barred vent slots above cells
+        p.doubleDoor(12, 2, 14, DOOR, Face.NORTH); // NW Corner Dungeon
+        p.doubleDoor(22, 2, 20, DOOR, Face.SOUTH); // SW Prison Cell
+        p.doubleDoor(22, 2, 15, DOOR, Face.NORTH); // NW Prison Cell
+        p.doubleDoor(32, 2, 20, DOOR, Face.SOUTH); // SE Prison Cell
+        p.doubleDoor(35, 2, 15, DOOR, Face.NORTH); // NE Under-Stair Vault
+        p.doubleDoor(41, 2, 20, DOOR, Face.SOUTH); // SE Corner Armory
+        p.set(22, 5, 20, BARS);
+        p.set(22, 5, 15, BARS);
+        p.set(32, 5, 20, BARS);
 
-        // East storage / guardroom double doors
-        for (int zDoor : new int[]{13, 21}) {
-            p.doubleDoor(eastWallX, 2, zDoor, DOOR, Face.EAST);
-        }
+        // 6. Deep splayed embrasures & barred windows in the 3-metre outer stone walls
+        // North sea embrasures (z = 8..10: outer bars at z = 8, open embrasure at z = 9..10)
+        embrasureZ(p, 12, 13, 3, 3, 9, 10, 8);  // NW Corner Dungeon
+        embrasureZ(p, 17, 18, 3, 4, 9, 10, 8);  // NW Vaulted Alcove
+        embrasureZ(p, 22, 23, 3, 3, 9, 10, 8);  // NW Prison Cell
+        embrasureZ(p, 42, 42, 3, 4, 9, 10, 8);  // East Grand Hall (north embrasure)
+        // South harbour embrasures (z = 25..27: outer bars at z = 27, open embrasure at z = 25..26)
+        embrasureZ(p, 17, 18, 2, 3, 25, 26, 27); // SW Vaulted Alcove low barred window
+        embrasureZ(p, 22, 23, 3, 3, 25, 26, 27); // SW Prison Cell
+        embrasureZ(p, 32, 33, 3, 3, 25, 26, 27); // SE Prison Cell
+        embrasureZ(p, 37, 37, 2, 3, 25, 26, 27); // SE Vaulted Alcove low barred window
+        embrasureZ(p, 42, 42, 3, 3, 25, 26, 27); // SE Corner Armory
+        // West and East sea embrasures
+        embrasureX(p, 9, 10, 8, 3, 4, 20, 21);   // West End Hall
+        embrasureX(p, 45, 46, 47, 3, 4, 13, 14); // East Grand Hall (east north)
+        embrasureX(p, 45, 46, 47, 3, 4, 17, 18); // East Grand Hall (east south)
+        embrasureX(p, 45, 46, 47, 3, 3, 22, 23); // SE Corner Armory (east)
 
-        // Dungeon furnishings (west wing): prisoner bunks, iron chains
-        for (int zDunc : new int[]{12, 17, 22}) {
-            p.set(CX1 + 4, 2, zDunc, BARS);
-            p.set(CX1 + 4, 3, zDunc, CHAIN);
-            p.set(CX1 + 5, 2, zDunc, slab(SLAB_STONE));
-        }
+        // 7. Authentic room furnishings (leaving all doorway and gallery walking zones clear)
+        // NW Corner Dungeon
+        p.set(11, 2, 11, slab(SLAB_STONE));
+        p.set(14, 2, 11, BARS);
+        p.set(14, 4, 11, CHAIN);
+        p.set(14, 5, 11, CHAIN);
 
-        // British salt store furnishings (east wing north chamber): quartz blocks and barrels
-        for (int x = eastWallX + 2; x <= eastWallX + 6; x++) {
-            for (int z = CZ1 + 4; z <= CZ1 + 7; z++) {
-                if ((x + z) % 2 == 0) {
-                    p.set(x, 2, z, b("smooth_quartz"));
-                    if (hash(x, 0, z) % 2 == 0) {
-                        p.set(x, 3, z, b("smooth_quartz"));
+        // West End Hall: British Salt Store (stacked quartz salt blocks & barrels in south end)
+        for (int x = 11; x <= 13; x++) {
+            for (int z = 22; z <= 24; z++) {
+                if (x == 11 || z == 24) {
+                    if ((x + z) % 2 == 0) {
+                        p.set(x, 2, z, b("smooth_quartz"));
+                        if (hash(x, 0, z) % 2 == 0) {
+                            p.set(x, 3, z, b("smooth_quartz"));
+                        }
+                    } else {
+                        p.set(x, 2, z, b("barrel"));
                     }
-                } else {
-                    p.set(x, 2, z, b("barrel"));
                 }
             }
         }
 
-        // Guardroom armory (east wing south chamber): anvils & chests
-        p.set(eastWallX + 4, 2, 22, b("anvil"));
-        p.set(eastWallX + 5, 2, 22, b("chest"));
+        // SW & SE Vaulted Alcoves: wooden mezzanine corbel brackets at y = 4..5 + oak benches
+        p.set(16, 4, 24, stairs("spruce_stairs", Face.WEST, true));
+        p.set(19, 4, 24, stairs("spruce_stairs", Face.EAST, true));
+        p.set(16, 5, 23, b("spruce_slab") + "[type=top]");
+        p.set(16, 5, 24, b("spruce_slab") + "[type=top]");
+        p.set(19, 5, 23, b("spruce_slab") + "[type=top]");
+        p.set(19, 5, 24, b("spruce_slab") + "[type=top]");
 
-        // Lighting in the hall, wings, and courtyard corners
-        p.set(GATE_X, 6, 14, lantern(true));
-        p.set(GATE_X + 1, 6, 14, lantern(true));
-        p.set(16, 5, 12, lantern(true));
-        p.set(16, 5, 17, lantern(true));
-        p.set(16, 5, 22, lantern(true));
-        p.set(39, 5, 13, lantern(true));
-        p.set(39, 5, 21, lantern(true));
+        p.set(16, 5, 11, b("spruce_slab") + "[type=top]");
+        p.set(16, 5, 12, b("spruce_slab") + "[type=top]");
+        p.set(19, 5, 11, b("spruce_slab") + "[type=top]");
+        p.set(19, 5, 12, b("spruce_slab") + "[type=top]");
+        p.set(17, 2, 11, stairs("oak_stairs", Face.NORTH, false));
+        p.set(18, 2, 11, stairs("oak_stairs", Face.NORTH, false));
+
+        p.set(36, 5, 23, b("spruce_slab") + "[type=top]");
+        p.set(36, 5, 24, b("spruce_slab") + "[type=top]");
+        p.set(38, 5, 23, b("spruce_slab") + "[type=top]");
+        p.set(38, 5, 24, b("spruce_slab") + "[type=top]");
+        p.set(37, 2, 24, stairs("oak_stairs", Face.SOUTH, false));
+
+        // SW, NW, SE Ottoman Prison Cells: stone bunks, iron bars, hanging chains
+        p.set(21, 2, 24, slab(SLAB_STONE));
+        p.set(24, 2, 24, BARS);
+        p.set(24, 4, 24, CHAIN);
+        p.set(24, 5, 24, CHAIN);
+
+        p.set(24, 2, 11, slab(SLAB_STONE));
+        p.set(21, 2, 11, BARS);
+        p.set(21, 4, 11, CHAIN);
+        p.set(21, 5, 11, CHAIN);
+
+        p.set(34, 2, 24, slab(SLAB_STONE));
+        p.set(31, 2, 24, BARS);
+        p.set(31, 4, 24, CHAIN);
+        p.set(31, 5, 24, CHAIN);
+
+        // Entrance Vestibule benches
+        p.set(26, 2, 22, stairs("oak_stairs", Face.WEST, false));
+        p.set(26, 2, 23, stairs("oak_stairs", Face.WEST, false));
+        p.set(29, 2, 22, stairs("oak_stairs", Face.EAST, false));
+        p.set(29, 2, 23, stairs("oak_stairs", Face.EAST, false));
+
+        // Guard / ticket niche opposite the entrance (x = 28..31, z = 14)
+        p.set(28, 2, 14, stairs("oak_stairs", Face.NORTH, false));
+        p.set(29, 2, 14, b("spruce_planks"));
+        p.set(30, 2, 14, b("spruce_planks"));
+        p.set(31, 2, 14, b("spruce_planks"));
+        p.set(30, 3, 14, lantern(false));
+
+        // NE Under-Stair Munitions Vault (cannonballs, chests, barrels along back edge z = 11..12)
+        p.set(33, 2, 11, b("barrel"));
+        p.set(34, 2, 11, b("barrel"));
+        p.set(37, 2, 11, b("barrel"));
+        p.set(38, 2, 11, b("barrel"));
+        p.set(33, 2, 12, b("chest"));
+        p.set(38, 2, 12, CANNON_BODY);
+
+        // East Grand Hall: armory anvil, supply chests, barrels, and wooden benches
+        p.set(40, 2, 11, b("anvil"));
+        p.set(41, 2, 11, b("chest"));
+        p.set(43, 2, 11, b("barrel"));
+        p.set(44, 2, 11, b("barrel"));
+        p.set(44, 2, 15, stairs("oak_stairs", Face.EAST, false));
+        p.set(44, 2, 16, stairs("oak_stairs", Face.EAST, false));
+
+        // SE Corner Armory / Guard Chamber
+        p.set(40, 2, 24, b("chest"));
+        p.set(40, 4, 24, CHAIN);
+        p.set(40, 5, 24, CHAIN);
+        p.set(43, 2, 24, b("barrel"));
+        p.set(44, 2, 24, b("barrel"));
+        p.set(44, 2, 23, b("anvil"));
+
+        // 8. Hanging lanterns along the central gallery, end halls, alcoves, and chambers
+        int[][] hangingLanterns = {
+                {18, 7, 17}, {23, 7, 17}, {28, 7, 17}, {37, 7, 17},
+                {27, 6, 21}, {28, 6, 21},
+                {13, 6, 17}, {13, 6, 22},
+                {42, 6, 13}, {42, 6, 17},
+                {17, 6, 22}, {18, 6, 13}, {37, 6, 22},
+                {12, 5, 12}, {22, 5, 22}, {22, 5, 13}, {33, 5, 22}, {36, 5, 13}, {42, 5, 22}
+        };
+        for (int[] hl : hangingLanterns) {
+            p.set(hl[0], hl[1], hl[2], lantern(true));
+        }
     }
 
-    /** Grand stone staircase (2 blocks wide) connecting ground floor to the roof deck. */
-    private void staircase(Plan p) {
-        // Steps climbing north-to-south in the center of the hall (x = 25..26, z = 14..23), leaving all wing doors clear
-        for (int x = 25; x <= 26; x++) {
-            for (int i = 0; i <= 9; i++) {
-                int z = 14 + i;
-                int y = 2 + i;
-                p.set(x, y, z, stairs(STAIRS_STONE, Face.SOUTH, false));
-                for (int yy = 2; yy < y; yy++) {
-                    p.set(x, yy, z, ashlar(x, yy, z));
+    private static void wallColumn(Plan p, int x, int z, int y1, int y2) {
+        for (int y = y1; y <= y2; y++) {
+            p.set(x, y, z, ashlar(x, y, z));
+        }
+    }
+
+    private static void embrasureZ(Plan p, int x1, int x2, int y1, int y2, int openZ1, int openZ2, int barZ) {
+        for (int x = x1; x <= x2; x++) {
+            for (int y = y1; y <= y2; y++) {
+                for (int z = openZ1; z <= openZ2; z++) {
+                    p.set(x, y, z, AIR);
                 }
-                int clearTop = z <= 19 ? 10 : Math.min(TOP, y + 3);
-                for (int yy = y + 1; yy <= clearTop; yy++) {
-                    p.set(x, yy, z, AIR);
-                }
+                p.set(x, y, barZ, BARS);
             }
         }
-        // Guardrails around the stairwell opening on the roof deck (z = 24 open for exit)
-        for (int z = 19; z <= 23; z++) {
-            p.set(24, 12, z, WALL);
+    }
+
+    private static void embrasureX(Plan p, int openX1, int openX2, int barX, int y1, int y2, int z1, int z2) {
+        for (int z = z1; z <= z2; z++) {
+            for (int y = y1; y <= y2; y++) {
+                for (int x = openX1; x <= openX2; x++) {
+                    p.set(x, y, z, AIR);
+                }
+                p.set(barX, y, z, BARS);
+            }
         }
-        p.set(25, 12, 19, WALL);
-        p.set(26, 12, 19, WALL);
+    }
+
+    /** Grand 2-block-wide stone staircase climbing along the north wall (x = 28..37, z = 11..12) to the roof deck. */
+    private void staircase(Plan p) {
+        for (int i = 0; i <= 9; i++) {
+            int x = 28 + i;
+            int y = 2 + i;
+            for (int z = 11; z <= 12; z++) {
+                p.set(x, y, z, stairs(STAIRS_STONE, Face.EAST, false));
+                if (i <= 4) {
+                    for (int yy = 2; yy < y; yy++) {
+                        p.set(x, yy, z, ashlar(x, yy, z));
+                    }
+                    for (int yy = y + 1; yy <= 10; yy++) {
+                        p.set(x, yy, z, AIR);
+                    }
+                } else {
+                    // Cantilevered stone soffit above the NE Under-Stair Vault (yy = 2..y-2 stays open)
+                    p.set(x, y - 1, z, ashlar(x, y - 1, z));
+                    for (int yy = y + 1; yy <= TOP; yy++) {
+                        p.set(x, yy, z, AIR);
+                    }
+                }
+            }
+            // Cheek wall on the south side of the stair flight (z = 13)
+            int wallBottom = (i <= 4) ? 2 : y - 1;
+            int wallTop = (i <= 4) ? 10 : 11;
+            wallColumn(p, x, 13, wallBottom, wallTop);
+        }
+
+        // Protective parapet around the roof stairwell opening (leaving east exit x = 38, z = 11..12 open)
+        for (int x = 32; x <= 37; x++) {
+            p.set(x, 12, 10, WALL);
+            p.set(x, 12, 13, WALL);
+        }
+        p.set(32, 12, 11, WALL);
+        p.set(32, 12, 12, WALL);
+        p.set(37, 13, 13, lantern(false));
     }
 
     // ------------------------------------------------------------------ roof & battlements
 
     /**
-     * Roof deck platform (y = 11), central courtyard parapet, 12 perimeter embrasures (ramparts),
+     * Roof deck platform (y = 11), central skylight parapet, 12 perimeter embrasures (ramparts),
      * and coastal artillery cannons pointing out to sea.
      */
     private void roofDeckAndCannons(Plan p) {
         int deckY = 11;
 
-        // Paved roof platform (leaving central courtyard lightwell and stairwell opening clear)
+        // Paved roof platform (leaving central skylight and north stairwell opening clear)
         for (int x = CX1; x <= CX2; x++) {
             for (int z = CZ1; z <= CZ2; z++) {
-                boolean inCourtyard = (x >= 28 && x <= 30 && z >= 21 && z <= 23);
-                boolean inStairwell = (x >= 25 && x <= 26 && z >= 20 && z <= 22);
-                if (!inCourtyard && !inStairwell) {
+                boolean inSkylight = (x >= 33 && x <= 35 && z >= 17 && z <= 18);
+                boolean inStairwell = (x >= 33 && x <= 37 && z >= 11 && z <= 12);
+                if (!inSkylight && !inStairwell) {
                     p.set(x, deckY, z, paving(x, z));
                 }
             }
         }
 
-        // Parapet around the central courtyard lightwell (x = 27..31, z = 20..24)
-        for (int x = 27; x <= 31; x++) {
-            p.set(x, 12, 20, WALL);
-            p.set(x, 12, 24, WALL);
+        // Parapet around the central skylight opening (x = 32..36, z = 16..19)
+        for (int x = 32; x <= 36; x++) {
+            p.set(x, 12, 16, WALL);
+            p.set(x, 12, 19, WALL);
         }
-        for (int z = 20; z <= 24; z++) {
-            p.set(27, 12, z, WALL);
-            p.set(31, 12, z, WALL);
+        for (int z = 16; z <= 19; z++) {
+            p.set(32, 12, z, WALL);
+            p.set(36, 12, z, WALL);
         }
 
         // Perimeter parapet walls (y = 12..13)
@@ -452,8 +680,8 @@ public final class Paphos implements Building {
             p.set(CX2, 13, z, WALL);
         }
 
-        // 12 distinct cannon embrasures: 4 North, 4 South, 2 West, 2 East (proportional to 40 × 20 m)
-        int[] northXs = {13, 21, 34, 42};
+        // 12 distinct cannon embrasures: 4 North (clearing stairwell at x = 32..37), 4 South, 2 West, 2 East
+        int[] northXs = {13, 21, 31, 42};
         for (int ex : northXs) {
             cannon(p, ex, deckY + 1, CZ1, Face.NORTH);
         }
@@ -494,15 +722,17 @@ public final class Paphos implements Building {
     // ------------------------------------------------------------------ upper keep
 
     /**
-     * Upper secondary tower / keep on the north roof (x = 20..35, z = 10..17, y = 11..16):
-     * houses the Ottoman garrison commander's quarters and small mosque,
-     * with a paved landing outside the south door and an upper lookout terrace and flagpole.
+     * Authentic 3-room upper tower (x = 13..29, z = 13..22, 17 × 10 m, floor y = 11, roof y = 17):
+     * - Central Ottoman mosque with prayer carpets and mihrab, entered through a south double door.
+     * - West garrison barracks (double door from mosque) with soldier bunks and chests.
+     * - East commander's & armory room (double door from mosque) with desk, bookshelf, and equipment.
+     * - Tall barred windows, protruding limestone cornice molding, and flat viewing-deck parapet.
      */
     private void upperKeep(Plan p) {
-        int kx1 = 20, kx2 = 35; // 16 blocks wide (centered on GATE_X..GATE_X+1 = 27..28)
-        int kz1 = 10, kz2 = 17; // 8 blocks deep, clear of north cannons (z = 8..9) and opening onto z = 18..19
+        int kx1 = 13, kx2 = 29; // 17 blocks wide
+        int kz1 = 13, kz2 = 22; // 10 blocks deep
         int floorY = 11;
-        int roofY = 16;
+        int roofY = 17;
 
         for (int x = kx1; x <= kx2; x++) {
             for (int z = kz1; z <= kz2; z++) {
@@ -520,46 +750,93 @@ public final class Paphos implements Building {
             }
         }
 
-        // Entrance double door into upper keep from the roof terrace (south side, z = 18, centered on 27..28)
-        p.doubleDoor(GATE_X, floorY + 1, kz2, DOOR, Face.NORTH);
+        // Interior dividing walls dividing upper tower into West Barracks (14..17), Mosque (19..23), East Commander (25..28)
+        for (int z = kz1 + 1; z <= kz2 - 1; z++) {
+            wallColumn(p, 18, z, floorY + 1, roofY - 1);
+            wallColumn(p, 24, z, floorY + 1, roofY - 1);
+        }
 
-        // Arched lookout windows in the keep walls
-        p.set(kx1, floorY + 2, 13, b("glass"));
-        p.set(kx1, floorY + 2, 14, b("glass"));
-        p.set(kx2, floorY + 2, 13, b("glass"));
-        p.set(kx2, floorY + 2, 14, b("glass"));
-        p.set(GATE_X, floorY + 2, kz1, b("glass"));
-        p.set(GATE_X + 1, floorY + 2, kz1, b("glass"));
+        // Three double doors connecting terrace -> Mosque -> West & East rooms
+        p.doubleDoor(20, floorY + 1, kz2, DOOR, Face.NORTH);
+        p.doubleDoor(18, floorY + 1, 17, DOOR, Face.WEST);
+        p.doubleDoor(24, floorY + 1, 17, DOOR, Face.EAST);
 
-        // Interior: Ottoman mosque / prayer chamber
-        for (int x = kx1 + 2; x <= kx2 - 2; x++) {
-            for (int z = kz1 + 2; z <= kz2 - 2; z++) {
-                p.set(x, floorY + 1, z, b("red_carpet"));
+        // Tall iron-barred lattice windows characteristic of the upper tower
+        for (int y = floorY + 2; y <= floorY + 4; y++) {
+            p.set(23, y, kz2, BARS);
+            p.set(21, y, kz1, BARS);
+            p.set(kx1, y, 17, BARS);
+            p.set(kx1, y, 18, BARS);
+            p.set(kx2, y, 17, BARS);
+            p.set(kx2, y, 18, BARS);
+        }
+        for (int y = floorY + 2; y <= floorY + 3; y++) {
+            p.set(15, y, kz2, BARS);
+            p.set(27, y, kz2, BARS);
+            p.set(15, y, kz1, BARS);
+            p.set(27, y, kz1, BARS);
+        }
+
+        // Central Ottoman mosque: bordered prayer rugs (leaving door thresholds z = 21, x = 19, x = 23 clear)
+        for (int x = 20; x <= 22; x++) {
+            for (int z = 15; z <= 20; z++) {
+                boolean inner = (x == 21 && z >= 16 && z <= 19);
+                p.set(x, floorY + 1, z, b(inner ? "red_carpet" : "green_carpet"));
             }
         }
-        // Mihrab prayer niche facing south-east
-        p.set(kx2 - 1, floorY + 1, kz2 - 1, CARVED);
-        p.set(kx2 - 1, floorY + 2, kz2 - 1, stairs(STAIRS_STONE, Face.NORTH, true));
+        // Carved mihrab niche at south-east mosque wall and Quran bookshelf stand
+        p.set(23, floorY + 1, 21, CARVED);
+        p.set(23, floorY + 2, 21, stairs(STAIRS_STONE, Face.NORTH, true));
+        p.set(23, floorY + 3, 21, CARVED);
+        p.set(19, floorY + 1, 14, b("bookshelf"));
+        p.set(19, floorY + 2, 14, lantern(false));
 
-        // Lanterns hanging in keep
-        p.set(GATE_X, roofY - 1, 13, lantern(true));
-        p.set(GATE_X + 1, roofY - 1, 13, lantern(true));
+        // West garrison barracks: wooden bunks, pillows, chests, barrel, crafting bench
+        p.set(14, floorY + 1, 14, b("white_wool"));
+        p.set(14, floorY + 1, 15, slab("spruce_slab"));
+        p.set(14, floorY + 1, 20, slab("spruce_slab"));
+        p.set(14, floorY + 1, 21, b("white_wool"));
+        p.set(15, floorY + 1, 14, b("chest"));
+        p.set(16, floorY + 1, 14, b("barrel"));
+        p.set(15, floorY + 1, 21, b("chest"));
+        p.set(16, floorY + 1, 21, b("crafting_table"));
 
-        // Parapet around the keep roof deck (y = 17)
-        for (int x = kx1; x <= kx2; x++) {
-            p.set(x, 17, kz1, WALL);
-            p.set(x, 17, kz2, WALL);
+        // East commander's & armory room: desk, chair, bookshelf, chests, barrel, anvil
+        p.set(26, floorY + 1, 14, b("bookshelf"));
+        p.set(27, floorY + 1, 14, b("spruce_planks"));
+        p.set(28, floorY + 1, 14, b("spruce_planks"));
+        p.set(28, floorY + 2, 14, lantern(false));
+        p.set(27, floorY + 1, 15, stairs("oak_stairs", Face.NORTH, false));
+        p.set(28, floorY + 1, 20, b("chest"));
+        p.set(28, floorY + 1, 21, b("barrel"));
+        p.set(27, floorY + 1, 21, b("anvil"));
+
+        // Hanging lanterns in all 3 rooms
+        for (int rx : new int[]{16, 21, 26}) {
+            p.set(rx, roofY - 1, 16, lantern(true));
+            p.set(rx, roofY - 1, 19, lantern(true));
+        }
+
+        // Protruding limestone cornice ring at roofY (characteristic Ottoman exterior trim)
+        String cornice = b(SLAB_STONE) + "[type=top]";
+        for (int x = kx1 - 1; x <= kx2 + 1; x++) {
+            p.set(x, roofY, kz1 - 1, cornice);
+            p.set(x, roofY, kz2 + 1, cornice);
         }
         for (int z = kz1; z <= kz2; z++) {
-            p.set(kx1, 17, z, WALL);
-            p.set(kx2, 17, z, WALL);
+            p.set(kx1 - 1, roofY, z, cornice);
+            p.set(kx2 + 1, roofY, z, cornice);
         }
 
-        // Flagpole / tower signal beacon at the center of the keep roof (y = 17..20)
-        p.set(GATE_X, 17, 13, CARVED);
-        p.set(GATE_X, 18, 13, BARS);
-        p.set(GATE_X, 19, 13, BARS);
-        p.set(GATE_X, 20, 13, lantern(false));
+        // Flat upper viewing deck parapet (y = 18) with no central mast/beacon
+        for (int x = kx1; x <= kx2; x++) {
+            p.set(x, roofY + 1, kz1, WALL);
+            p.set(x, roofY + 1, kz2, WALL);
+        }
+        for (int z = kz1; z <= kz2; z++) {
+            p.set(kx1, roofY + 1, z, WALL);
+            p.set(kx2, roofY + 1, z, WALL);
+        }
     }
 
     // ------------------------------------------------------------------ harbor promenade
@@ -621,12 +898,10 @@ public final class Paphos implements Building {
                 "Над единственным арочным входом до сих пор сохранилась беломраморная плита с резной надписью "
                         + "об османской реконструкции 1592 года.\n\nЗамок сложен из массивных тёсаных блоков кипрского "
                         + "известняка. Вход защищён рвом с морской водой и каменным арочным мостом.",
-                "Нижний ярус:\nМассивный сводчатый зал, центральный открытый дворик и боковые казематы с толстыми "
-                        + "стенами (3 м). В османский период здесь располагались тюремные камеры, а с 1878 года при "
-                        + "британцах помещения использовались как соляной склад.",
-                "Верхний ярус и крыша:\nШирокая каменная лестница ведёт на открытую площадку с 12 зубчатыми амбразурами, "
-                        + "где стояли береговые артиллерийские орудия. На крыше возвышается верхняя башня (15 × 10 м) "
-                        + "с караульным помещением и мечетью.",
+                "Нижний ярус:\nДлинная стрельчато-сводчатая галерея во всю длину форта со световым проёмом и колодцем, "
+                        + "открытые боковые альковы и закрытые османские темницы с глубокими бойницами, соляной склад и караульный зал.",
+                "Верхний ярус и крыша:\nКаменная лестница у северной стены ведёт на крышу с 12 амбразурами для пушек. "
+                        + "Наверху стоит трёхкомнатная башня (~17 × 10 м) с мечетью в центре, казармой гарнизона и покоями коменданта.",
                 "С 1935 года замок объявлен памятником древности, а с 1980 года входит в список Всемирного наследия "
                         + "ЮНЕСКО как часть археологического парка Пафоса.\n\nСегодня это главный исторический символ "
                         + "города и место ежегодного оперного фестиваля «Афродита»."));
