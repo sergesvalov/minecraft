@@ -33,8 +33,8 @@ class BuildingSnapshotTest {
                     173061, 53, 4, 1,
                     "8ee22679b469108fa1086efcd609405f97c8c3c2c76d9af75f17cc50c07a1b94"),
             "paphos", new ExpectedSnapshot(
-                    95912, 52, 2, 1,
-                    "c7a8d6bf574c61ff6c45bc7499dd9bcf88e1c2a4dfb2f8996ccc3165b6b3fde2"),
+                    95912, 71, 2, 1,
+                    "9ffd66379347071f13ef15d70919802e9b777c0d742d4dc02fc8dedd902c6de9"),
             "kourion", new ExpectedSnapshot(
                     88987, 26, 2, 1,
                     "4e8ee7f9556cfb64d4acbf8eed151db6cfdd69faa0a3eecd6b4b558ee8b796a7"),
@@ -198,20 +198,26 @@ class BuildingSnapshotTest {
                 }
             }
         }
-        for (int x = 35; x <= 37; x++) {
+        for (int x = 35; x <= 36; x++) {
             for (int z = 11; z <= 12; z++) {
                 for (int y = 2; y <= 5; y++) {
                     assertEquals(Plan.AIR, paphos.get(x, y, z),
-                            "NE under-stair vault interior blocked at " + x + "," + y + "," + z);
+                            "NE under-stair vault aisle blocked at " + x + "," + y + "," + z);
                 }
             }
         }
-        for (int rx : new int[]{16, 21, 26}) {
+        for (int rx : new int[]{16, 26}) {
             for (int z = 17; z <= 18; z++) {
                 for (int y = 12; y <= 15; y++) {
                     assertEquals(Plan.AIR, paphos.get(rx, y, z),
                             "Upper tower room blocked at " + rx + "," + y + "," + z);
                 }
+            }
+        }
+        for (int z = 17; z <= 18; z++) {
+            assertEquals("minecraft:red_carpet", paphos.get(21, 12, z));
+            for (int y = 13; y <= 15; y++) {
+                assertEquals(Plan.AIR, paphos.get(21, y, z), "Upper tower mosque blocked at 21," + y + "," + z);
             }
         }
         for (int x = 13; x <= 29; x++) {
@@ -534,10 +540,6 @@ class BuildingSnapshotTest {
                 System.out.printf("NEW SNAPSHOT %s nonNull=%d palette=%d signs=%d lecterns=%d sha256=%s%n",
                         b.id(), nonNull, palette.size(), plan.signs.size(), plan.lecterns.size(), hash);
                 continue;
-            }
-            if ("paphos".equals(b.id()) && !exp.sha256().equals(hash)) {
-                fail(String.format("NEW SNAPSHOT %s nonNull=%d palette=%d signs=%d lecterns=%d sha256=%s",
-                        b.id(), nonNull, palette.size(), plan.signs.size(), plan.lecterns.size(), hash));
             }
             assertEquals(exp.nonNull(), nonNull, b.id() + " nonNull");
             assertEquals(exp.palette(), palette.size(), b.id() + " palette");
