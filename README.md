@@ -21,7 +21,7 @@
   - `halloumi.tavern`, `halloumi.inn` — постройка кипрской таверны командой `/halloumi tavern` (`/halloumi inn`);
   - `greatbuildings.build` — постройка исторических сооружений в масштабе 1:1 (`/gb build`, `/gb confirm`, `/gb undo`, `/gb tp`).
 - **Сторонние плагины:** `Geyser`, `Floodgate`, `EssentialsX 2.22.0`, `AuthMeReloaded`, `Squaremap`, `LuckPerms`, `GSit`, `AxGraves`, `Chunky` (`FAWE` временно отключён до выхода сборки под 26.3).
-- **Кастомные плагины проекта:** `WardenLog v2.1`, `HalloumiTrader v1.6`, `GreatBuildings v1.10`.
+- **Кастомные плагины проекта:** `WardenLog v2.1`, `HalloumiTrader v1.6`, `GreatBuildings v1.11`.
 
 ## Документация (`docs/`)
 
@@ -30,7 +30,7 @@
 | [Руководство для игроков](docs/player-guide.md) | Регистрация, карта, телепорты, анимации, могилы, таверны и великие здания |
 | [Техническая документация](docs/technical.md) | Архитектура Docker, настройки под RPi 4, Jenkins CI/CD, бэкапы Restic и скрипты |
 | [Мониторинг Warden](docs/monitoring.md) | Архитектура `WardenLog` + `warden-monitor`, дашборд, Telegram, все 22 метрики Prometheus |
-| [GreatBuildings (`v1.10`)](docs/plugins/great-buildings.md) | 6 исторических построек 1:1 (Грузия, Кипр, Израиль), команды, архитектура |
+| [GreatBuildings (`v1.11`)](docs/plugins/great-buildings.md) | 6 исторических построек 1:1 (Грузия, Кипр, Израиль), команды, архитектура |
 | [HalloumiTrader (`v1.6`)](docs/plugins/halloumi-trader.md) | Торговцы халуми, таверны по биомам, меню мезе, постоялец, сиденья |
 | [WardenLog (`v2.1`)](docs/plugins/warden-log.md) | Логирование событий в `events.jsonl`, фильтры, лимиты анти-лага и ротация логов |
 | [Ресурспак «Халуми»](docs/resourcepack.md) | Иконки блюд 16×16 для Java и Bedrock (Geyser) |
