@@ -299,12 +299,22 @@ def run_cmd(cmd: list, timeout: int = 300) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
 
 
-def run_restic_check(container: str, subset: str) -> tuple:
-    cmd = ["docker", "exec", container, "restic", "check"]
+def restic_check_args(subset: str) -> list:
+    """Maps the --subset value to `restic check` data-read flags."""
+    subset = (subset or "").strip()
+    # cron treats an unescaped `%` as a newline, so `--subset 10%` arrives as "10".
+    # restic rejects a bare "10" (it expects n/t, N%, or a size); treat bare numbers as percent.
+    if re.fullmatch(r"\d+(\.\d+)?", subset):
+        subset += "%"
     if subset == "100%":
-        cmd.append("--read-data")
-    elif subset and subset.lower() != "none":
-        cmd.append(f"--read-data-subset={subset}")
+        return ["--read-data"]
+    if subset and subset.lower() != "none":
+        return [f"--read-data-subset={subset}"]
+    return []
+
+
+def run_restic_check(container: str, subset: str) -> tuple:
+    cmd = ["docker", "exec", container, "restic", "check"] + restic_check_args(subset)
     res = run_cmd(cmd, timeout=900)
     if res.returncode != 0:
         msg = (res.stderr or res.stdout).strip().splitlines()[-3:]

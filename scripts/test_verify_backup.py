@@ -176,6 +176,18 @@ class VerifyBackupTests(unittest.TestCase):
         _, drop_errs, _ = vb.evaluate_snapshots(snaps_drop, now, 26.0, 25.0)
         self.assertTrue(drop_errs)
 
+    def test_restic_check_args(self):
+        self.assertEqual(["--read-data-subset=10%"], vb.restic_check_args("10%"))
+        # cron strips an unescaped `%`, leaving a bare number
+        self.assertEqual(["--read-data-subset=10%"], vb.restic_check_args("10"))
+        self.assertEqual(["--read-data-subset=2.5%"], vb.restic_check_args("2.5"))
+        self.assertEqual(["--read-data"], vb.restic_check_args("100%"))
+        self.assertEqual(["--read-data"], vb.restic_check_args("100"))
+        self.assertEqual(["--read-data-subset=1/5"], vb.restic_check_args("1/5"))
+        self.assertEqual(["--read-data-subset=500M"], vb.restic_check_args("500M"))
+        self.assertEqual([], vb.restic_check_args("none"))
+        self.assertEqual([], vb.restic_check_args(""))
+
     def test_validate_json_and_utf8(self):
         self.assertEqual([], vb.validate_json_bytes(json.dumps([{"name": "papa"}]).encode(), "ops.json"))
         self.assertTrue(vb.validate_json_bytes(b"{broken", "ops.json"))
